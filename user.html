@@ -221,6 +221,7 @@ select,input,textarea,button{color:var(--t1)}
 
 <div class="tst" id="toast">✓ 報告が送信されました</div>
 <div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t">新ヒヤリハット報告</div><div class="hdr-s">建災防方式 安全管理システム</div></div></div><div class="user-pill" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div>
+<div id="syncBanner" style="display:none;font-size:10px;padding:6px 16px;background:rgba(255,152,0,.12);border-bottom:1px solid rgba(255,152,0,.25);color:#E65100;max-width:540px;margin:0 auto"></div>
 
 <!-- REPORT -->
 <div class="pg on" id="pR"><div class="fw">
@@ -666,6 +667,7 @@ function syncUI(){loadDB();loadPhotos();var pg=document.querySelector('.pg.on');
 window.addEventListener('focus',syncUI);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)syncUI()});
 window.addEventListener('storage',function(e){if(e.key==='hh_reports'||e.key==='hh_photos')syncUI()});
+(function(){var b=document.getElementById('syncBanner');if(b&&typeof HHDB!=='undefined'&&!HHDB.useFirebase()){b.style.display='block';b.textContent='⚠ 複数端末同期オフ：携帯・PCで別データになります。owner.html の設定タブでFirebase設定をしてください。'}})();
 </script>
 </body>
 </html>
