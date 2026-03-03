@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firebase 接続診断</title>
+<style>
+body{font-family:sans-serif;max-width:500px;margin:40px auto;padding:20px;background:#f5f5f5}
+h1{font-size:18px;margin-bottom:20px}
+.box{background:#fff;border-radius:8px;padding:16px;margin-bottom:12px;border:1px solid #ddd}
+.ok{color:#2E7D32;font-weight:bold}
+.ng{color:#E53935;font-weight:bold}
+pre{font-size:11px;overflow-x:auto;background:#f9f9f9;padding:8px;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>Firebase 接続診断</h1>
+<div id="result"></div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  var r=document.getElementById('result');
+  var cfg=window.HH_FIREBASE_CONFIG;
+  var hasDb=cfg&&cfg.databaseURL&&(cfg.databaseURL.indexOf('firebaseio.com')>=0||cfg.databaseURL.indexOf('firebasedatabase.app')>=0);
+  
+  var html='<div class="box"><b>1. config.firebase.json の読み込み</b><br>';
+  html+=hasDb?'<span class="ok">✓ 成功</span> - databaseURL が設定されています':'<span class="ng">✗ 失敗</span> - databaseURL が空です。config.firebase.json を確認してください';
+  html+='</div>';
+  
+  html+='<div class="box"><b>2. 設定値</b><pre>'+JSON.stringify(cfg||{},null,2)+'</pre></div>';
+  
+  if(!hasDb){
+    r.innerHTML=html;
+    return;
+  }
+  
+  var html2='<div class="box"><b>3. Firebase 接続テスト</b><br>接続中...</div>';
+  r.innerHTML=html+html2;
+  
+  var s=document.createElement('script');
+  s.src='https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+  s.onload=function(){
+    var s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
+    s2.onload=function(){
+      try{
+        firebase.initializeApp(cfg);
+        var db=firebase.database();
+        db.ref('hh_data/hh_reports').once('value',function(snap){
+          var v=snap.val();
+          var cnt=Array.isArray(v)?v.length:(v?Object.keys(v).length:0);
+          html2='<div class="box"><b>3. Firebase 接続</b><br><span class="ok">✓ 成功</span><br>報告件数: '+cnt+' 件</div>';
+          r.innerHTML=html+html2;
+        },function(err){
+          html2='<div class="box"><b>3. Firebase 接続</b><br><span class="ng">✗ 失敗</span><br>'+err.message+'<br><br>Firebase Console の Realtime Database → ルール を確認してください。テストモード期限が切れている可能性があります。</div>';
+          r.innerHTML=html+html2;
+        });
+      }catch(e){
+        html2='<div class="box"><b>3. Firebase 接続</b><br><span class="ng">✗ エラー</span><br>'+e.message+'</div>';
+        r.innerHTML=html+html2;
+      }
+    };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
