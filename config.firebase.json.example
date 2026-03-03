@@ -1,0 +1,9 @@
+{
+  "apiKey": "ここにAPIキーを入力",
+  "authDomain": "プロジェクトID.firebaseapp.com",
+  "databaseURL": "https://プロジェクトID-default-rtdb.firebaseio.com",
+  "projectId": "プロジェクトID",
+  "storageBucket": "プロジェクトID.appspot.com",
+  "messagingSenderId": "数字",
+  "appId": "1:数字:web:英数字"
+}
