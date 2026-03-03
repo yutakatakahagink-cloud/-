@@ -251,6 +251,7 @@ select,input,textarea,button{color:var(--t1)}
 
 <div class="tst" id="toast"></div>
 <div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t">新ヒヤリハット報告（管理者）</div><div class="hdr-s">建災防方式 安全管理システム</div></div></div><div class="user-pill" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div>
+<div id="syncBanner" style="display:none;font-size:10px;padding:6px 16px;background:rgba(255,152,0,.12);border-bottom:1px solid rgba(255,152,0,.25);color:#E65100;max-width:540px;margin:0 auto"></div>
 
 <!-- DASHBOARD -->
 <div class="pg" id="pD">
@@ -581,27 +582,26 @@ function rCom(){
   document.getElementById('cS').innerHTML=sm;
   document.getElementById('cS_full').innerHTML='<div class="com-detail">'+sm+'</div>';
 
-  // 体験別→対策提案（対策に持っていける形式）
+  // 体験別→対策提案（自由記述に基づく対策案・クリックで吹き出し詳細表示）
   const expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
   const expToMeasure={ '墜落しそうになった':'足場点検・高所作業の安全手順・墜落制止用器具の使用徹底','転倒しそうになった':'4S・通路確保・滑り止め・照明改善','機械等に激突されそうになった':'合図者配置・進入禁止区域の明確化・声掛けルール','ものが落下してきた':'落下防止ネット・工具の落下防止ワイヤー・開口部の囲い','ものが倒れかかってきた':'仮設の固定・計測頻度・警報システム','自分からぶつかりそうになった':'通路確保・視界確保・注意喚起','はさまれそうになった':'安全ガード・インターロック・作業手順の見直し','切られそうになった':'刃物の管理・保護具・作業手順の教育','やけどしそうになった':'熱源の隔離・保護具・緊急措置の周知','感電しそうになった':'絶縁確認・仮設電気の点検・感電防止教育','交通事故になりそうだった':'誘導員配置・バックモニター・後方確認の義務化','その他':'個別事象に応じた対策検討'};
   const causeToMeasure={ '確認不足':'チェックリスト導入・ダブルチェック・朝礼での確認事項周知','連絡・連携ミス':'声掛けルール・合図の統一・無線の活用','作業環境':'4S・照明・通路確保・危険区域の明示','設備・機械':'定期点検・安全装置の確認・修理・更新','不注意行動':'KY活動強化・休憩の確保・焦りを生む工程の見直し','視界不良':'照明改善・視界確保・安全標識の設置'};
   var ecCom={};expTypes.forEach(function(t){ecCom[t]=0});fd.forEach(function(r){r.e.forEach(function(e){if(ecCom[e]!==undefined)ecCom[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ecCom[k]++}})});
   var seCom=expTypes.filter(function(t){return ecCom[t]>0}).sort(function(a,b){return ecCom[b]-ecCom[a]});
-  var byExpHtml='';
+  var byExpData=[];var byExpHtml='';
   seCom.forEach(function(exp){
     var sub=fd.filter(function(r){return r.e.some(function(e){return e===exp||e.startsWith(exp.substring(0,2))})});
-    var cc={};sub.forEach(function(r){r.c.forEach(function(c){cc[c]=(cc[c]||0)+1})});var topC=Object.entries(cc).sort(function(a,b){return b[1]-a[1]}).slice(0,2);
-    var av={};sub.forEach(function(r){r.av.forEach(function(a){av[a]=(av[a]||0)+1})});var topAv=Object.entries(av).sort(function(a,b){return b[1]-a[1]}).slice(0,2);
-    var ac={};sub.forEach(function(r){r.ac.forEach(function(a){ac[a]=(ac[a]||0)+1})});var topAc=Object.entries(ac).sort(function(a,b){return b[1]-a[1]}).slice(0,2);
-    var highL=sub.filter(function(r){return r.l>=7}).length;
+    byExpData.push({exp:exp,sub:sub});
     var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');
-    byExpHtml+='<div class="byexp-item"><span style="font-weight:700;color:var(--ac)">'+expShort+'</span>('+sub.length+(highL?'/Lv7+'+highL:'')+') ';
-    byExpHtml+='<b>対策:</b>'+expToMeasure[exp];
-    if(topC.length){byExpHtml+=' | <span style="color:var(--t2)">原因:'+topC.map(function(x){return x[0]+'('+x[1]+')'}).join(',')+'→'+(topC[0]?causeToMeasure[topC[0][0]]||'':'')+'</span>'}
-    if(topAv.length){byExpHtml+=' | 回避理由:'+topAv.map(function(x){return x[0]}).join(',')}
-    if(topAc.length){byExpHtml+=' | 役立つ:'+topAc.map(function(x){return x[0]}).join(',')}
+    byExpHtml+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:6px">'+expShort+'（'+sub.length+'件）</div>';
+    sub.forEach(function(r,ri){
+      var raw=(r.d||r.m||'').replace(/\s+/g,' ');var sum=(raw.length>50?raw.substring(0,50)+'…':raw)||'（内容なし）';
+      var lv=r.l>=7?' <span style="color:var(--rd);font-size:9px">Lv'+r.l+'</span>':'';
+      byExpHtml+='<div class="byexp-item" onclick="showByExpReportDetail('+(byExpData.length-1)+','+ri+')" style="padding:8px 10px;margin-bottom:4px;border-radius:6px;border:1px solid var(--bd);cursor:pointer;transition:background .2s;background:var(--bg)" onmouseover="this.style.background=\'rgba(0,137,123,.08)\'" onmouseout="this.style.background=\'var(--bg)\'"><span style="font-size:11px">'+esc(sum)+'</span>'+lv+'<div style="font-size:9px;color:var(--t3);margin-top:4px">タップで詳細・対策案を表示</div></div>';
+    });
     byExpHtml+='</div>';
   });
+  window.comByExpData=byExpData;window.comExpToMeasure=expToMeasure;window.comCauseToMeasure=causeToMeasure;
   var byExpFull=byExpHtml||'<p style="color:var(--t3);font-size:11px">報告データがありません</p>';
   document.getElementById('cByExp').innerHTML=byExpFull;
   document.getElementById('cByExp_full').innerHTML='<div class="com-detail">'+byExpFull+'</div>';
@@ -609,14 +609,19 @@ function rCom(){
   // 法改正（施行済み1年前まで / 施行予定1年以内）
   var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var oneYearAgo=new Date(today);oneYearAgo.setFullYear(oneYearAgo.getFullYear()-1);var oneYearLater=new Date(today);oneYearLater.setFullYear(oneYearLater.getFullYear()+1);
   var laws=[
-    {law:'労働安全衛生法',date:'2025/4/1',desc:'労働安全衛生規則改正。災害時の退避・立入禁止の対象が「労働者」から「作業に従事する者」へ拡大。個人事業者・協力業者も対象。',impact:'元請・下請の混在現場で、全作業者への安全措置が義務化。'},
-    {law:'労働安全衛生法',date:'2026/4/1',desc:'個人事業者等への安全衛生対策拡大。フリーランス・一人親方も対象。ストレスチェック義務拡大、化学物質対策強化、高齢者災害防止推進。',impact:'建設現場の一人親方・協力業者にも安全衛生教育・健康管理が適用。'},
-    {law:'労働安全衛生法',date:'2027/4/1',desc:'作業場所管理事業者に混在作業時の連絡調整等を義務付け。個人事業者に機械の安全装置・定期自主検査・安全衛生教育受講を義務化。',impact:'特別教育対象業務拡大（丸鋸取替え、アーク溶接、チェーンソー、高さ2m以上ロープ高所作業等）。'},
-    {law:'建設業法',date:'2024/9/1',desc:'労務費の基準（標準労務費）の作成・勧告。著しく低い労務費での見積り禁止、原価割れ契約禁止。',impact:'適正な労務費の確保により、安全投資の余裕が生まれる。'},
-    {law:'建設業法',date:'2024/12/13',desc:'資材高騰のリスク情報（おそれ情報）の通知義務化。請負代金変更方法の契約書明記。',impact:'資材高騰時の価格変更協議が円滑に。'},
-    {law:'建設業法',date:'2025/12/12',desc:'建設業法・入契法改正の完全施行。労働者処遇確保の努力義務、著しく短い工期の契約禁止、ICT活用による監理技術者専任規制の合理化。',impact:'工期の適正化により、安全に十分な時間を確保しやすく。'},
-    {law:'建設業法',date:'2026/4/1',desc:'元方事業者・関係請負人の対象を「労働者」から「作業従事者」に改正。建設業等30条・30条の2で個人事業主を統括管理の対象に明確化。',impact:'元請の統括安全衛生管理責任が個人事業主にも及ぶ。'},
-    {law:'労働安全衛生法',date:'2024/4/1',desc:'ストレスチェックの実施・面接指導等の見直し。',impact:'メンタルヘルス対策の継続的実施。'}
+    {law:'労働安全衛生法',date:'2025/4/1',desc:'労働安全衛生規則改正。災害時の退避・立入禁止・火気使用禁止の対象が「労働者」から「作業に従事する者」へ拡大。個人事業者・協力業者・一人親方・資材搬入業者も対象に。',impact:'元請・下請の混在現場で、全作業者への安全措置が義務化。危険箇所での退避指示は全員に適用。',action:'元請は現場の全作業者リストを把握し、退避訓練・立入禁止区域の周知を徹底。下請・一人親方への保護具使用の周知義務も。',ref:'労働安全衛生規則第528条の2等'},
+    {law:'労働安全衛生法',date:'2026/1/1',desc:'労働安全衛生法改正の第1段階施行。個人事業者等への安全衛生対策の枠組み整備、化学物質による健康障害防止の強化等。',impact:'建設現場の一人親方・協力業者への対策準備が本格化。',action:'一人親方・協力業者の把握、化学物質取扱いのSDS確認体制の整備。',ref:'労働安全衛生法改正法（2025年公布）'},
+    {law:'労働安全衛生法',date:'2026/4/1',desc:'個人事業者等への安全衛生対策拡大。フリーランス・一人親方も保護対象に明確化。ストレスチェックは50人未満事業場にも義務化（従来は努力義務）。化学物質のSDS交付厳格化、高齢者災害防止推進、ボイラー・クレーン等の製造許可・検査制度見直し。',impact:'建設現場の一人親方・協力業者にも安全衛生教育・健康管理が適用。小規模事業場でもストレスチェック必須に。',action:'一人親方への安全衛生教育受講の案内、ストレスチェック体制の整備（50人未満も）、化学物質取扱いのSDS確認徹底。',ref:'労働安全衛生法改正法（2025年公布）'},
+    {law:'労働安全衛生法',date:'2026/10/1',desc:'労働安全衛生法改正の第3段階施行。機械等による労働災害防止の促進、業務上災害報告制度の創設等。',impact:'労働災害の報告・分析体制の強化。機械の安全装置・定期検査の徹底。',action:'業務上災害報告のルール整備、機械の安全装置・点検記録の見直し。',ref:'労働安全衛生法改正法'},
+    {law:'労働安全衛生法',date:'2027/4/1',desc:'作業場所管理事業者に混在作業時の連絡調整等を義務付け。個人事業者に機械の安全装置・定期自主検査・安全衛生教育受講を義務化。特別教育対象業務拡大（丸鋸取替え、アーク溶接、チェーンソー、高さ2m以上ロープ高所作業等）。',impact:'特別教育対象業務が拡大。個人事業主も安全装置のない機械使用禁止、定期自主検査が義務に。',action:'特別教育の対象業務一覧を確認し、該当者に受講を案内。混在作業時の元請による連絡調整会議の実施。',ref:'労働安全衛生法・安衛則改正'},
+    {law:'労働基準法',date:'2027/4/1',desc:'勤務間インターバル制度の義務化（終業から始業まで原則11時間以上の休息確保）。連続勤務14日超の禁止。法定休日の事前特定義務化。「つながらない権利」のガイドライン整備。有給休暇の賃金算定の通常賃金方式原則化、週44時間特例の廃止検討等。※2026年国会提出見送りの可能性あり。',impact:'建設現場の長時間労働・連続勤務が規制され、疲労によるヒヤリハット・災害防止に直結。シフト制・交替制の見直しが必須に。',action:'勤怠管理システムの改修、就業規則の整備、シフト・交替制の見直し。勤務間インターバル11時間の確保、連続勤務14日以内の徹底。',ref:'労働基準法（改正検討中）'},
+    {law:'労働施策総合推進法',date:'2026/10/1',desc:'カスタマーハラスメント（顧客等からの著しい迷惑行為）対策の義務化。暴言・脅迫・過度な要求等への対応。事業主の方針明確化・周知、相談窓口設置、発生時の迅速対応、抑止措置が義務に。',impact:'発注者・工事関係者からの過度な要求・威圧的態度への対応が法的義務に。建設現場でも発注者対応が課題となる場合に適用。',action:'カスハラ防止方針の策定・周知、相談窓口の設置、発注者等からの過度な要求への対応マニュアル整備。',ref:'労働施策総合推進法改正法（2025年公布）'},
+    {law:'下請法・取適法',date:'2026/1/1',desc:'下請法が中小受託取引適正化法（取適法）に改称・改正。適用対象の拡大（従業員基準の見直し）、価格転嫁への対応、取引の適正化が強化。',impact:'下請取引の透明性・適正化が進み、不当な値引き・工期短縮の抑制に。建設業の下請取引にも関連。',action:'取適法の適用範囲確認、価格転嫁条項の整備、取引記録の適正な保存。',ref:'下請代金支払遅延等防止法及び下請中小企業振興法の一部を改正する法律'},
+    {law:'建設業法',date:'2024/9/1',desc:'労務費の基準（標準労務費）の作成・勧告。著しく低い労務費での見積り禁止、原価割れ契約禁止。適正な労務単価の水準を示すことで、下請いじめの防止と現場の安全投資を確保。',impact:'適正な労務費の確保により、安全投資・教育訓練の余裕が生まれる。',action:'発注者・元請は標準労務費を参照し、適正な見積りを。下請は原価割れ契約の受諾を避ける。',ref:'建設業法第24条の2'},
+    {law:'建設業法',date:'2024/12/13',desc:'資材高騰のリスク情報（おそれ情報）の通知義務化。発注者が資材高騰の可能性を認識した場合、受注者へ通知。請負代金変更方法の契約書明記も義務化。',impact:'資材高騰時の価格変更協議が円滑に。現場の資材調達・品質確保に影響。',action:'契約書に代金変更条項を明記。資材高騰情報の共有ルートを整備。',ref:'建設業法・入契法改正'},
+    {law:'建設業法',date:'2025/12/12',desc:'建設業法・入契法改正の完全施行。労働者処遇確保の努力義務（賃金・教育・福利厚生の適正化）。著しく短い工期の契約禁止。ICT活用による監理技術者専任規制の合理化（複数現場の兼務が条件付きで可能に）。',impact:'工期の適正化により、安全に十分な時間を確保しやすく。監理技術者の配置が柔軟に。',action:'工期設定の見直し、労働者処遇の点検、ICT活用による監理体制の検討。',ref:'建設業法・建設業法施行令'},
+    {law:'建設業法',date:'2026/4/1',desc:'元方事業者・関係請負人の対象を「労働者」から「作業従事者」に改正。建設業等30条・30条の2で個人事業主を統括安全衛生管理の対象に明確化。元請の統括責任が一人親方・個人事業主にも及ぶ。',impact:'元請の統括安全衛生管理責任が個人事業主にも及ぶ。混在現場の安全管理が強化。',action:'元請は個人事業主を含む全作業者の把握、安全衛生教育の実施確認、統括安全衛生管理の強化。',ref:'建設業法第30条・30条の2'},
+    {law:'労働安全衛生法',date:'2024/4/1',desc:'ストレスチェックの実施・面接指導等の見直し。高ストレス者への面接指導の要件見直し、医師による面接指導の実施方法の柔軟化。',impact:'メンタルヘルス対策の継続的実施。面接指導の運用が実態に即して柔軟に。',action:'ストレスチェック実施、高ストレス者への面接指導の実施、就業上の措置の記録・保存。',ref:'労働安全衛生規則第52条の9等'}
   ];
   laws.forEach(function(l){var p=l.date.split('/');l.dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])||1)});
   var enacted=laws.filter(function(l){return l.dateObj<=today&&l.dateObj>=oneYearAgo}).sort(function(a,b){return b.dateObj-a.dateObj});
@@ -681,8 +686,30 @@ function showCauseReporters(cause){
 function showLawDetailByIdx(type,i){
   var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);
   var l=arr[i];if(!l)return;
-  var h='<div class="com-detail"><div class="com-section"><strong>'+l.law+'　'+l.date+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+l.desc+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+l.impact+'</p></div></div>';
+  var h='<div class="com-detail"><div class="com-section"><strong>'+l.law+'　'+l.date+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+l.desc+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+l.impact+'</p></div>';
+  if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+l.action+'</p></div>';
+  if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+l.ref+'</p></div>';
+  h+='</div>';
   showComDetail(l.law+'　'+l.date,h);
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showByExpReportDetail(expIdx,rIdx){
+  var data=window.comByExpData;var expM=window.comExpToMeasure;var causeM=window.comCauseToMeasure;
+  if(!data||!data[expIdx])return;var item=data[expIdx];var r=item.sub[rIdx];if(!r)return;
+  var exp=item.exp;var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');
+  var h='<div class="com-detail">';
+  h+='<div class="com-section"><strong>【自由記述】</strong></div>';
+  if(r.w){h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(r.w)+'</p></div>';}
+  if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}
+  if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}
+  if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}
+  h+='<div class="com-section"><strong>対策提案（詳細）</strong>';
+  var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');
+  if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');
+  if(r.c&&r.c.length){var causeStr=r.c.map(function(c){return causeM[c]||''}).filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}
+  h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';
+  h+='</div></div>';
+  showComDetail(expShort+' の対策案',h);
 }
 
 // Initial render (dashboard will show after login)
@@ -692,7 +719,7 @@ function syncUI(){loadDB();loadPhotos();var pg=document.querySelector('.pg.on');
 window.addEventListener('focus',syncUI);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)syncUI()});
 window.addEventListener('storage',function(e){if(e.key==='hh_reports'||e.key==='hh_photos')syncUI()});
-
+(function(){var b=document.getElementById('syncBanner');if(b&&typeof HHDB!=='undefined'&&!HHDB.useFirebase()){b.style.display='block';b.textContent='⚠ 複数端末同期オフ：携帯・PCで別データになります。owner.html の設定タブでFirebase設定をしてください。'}})();
 </script>
 
 </body>
