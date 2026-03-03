@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新ヒヤリハット報告（使用者）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E8F5E9;--bg2:#C8E6C9;--bg3:#A5D6A7;--bg4:#81C784;--bg5:#66BB6A;--ac:#2E7D32;--ac2:#43A047;--acg:rgba(46,125,50,0.15);--yl:#F9A825;--rd:#E53935;--gn:#00897B;--bl:#0277BD;--pr:#7B1FA2;--t1:#1B5E20;--t2:#33691E;--t3:#558B2F;--bd:#A5D6A7;--r:12px;--rs:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
+select,input,textarea,button{color:var(--t1)}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #A5D6A7;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0);max-width:540px;margin:0 auto}
+@media(min-width:541px) and (max-width:767px){.nav{left:50%;transform:translateX(-50%);border-radius:16px 16px 0 0}}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;color:var(--t3);cursor:pointer;border:none;background:none;font-family:inherit;font-size:9px;font-weight:600;position:relative;-webkit-tap-highlight-color:transparent}
+.ni.on{color:var(--ac)}.ni.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2.5px;background:var(--ac);border-radius:0 0 3px 3px}
+.ni svg{width:20px;height:20px}
+.hdr{background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--bd);padding:14px 16px 16px;max-width:540px;margin:0 auto;position:sticky;top:0;z-index:50}
+.hdr-r{display:flex;align-items:center;justify-content:space-between}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#2E7D32,#66BB6A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 10px rgba(46,125,50,.25)}
+.hdr-t{font-size:15px;font-weight:700}.hdr-s{font-size:10px;color:var(--t3);font-weight:500;margin-top:1px}
+.pg{display:none;padding-bottom:72px;max-width:540px;margin:0 auto}.pg.on{display:block;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fw{padding:0 16px 20px}
+.sd{font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.1em;margin:22px 0 12px;display:flex;align-items:center;gap:8px}
+.sd::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bd),transparent)}
+.fg{margin-bottom:16px}
+.fl{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;margin-bottom:6px}.rq{color:var(--rd);font-size:10px}
+.fi,.fs,.ft{width:100%;background:#fff;border:1px solid #81C784;border-radius:var(--rs);padding:10px 12px;color:#1B5E20;font-family:inherit;font-size:14px;transition:border-color .2s}
+.fi:focus,.fs:focus,.ft:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px var(--acg)}
+.ft{resize:vertical;min-height:80px;line-height:1.6}
+.cg{display:flex;flex-wrap:wrap;gap:6px}
+.ch{padding:6px 12px;border-radius:16px;font-size:11px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;transition:all .2s;user-select:none}
+.ch.on{background:var(--acg);border-color:var(--ac);color:var(--ac2)}.ch:active{transform:scale(.96)}
+.ck{padding:6px 10px;border-radius:16px;font-size:10px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;transition:all .2s;user-select:none}
+.ck.on{background:rgba(56,189,248,.1);border-color:var(--bl);color:var(--bl)}
+.lg{display:flex;flex-wrap:wrap;gap:5px}
+.lb{width:40px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'IBM Plex Sans',sans-serif;background:#fff;border:1.5px solid #81C784;color:#558B2F;cursor:pointer;transition:all .2s}
+.lb.on{border-color:var(--ac);color:var(--ac);background:var(--acg)}
+.lkg{display:flex;flex-direction:column;gap:8px}
+.lki{background:#fff;border-radius:var(--rs);border:1px solid #81C784;padding:9px 10px;display:flex;align-items:center;gap:8px}
+.lkl{font-size:11px;flex:1;color:var(--t1);line-height:1.3}
+.lkd{display:flex;gap:4px;flex-shrink:0}
+.lkdt{width:28px;height:28px;border-radius:50%;border:2px solid #81C784;background:#E8F5E9;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:transparent;cursor:pointer;transition:all .15s}
+.lkdt.on{border-color:var(--ac);background:var(--ac);color:#fff}
+.sub{width:100%;padding:14px;background:linear-gradient(135deg,#2E7D32,#43A047);border:none;border-radius:var(--r);color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(46,125,50,.25);margin-top:24px}
+.sub:active{transform:scale(.98)}
+.cb{background:#fff;border:1px solid #A5D6A7;border-radius:14px;padding:16px;margin-bottom:12px}
+.cht{font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.chd{width:6px;height:6px;border-radius:50%}
+.hb{display:flex;flex-direction:column;gap:7px}
+.hr{display:flex;align-items:center;gap:7px}
+.hl{width:72px;font-size:10px;color:var(--t2);text-align:right;flex-shrink:0}
+.htk{flex:1;height:20px;background:#C8E6C9;border-radius:4px;overflow:hidden}
+.hfl{height:100%;border-radius:4px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:5px}
+.hv{font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.trw{display:flex;align-items:flex-end;gap:4px;height:110px;padding-top:6px}
+.tc{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+.tb2{width:100%;max-width:24px;border-radius:3px 3px 0 0;transition:height .8s ease}
+.tl2{font-size:8px;color:var(--t3);margin-top:4px}
+.cs{padding:14px 16px}
+.tst{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);background:#2E7D32;color:white;padding:10px 20px;border-radius:var(--r);font-size:12px;font-weight:600;z-index:300;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 6px 20px rgba(46,125,50,.3)}
+.tst.show{transform:translateX(-50%) translateY(0)}
+.ic{background:linear-gradient(135deg,rgba(46,125,50,.06),rgba(102,187,106,.1));border:1px solid rgba(46,125,50,.2);border-radius:14px;padding:16px;margin-bottom:12px}
+.ict{font-size:12px;font-weight:700;color:#2E7D32;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.icb{font-size:11px;color:var(--t2);line-height:1.8}
+.icb strong{color:#2E7D32}
+.tps{display:flex;gap:5px;padding:10px 16px;overflow-x:auto}
+.tp{padding:5px 12px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap;cursor:pointer;background:#fff;border:1px solid #81C784;color:#558B2F;font-family:inherit}
+.tp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
+.login-overlay{position:fixed;inset:0;background:#E8F5E9;z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border:1px solid #81C784;border-radius:16px;padding:28px 24px;width:90%;max-width:380px;box-shadow:0 4px 20px rgba(46,125,50,.12)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px;justify-content:center}
+.login-logo .ico{width:40px;height:40px;background:linear-gradient(135deg,#2E7D32,#66BB6A);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(46,125,50,.3)}
+.login-logo .ttl{font-size:18px;font-weight:700}
+.login-lbl{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;display:block}
+.login-sel{width:100%;background:#fff;border:1px solid #81C784;border-radius:var(--rs);padding:12px;color:#1B5E20;font-family:inherit;font-size:14px;-webkit-appearance:none;margin-bottom:16px}
+.login-sel:focus{outline:none;border-color:var(--ac)}
+.login-inf{background:#E8F5E9;border-radius:var(--rs);padding:12px;margin-bottom:16px;font-size:12px;color:#33691E;line-height:1.6;display:none}
+.login-inf b{color:#1B5E20}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#2E7D32,#43A047);border:none;border-radius:var(--r);color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(46,125,50,.25)}
+.login-btn:disabled{opacity:.4;cursor:not-allowed}
+.user-pill{padding:5px 12px;border-radius:14px;font-size:10px;background:#fff;border:1px solid #81C784;color:#2E7D32;cursor:pointer;font-weight:600}
+.other-inp{display:none;margin-top:6px}.other-inp.show{display:block}
+.dept-flt{display:flex;gap:5px;padding:8px 16px;overflow-x:auto}
+.dfp{padding:4px 10px;border-radius:10px;font-size:9px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;cursor:pointer;white-space:nowrap;font-family:inherit}
+.dfp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
+.guide-box{background:rgba(46,125,50,.06);border:1px solid rgba(46,125,50,.15);border-radius:var(--rs);padding:10px 12px;margin-top:8px;font-size:10px;color:#2E7D32;line-height:1.6}
+.guide-box b{color:#1B5E20}
+.crt{flex:1;height:16px;background:#C8E6C9;border-radius:8px;overflow:hidden}
+.crf{height:100%;border-radius:8px;transition:width .8s ease}
+.crv{width:30px;font-size:10px;font-weight:700;text-align:right;font-family:'IBM Plex Sans',sans-serif}
+
+.ls{padding:0 16px 16px}.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lt{font-size:13px;font-weight:700}
+.fp{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;font-family:inherit}
+.rc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:7px;cursor:pointer;transition:background .2s}
+.rc:active{background:var(--bg5)}
+.rt{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.bd2{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
+.bf{background:rgba(229,56,59,.12);color:var(--rd)}.bt2{background:rgba(240,180,41,.12);color:var(--yl)}.bm{background:rgba(167,139,250,.12);color:var(--pr)}.bdr{background:rgba(56,189,248,.12);color:var(--bl)}.bcl{background:rgba(45,198,166,.12);color:var(--gn)}.bo{background:rgba(83,98,116,.12);color:var(--t2)}
+.rde{font-size:12px;font-weight:500;line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rm{display:flex;gap:10px;font-size:10px;color:var(--t3)}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px}
+.mbg.show{display:flex}
+.mbd{background:#fff;border-radius:14px;width:100%;max-width:540px;max-height:85vh;overflow-y:auto;padding:24px 24px 32px;animation:su .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+@keyframes su{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.mp{width:32px;height:3px;background:var(--t3);border-radius:2px;margin:0 auto 14px}
+.mh{font-size:15px;font-weight:700;margin-bottom:14px}
+.dl{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bd);font-size:12px}
+.dk{color:var(--t2)}.dv{font-weight:600;text-align:right;max-width:60%}
+.dbk{padding:10px 0;border-bottom:1px solid var(--bd)}
+.dbt{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:5px}
+.dbtx{font-size:12px;line-height:1.7}
+.com-detail{padding:0}.com-section{margin-bottom:12px}
+.photo-area{margin-bottom:16px}
+.photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:#fff;border:2px dashed #81C784;border-radius:var(--r);color:var(--ac);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s}
+.photo-btn:active{background:var(--acg);border-color:var(--ac)}
+.photo-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+.photo-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.photo-thumb{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid #A5D6A7}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-del{position:absolute;top:2px;right:2px;width:22px;height:22px;background:rgba(229,57,53,.9);border:none;border-radius:50%;color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-count{font-size:10px;color:var(--t3);margin-top:4px}
+.modal-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.modal-photos img{width:100%;max-width:280px;border-radius:8px;border:1px solid var(--bd);cursor:pointer}
+.photo-full-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.photo-full-overlay img{max-width:95vw;max-height:90vh;border-radius:8px}
+
+/* ===== PC RESPONSIVE (768px+) ===== */
+@media(min-width:768px){
+  .nav{max-width:none;width:100%;position:fixed;top:0;bottom:auto;border-top:none;border-bottom:1px solid #A5D6A7;border-radius:0;left:0;transform:none;padding-bottom:0}
+  .ni{flex-direction:row;font-size:11px;padding:12px 16px;gap:6px}
+  .ni svg{width:18px;height:18px}
+  .ni.on::before{top:auto;bottom:0;width:100%;height:2.5px;left:0;transform:none;border-radius:3px 3px 0 0}
+  .hdr{max-width:none;margin-top:48px;padding:18px 32px 18px}
+  .hdr-t{font-size:18px}
+  .hdr-s{font-size:12px}
+  .logo{width:38px;height:38px;font-size:18px}
+  .pg{max-width:none;padding-bottom:24px;margin-top:0}
+  .fw{padding:0 32px 24px}
+  .sd{font-size:12px;margin:28px 0 14px}
+  .fg{margin-bottom:20px}
+  .fl{font-size:14px}
+  .fi,.fs,.ft{font-size:15px;padding:12px 16px}
+  .ch{padding:8px 16px;font-size:13px}
+  .ck{padding:8px 14px;font-size:12px}
+  .lb{width:48px;height:42px;font-size:14px}
+  .lki{padding:12px 14px}
+  .lkl{font-size:13px}
+  .lkdt{width:34px;height:34px;font-size:11px}
+  .sub{padding:16px;font-size:16px}
+  .login-card{max-width:460px;padding:36px 32px}
+  .login-logo .ttl{font-size:22px}
+  .login-logo .ico{width:48px;height:48px;font-size:24px}
+  .login-sel{font-size:15px;padding:14px}
+  .login-btn{font-size:16px;padding:16px}
+  .login-lbl{font-size:14px}
+  .login-inf{font-size:14px}
+  .user-pill{font-size:12px;padding:6px 16px}
+  .cb{padding:20px}
+  .cs{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:stretch}
+  .cs>.cb{margin-bottom:0;display:flex;flex-direction:column}
+  .cs>.cb>.hb,.cs>.cb>.trw{flex:1}
+  .cs>.cb-wide,.cs>.ic{grid-column:span 2}
+  .cht{font-size:14px}
+  .hl{font-size:12px;min-width:90px;width:90px;flex-shrink:0}
+  .hv{font-size:10px}
+  .htk{height:24px}
+  .trw{height:180px;min-height:180px}
+  .tl2{font-size:10px}
+  .cs{padding:18px 32px}
+  .tps{padding:12px 32px}
+  .tp{font-size:12px;padding:7px 16px}
+  .dept-flt{padding:10px 32px}
+  .dfp{font-size:11px;padding:6px 14px}
+  .guide-box{font-size:12px;padding:14px 16px}
+  .tst{font-size:14px;padding:12px 24px}
+  .sr{padding:18px 32px;grid-template-columns:repeat(4,1fr)}
+  .sc{padding:16px}
+  .sv{font-size:28px}
+  .sl{font-size:12px}
+  .ls{padding:0 32px 20px}
+  .lt{font-size:15px}
+  .rc{padding:16px}
+  .rde{font-size:14px}
+  .rm{font-size:12px}
+  .bd2{font-size:12px}
+  .fp{font-size:12px}
+}
+/* ===== WIDE PC (1200px+) ===== */
+@media(min-width:1200px){
+  .nav{max-width:none}
+  .hdr{max-width:none}
+  .pg{max-width:none}
+  .fw{padding:0 48px 32px}
+  .cs{padding:20px 48px}
+  .tps{padding:14px 48px}
+  .dept-flt{padding:12px 48px}
+  .sr{padding:20px 48px}
+  .ls{padding:0 48px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginScreen">
+<div class="login-card">
+  <div class="login-logo"><div class="ico">⚠</div><div class="ttl">新ヒヤリハット報告</div></div>
+  <p style="text-align:center;font-size:11px;color:var(--t3);margin-bottom:16px">使用者ログイン</p>
+  <label class="login-lbl">部署を選択</label>
+  <select class="login-sel" id="loginDept" onchange="onDeptSel()"><option value="">部署を選択してください</option></select>
+  <label class="login-lbl">氏名を選択</label>
+  <select class="login-sel" id="loginName" onchange="onNameSel()" disabled><option value="">先に部署を選択</option></select>
+  <div class="login-inf" id="loginInfo"></div>
+  <button class="login-btn" id="loginBtn" disabled onclick="doLogin()">ログイン</button>
+</div>
+</div>
+
+<div class="tst" id="toast">✓ 報告が送信されました</div>
+<div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t">新ヒヤリハット報告</div><div class="hdr-s">建災防方式 安全管理システム</div></div></div><div class="user-pill" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div>
+<div id="syncBanner" style="display:none;font-size:10px;padding:6px 16px;background:rgba(255,152,0,.12);border-bottom:1px solid rgba(255,152,0,.25);color:#E65100;max-width:540px;margin:0 auto"></div>
+
+<!-- REPORT -->
+<div class="pg on" id="pR"><div class="fw">
+  <div class="sd">属性（自動入力）</div>
+  <div class="fg"><label class="fl">記入日<span class="rq">*</span></label><input class="fi" type="date" id="f_date"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div class="fg"><label class="fl">氏名</label><input class="fi" type="text" id="f_name" readonly></div>
+    <div class="fg"><label class="fl">区分</label><input class="fi" type="text" id="f_kubun" readonly></div>
+  </div>
+  <input type="hidden" id="f_age">
+  <div class="fg"><label class="fl">部署</label><input class="fi" type="text" id="f_dept" readonly></div>
+
+  <div class="sd">どのような体験か<span class="rq">*</span></div>
+  <div class="cg" id="cExp"><div class="ch" data-v="墜落しそうになった">墜落</div><div class="ch" data-v="転倒しそうになった">転倒</div><div class="ch" data-v="機械等に激突されそうになった">激突</div><div class="ch" data-v="ものが落下してきた">落下</div><div class="ch" data-v="ものが倒れかかってきた">倒壊</div><div class="ch" data-v="自分からぶつかりそうになった">衝突</div><div class="ch" data-v="はさまれそうになった">挟まれ</div><div class="ch" data-v="切られそうになった">切傷</div><div class="ch" data-v="やけどしそうになった">火傷</div><div class="ch" data-v="感電しそうになった">感電</div><div class="ch" data-v="交通事故になりそうだった">交通事故</div><div class="ch" data-v="その他">その他</div></div>
+  <div class="other-inp" id="otherInp"><input class="fi" type="text" id="f_other" placeholder="その他の内容を入力"></div>
+
+  <div class="sd">自由記述</div>
+  <div class="fg"><label class="fl">いつ・どこで</label><input class="fi" type="text" id="f_ww" placeholder="例: 2/5 午前10時、3階足場"></div>
+  <div class="fg"><label class="fl">どのような作業で？</label><input class="fi" type="text" id="f_wk" placeholder="例: 鉄骨建方の補助作業中"></div>
+  <div class="fg"><label class="fl">内容<span class="rq">*</span></label><textarea class="ft" id="f_desc" placeholder="何が起きたか具体的に"></textarea></div>
+  <div class="fg"><label class="fl">対策</label><textarea class="ft" id="f_msr" placeholder="再発防止策" style="min-height:60px"></textarea></div>
+
+  <div class="sd">現場写真</div>
+  <div class="photo-area">
+    <input type="file" id="f_photos" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)">
+    <button type="button" class="photo-btn" onclick="document.getElementById('f_photos').click()">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      写真を撮影・選択（最大5枚）
+    </button>
+    <div class="photo-preview" id="photoPreview"></div>
+    <div class="photo-count" id="photoCount"></div>
+  </div>
+
+  <div class="sd">発生原因</div>
+  <div class="cg" id="cC"><div class="ch" data-v="設備・機械">設備・機械</div><div class="ch" data-v="工具・保護具">工具・保護具</div><div class="ch" data-v="作業環境">作業環境</div><div class="ch" data-v="作業方法">作業方法</div><div class="ch" data-v="連絡・連携ミス">連絡・連携ミス</div><div class="ch" data-v="確認不足">確認不足</div><div class="ch" data-v="不注意行動">不注意行動</div><div class="ch" data-v="考え事">考え事</div><div class="ch" data-v="視界不良">視界不良</div></div>
+
+  <div class="sd">災害レベル（1～10）</div>
+  <div class="lg" id="lvG"></div>
+
+  <div class="sd">背後要因：あなたの状態</div>
+  <p style="font-size:10px;color:var(--t3);margin-bottom:10px">1＝全くない ～ 4＝とてもあった</p>
+  <div class="lkg" id="lkS"><div class="lki"><span class="lkl">仕事量が多かった</span><div class="lkd" data-f="workload"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">時間内に処理しきれなかった</span><div class="lkd" data-f="overtime"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">一生懸命働く必要があった</span><div class="lkd" data-f="hardwork"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">ひどく疲れた</span><div class="lkd" data-f="fatigue"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">へとへとだ</span><div class="lkd" data-f="exhausted"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">だるい</span><div class="lkd" data-f="sluggish"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">気がはりつめている</span><div class="lkd" data-f="tense"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">不安だ</span><div class="lkd" data-f="anxiety"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">落ち着かない</span><div class="lkd" data-f="restless"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">ゆううつだ</span><div class="lkd" data-f="depressed"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">何をするのも面倒だ</span><div class="lkd" data-f="bothered"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">気分が晴れない</span><div class="lkd" data-f="gloomy"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">食欲がない</span><div class="lkd" data-f="appetite"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">よく眠れない</span><div class="lkd" data-f="sleep"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div></div>
+
+  <div class="sd">仕事・職場環境</div>
+  <div class="lkg" id="lkW"><div class="lki"><span class="lkl">自分のペースで仕事ができた</span><div class="lkd" data-f="pace"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">仕事の順番・やり方を決められた</span><div class="lkd" data-f="autonomy"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">方針に意見を反映できた</span><div class="lkd" data-f="voice"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">上司と気軽に話ができる</span><div class="lkd" data-f="boss_talk"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">同僚と気軽に話ができる</span><div class="lkd" data-f="peer_talk"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">困ったとき上司は頼りになる</span><div class="lkd" data-f="boss_help"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">困ったとき同僚は頼りになる</span><div class="lkd" data-f="peer_help"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">上司に個人的な相談ができる</span><div class="lkd" data-f="boss_consult"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">同僚に個人的な相談ができる</span><div class="lkd" data-f="peer_consult"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">気持ちがはつらつとしている</span><div class="lkd" data-f="vigor"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">仕事に誇りを感じる</span><div class="lkd" data-f="pride"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+<div class="lki"><span class="lkl">集中しているとき幸せだ</span><div class="lkd" data-f="happiness"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div></div>
+
+  <div class="sd">回避できなかった理由</div>
+  <div class="cg" id="cAv"><div class="ch" data-v="注意不足">注意不足</div><div class="ch" data-v="経験不足">経験不足</div><div class="ch" data-v="知識不足">知識不足</div><div class="ch" data-v="焦り">焦り</div><div class="ch" data-v="慣れ・油断">慣れ・油断</div><div class="ch" data-v="疲労">疲労</div><div class="ch" data-v="連携不足">連携不足</div><div class="ch" data-v="設備確認不足">設備確認不足</div><div class="ch" data-v="判断の遅れ">判断の遅れ</div><div class="ch" data-v="周囲確認不足">周囲確認不足</div><div class="ch" data-v="体力低下">体力低下</div><div class="ch" data-v="過信">過信</div></div>
+
+  <div class="sd">回避に役立つ活動</div>
+  <div class="cg" id="cAc"><div class="ck" data-v="HH体験">HH体験</div><div class="ck" data-v="同僚の話">同僚の話</div><div class="ck" data-v="安全教育">安全教育</div><div class="ck" data-v="朝礼夕礼">朝礼夕礼</div><div class="ck" data-v="現地MT">現地MT</div><div class="ck" data-v="KY活動">KY活動</div><div class="ck" data-v="KYT">KYT</div><div class="ck" data-v="RA">RA</div><div class="ck" data-v="災害事例">災害事例</div><div class="ck" data-v="パトロール">パトロール</div><div class="ck" data-v="危険体感">危険体感</div><div class="ck" data-v="見える化">見える化</div><div class="ck" data-v="安全標識">安全標識</div><div class="ck" data-v="4S">4S</div><div class="ck" data-v="避難訓練">避難訓練</div><div class="ck" data-v="作業監視">作業監視</div><div class="ck" data-v="状況把握">状況把握</div><div class="ck" data-v="目配り">目配り</div><div class="ck" data-v="設備点検">設備点検</div><div class="ck" data-v="手順書">手順書</div><div class="ck" data-v="コミュニケーション">コミュ</div><div class="ck" data-v="懇親会">懇親会</div><div class="ck" data-v="体操">体操</div><div class="ck" data-v="安全表彰">安全表彰</div><div class="ck" data-v="休憩">休憩</div><div class="ck" data-v="食事">食事</div><div class="ck" data-v="悩み相談">悩み相談</div><div class="ck" data-v="睡眠">睡眠</div></div>
+
+  <button class="sub" onclick="doSubmit()">報告を送信する</button>
+</div></div>
+
+<!-- LIST (使用者用・報告者・部署・区分年齢・背景要因は非表示) -->
+<div class="pg" id="pD">
+  <div class="ls"><div class="lh"><div class="lt">報告一覧</div></div><div id="rL"></div></div>
+</div>
+
+<!-- ANALYTICS (no 背後要因 tab) -->
+<div class="pg" id="pA">
+  <div class="tps" id="aT"><button class="tp on" data-t="simple">単純集計</button><button class="tp" data-t="byexp">体験別分析</button><button class="tp" data-t="resil">レジリエンス</button><button class="tp" data-t="acts">活動分析</button></div>
+  <div class="dept-flt" id="dfAnl"></div>
+  <div class="cs" id="aC"></div>
+</div>
+
+<div class="mbg" id="modal"><div class="mbd"><div class="mp"></div><div class="mh" id="mT"></div><div id="mI"></div></div></div>
+
+<nav class="nav">
+  <button class="ni on" data-p="pR"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>報告</button>
+  <button class="ni" data-p="pD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>一覧</button>
+  <button class="ni" data-p="pA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>分析</button>
+</nav>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="hh-data.js"></script>
+<script>
+const EMP=[{"name": "川名哲也", "honbu": "総務部", "bu": "", "ka": "", "kubun": "事務職", "sex": "男", "bday": "1967-09-17", "age": 58, "ageRange": "50~59歳", "empNo": 290, "dept": "総務部"}, {"name": "甲斐亮三", "honbu": "総務部", "bu": "", "ka": "", "kubun": "事務職", "sex": "男", "bday": "1975-03-24", "age": 50, "ageRange": "50~59歳", "empNo": 77, "dept": "総務部"}, {"name": "甲斐緑", "honbu": "総務部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1974-07-23", "age": 51, "ageRange": "50~59歳", "empNo": 68, "dept": "総務部"}, {"name": "増田祥子", "honbu": "総務部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1969-02-05", "age": 57, "ageRange": "50~59歳", "empNo": 78, "dept": "総務部"}, {"name": "瀧口裕子", "honbu": "総務部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1981-08-24", "age": 44, "ageRange": "40~49歳", "empNo": 263, "dept": "総務部"}, {"name": "松本有紗", "honbu": "総務部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1995-07-16", "age": 30, "ageRange": "30~39歳", "empNo": 297, "dept": "総務部"}, {"name": "髙萩泰", "honbu": "総務部", "bu": "安全管理", "ka": "", "kubun": "事務職", "sex": "男", "bday": "1992-04-03", "age": 33, "ageRange": "30~39歳", "empNo": 274, "dept": "総務部/安全管理"}, {"name": "成岡弘二", "honbu": "土木本部", "bu": "", "ka": "", "kubun": "土木", "sex": "男", "bday": "1967-08-20", "age": 58, "ageRange": "50~59歳", "empNo": 36, "dept": "土木本部"}, {"name": "佐藤豊明", "honbu": "土木本部", "bu": "", "ka": "", "kubun": "土木", "sex": "男", "bday": "1963-12-06", "age": 62, "ageRange": "60~64歳", "empNo": 137, "dept": "土木本部"}, {"name": "中根直人", "honbu": "土木本部", "bu": "", "ka": "", "kubun": "土木", "sex": "男", "bday": "1965-06-21", "age": 60, "ageRange": "60~64歳", "empNo": 119, "dept": "土木本部"}, {"name": "下田かつ子", "honbu": "土木本部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1964-12-28", "age": 61, "ageRange": "60~64歳", "empNo": 100, "dept": "土木本部"}, {"name": "工藤晃子", "honbu": "土木本部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1982-03-13", "age": 43, "ageRange": "40~49歳", "empNo": 227, "dept": "土木本部"}, {"name": "吉田美幸", "honbu": "土木本部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1977-07-24", "age": 48, "ageRange": "40~49歳", "empNo": 264, "dept": "土木本部"}, {"name": "請関智", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1956-11-20", "age": 69, "ageRange": "65歳以上", "empNo": 148, "dept": "土木本部/土木部/営業"}, {"name": "山田誠吾", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1968-05-18", "age": 57, "ageRange": "50~59歳", "empNo": 138, "dept": "土木本部/土木部/営業"}, {"name": "友清恵", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "事務職", "sex": "女", "bday": "1980-04-27", "age": 45, "ageRange": "40~49歳", "empNo": 283, "dept": "土木本部/土木部/営業"}, {"name": "荻野幸美", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1959-10-29", "age": 66, "ageRange": "65歳以上", "empNo": 234, "dept": "土木本部/土木部/営業"}, {"name": "渡邊祐児", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1981-03-18", "age": 44, "ageRange": "40~49歳", "empNo": 140, "dept": "土木本部/土木部/営業"}, {"name": "牧田健作", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1967-07-02", "age": 58, "ageRange": "50~59歳", "empNo": 104, "dept": "土木本部/土木部/営業"}, {"name": "日髙翔", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1982-07-29", "age": 43, "ageRange": "40~49歳", "empNo": 287, "dept": "土木本部/土木部/営業"}, {"name": "花岡英隆", "honbu": "土木本部", "bu": "土木部", "ka": "営業", "kubun": "土木", "sex": "男", "bday": "1964-10-08", "age": 61, "ageRange": "60~64歳", "empNo": 293, "dept": "土木本部/土木部/営業"}, {"name": "志田和弘", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1972-11-11", "age": 53, "ageRange": "50~59歳", "empNo": 65, "dept": "土木本部/土木部"}, {"name": "児玉大佑", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1980-09-04", "age": 45, "ageRange": "40~49歳", "empNo": 120, "dept": "土木本部/土木部"}, {"name": "黒田義隆", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1968-12-28", "age": 57, "ageRange": "50~59歳", "empNo": 171, "dept": "土木本部/土木部"}, {"name": "佐藤ﾌﾞﾗｲｱﾝ", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1987-09-02", "age": 38, "ageRange": "30~39歳", "empNo": 135, "dept": "土木本部/土木部"}, {"name": "尾前伸樹", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1988-02-11", "age": 37, "ageRange": "30~39歳", "empNo": 268, "dept": "土木本部/土木部"}, {"name": "山田晃也", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1999-03-28", "age": 26, "ageRange": "20~29歳", "empNo": 225, "dept": "土木本部/土木部"}, {"name": "日髙奈央", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "女", "bday": "2000-03-27", "age": 25, "ageRange": "20~29歳", "empNo": 233, "dept": "土木本部/土木部"}, {"name": "貫竜大郎", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "2000-05-28", "age": 25, "ageRange": "20~29歳", "empNo": 250, "dept": "土木本部/土木部"}, {"name": "柏田汰玖", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1996-09-19", "age": 29, "ageRange": "20~29歳", "empNo": 276, "dept": "土木本部/土木部"}, {"name": "橋倉孝空", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1993-12-23", "age": 32, "ageRange": "30~39歳", "empNo": 291, "dept": "土木本部/土木部"}, {"name": "土田悠暉", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1997-09-27", "age": 28, "ageRange": "20~29歳", "empNo": 292, "dept": "土木本部/土木部"}, {"name": "田島禾楓", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "2006-10-23", "age": 19, "ageRange": "20歳未満", "empNo": 300, "dept": "土木本部/土木部"}, {"name": "佐藤宗近", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1962-03-18", "age": 63, "ageRange": "60~64歳", "empNo": 13, "dept": "土木本部/土木部"}, {"name": "吉本幸夫", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1961-12-04", "age": 64, "ageRange": "60~64歳", "empNo": 136, "dept": "土木本部/土木部"}, {"name": "中尾麻椰", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "女", "bday": "1998-03-14", "age": 27, "ageRange": "20~29歳", "empNo": 265, "dept": "土木本部/土木部"}, {"name": "倉田月渚", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "女", "bday": "2005-02-06", "age": 21, "ageRange": "20~29歳", "empNo": 277, "dept": "土木本部/土木部"}, {"name": "畦原愛子", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1985-12-18", "age": 40, "ageRange": "40~49歳", "empNo": 284, "dept": "土木本部/綜合プラント"}, {"name": "髙橋俊郎", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1977-06-25", "age": 48, "ageRange": "40~49歳", "empNo": 203, "dept": "土木本部/土木部/大武作業所"}, {"name": "松本聖紀", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1974-10-14", "age": 51, "ageRange": "50~59歳", "empNo": 167, "dept": "土木本部/土木部/大武作業所"}, {"name": "齊藤広将", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1999-07-07", "age": 26, "ageRange": "20~29歳", "empNo": 237, "dept": "土木本部/土木部/大武作業所"}, {"name": "畠中弘幸", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1960-06-10", "age": 65, "ageRange": "65歳以上", "empNo": 95, "dept": "土木本部/土木部/大武作業所"}, {"name": "小野宏行", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1983-09-25", "age": 42, "ageRange": "40~49歳", "empNo": 262, "dept": "土木本部/土木部/大武作業所"}, {"name": "菊川磨宏", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1999-01-25", "age": 27, "ageRange": "20~29歳", "empNo": 286, "dept": "土木本部/土木部/大武作業所"}, {"name": "川路達也", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "1987-12-17", "age": 38, "ageRange": "30~39歳", "empNo": 270, "dept": "土木本部/土木部/大武作業所"}, {"name": "金﨑煌明", "honbu": "土木本部", "bu": "土木部", "ka": "大武作業所", "kubun": "土木技能工", "sex": "男", "bday": "2005-02-15", "age": 20, "ageRange": "20~29歳", "empNo": 278, "dept": "土木本部/土木部/大武作業所"}, {"name": "福富隆", "honbu": "土木本部", "bu": "土木部", "ka": "", "kubun": "土木", "sex": "男", "bday": "1958-02-03", "age": 68, "ageRange": "65歳以上", "empNo": null, "dept": "土木本部/土木部"}, {"name": "土田香織", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "土木", "sex": "女", "bday": "1973-12-21", "age": 52, "ageRange": "50~59歳", "empNo": 166, "dept": "土木本部/綜合プラント"}, {"name": "田邉雅文", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1969-05-15", "age": 56, "ageRange": "50~59歳", "empNo": 110, "dept": "土木本部/綜合プラント"}, {"name": "波口泉", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "土木", "sex": "男", "bday": "1965-11-17", "age": 60, "ageRange": "60~64歳", "empNo": 272, "dept": "土木本部/綜合プラント"}, {"name": "小田伸二", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1968-08-10", "age": 57, "ageRange": "50~59歳", "empNo": 216, "dept": "土木本部/綜合プラント"}, {"name": "赤木邦彦", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1973-11-27", "age": 52, "ageRange": "50~59歳", "empNo": 256, "dept": "土木本部/綜合プラント"}, {"name": "佐藤千恵美", "honbu": "土木本部", "bu": "綜合プラント", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1961-09-22", "age": 64, "ageRange": "60~64歳", "empNo": 108, "dept": "土木本部/綜合プラント"}, {"name": "忍賀俊治", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木", "sex": "男", "bday": "1963-01-04", "age": 63, "ageRange": "60~64歳", "empNo": 33, "dept": "土木本部/高千穂営業所"}, {"name": "飯干徳善", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木", "sex": "男", "bday": "1969-08-16", "age": 56, "ageRange": "50~59歳", "empNo": 93, "dept": "土木本部/高千穂営業所"}, {"name": "橋本修", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木", "sex": "男", "bday": "1976-05-23", "age": 49, "ageRange": "40~49歳", "empNo": 208, "dept": "土木本部/高千穂営業所"}, {"name": "戸野口政弘", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木", "sex": "男", "bday": "1963-02-23", "age": 62, "ageRange": "60~64歳", "empNo": 50, "dept": "土木本部/高千穂営業所"}, {"name": "松田龍河", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木", "sex": "男", "bday": "2004-07-04", "age": 21, "ageRange": "20~29歳", "empNo": 304, "dept": "土木本部/高千穂営業所"}, {"name": "廣木早苗", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1985-02-21", "age": 40, "ageRange": "40~49歳", "empNo": 192, "dept": "土木本部/高千穂営業所"}, {"name": "廣木哲也", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1974-01-30", "age": 52, "ageRange": "50~59歳", "empNo": 165, "dept": "土木本部/高千穂営業所"}, {"name": "坂本健太郎", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1989-07-12", "age": 36, "ageRange": "30~39歳", "empNo": 187, "dept": "土木本部/高千穂営業所"}, {"name": "佐藤紀生", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1976-08-12", "age": 49, "ageRange": "40~49歳", "empNo": 182, "dept": "土木本部/高千穂営業所"}, {"name": "甲斐誠也", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1990-03-01", "age": 35, "ageRange": "30~39歳", "empNo": 236, "dept": "土木本部/高千穂営業所"}, {"name": "佐藤匡哉", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1992-11-11", "age": 33, "ageRange": "30~39歳", "empNo": 231, "dept": "土木本部/高千穂営業所"}, {"name": "富髙英太郎", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1977-01-28", "age": 49, "ageRange": "40~49歳", "empNo": 245, "dept": "土木本部/高千穂営業所"}, {"name": "佐藤寿憲", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1981-03-29", "age": 44, "ageRange": "40~49歳", "empNo": 257, "dept": "土木本部/高千穂営業所"}, {"name": "江藤誠一", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1966-10-27", "age": 59, "ageRange": "50~59歳", "empNo": 71, "dept": "土木本部/高千穂営業所"}, {"name": "飯干幸男", "honbu": "土木本部", "bu": "高千穂営業所", "ka": "", "kubun": "土木技能工", "sex": "男", "bday": "1963-11-21", "age": 62, "ageRange": "60~64歳", "empNo": 101, "dept": "土木本部/高千穂営業所"}, {"name": "町田建也", "honbu": "建材本部", "bu": "", "ka": "", "kubun": "建材", "sex": "男", "bday": "1961-08-29", "age": 64, "ageRange": "60~64歳", "empNo": 61, "dept": "建材本部"}, {"name": "渡辺伸一", "honbu": "建材本部", "bu": "", "ka": "", "kubun": "建材", "sex": "男", "bday": "1963-07-14", "age": 62, "ageRange": "60~64歳", "empNo": 162, "dept": "建材本部"}, {"name": "佐々木隆介", "honbu": "建材本部", "bu": "", "ka": "", "kubun": "建材", "sex": "男", "bday": "1997-12-13", "age": 28, "ageRange": "20~29歳", "empNo": 212, "dept": "建材本部"}, {"name": "木谷純奈", "honbu": "建材本部", "bu": "", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1995-06-19", "age": 30, "ageRange": "30~39歳", "empNo": 301, "dept": "建材本部"}, {"name": "中城俊昭", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1966-01-10", "age": 60, "ageRange": "60~64歳", "empNo": 89, "dept": "建材本部/延岡営業所"}, {"name": "甲斐聡史", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1985-08-09", "age": 40, "ageRange": "40~49歳", "empNo": 261, "dept": "建材本部/延岡営業所"}, {"name": "大山瑠美", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1981-01-23", "age": 45, "ageRange": "40~49歳", "empNo": 215, "dept": "建材本部/延岡営業所"}, {"name": "川井田正太", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1994-10-14", "age": 31, "ageRange": "30~39歳", "empNo": 299, "dept": "建材本部/延岡営業所"}, {"name": "谷﨑勇太", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1988-02-08", "age": 38, "ageRange": "30~39歳", "empNo": 170, "dept": "建材本部/延岡営業所"}, {"name": "柳田雄二", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1961-12-06", "age": 64, "ageRange": "60~64歳", "empNo": 48, "dept": "建材本部/延岡営業所"}, {"name": "小野勝", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1958-04-13", "age": 67, "ageRange": "65歳以上", "empNo": 63, "dept": "建材本部/延岡営業所"}, {"name": "佐伯俊明", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1989-12-12", "age": 36, "ageRange": "30~39歳", "empNo": 193, "dept": "建材本部/延岡営業所"}, {"name": "黒木真", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1996-01-13", "age": 30, "ageRange": "30~39歳", "empNo": 195, "dept": "建材本部/延岡営業所"}, {"name": "中原功太郎", "honbu": "建材本部", "bu": "延岡営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "2006-05-26", "age": 19, "ageRange": "20歳未満", "empNo": 302, "dept": "建材本部/延岡営業所"}, {"name": "福島洋幸", "honbu": "建材本部", "bu": "大分営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1976-12-14", "age": 49, "ageRange": "40~49歳", "empNo": 83, "dept": "建材本部/大分営業所"}, {"name": "菅原さおり", "honbu": "建材本部", "bu": "大分営業所", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1962-11-01", "age": 63, "ageRange": "60~64歳", "empNo": 142, "dept": "建材本部/大分営業所"}, {"name": "大石寛", "honbu": "建材本部", "bu": "大分営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1975-04-01", "age": 50, "ageRange": "50~59歳", "empNo": 223, "dept": "建材本部/大分営業所"}, {"name": "古長忠輔", "honbu": "建材本部", "bu": "大分営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1970-09-08", "age": 55, "ageRange": "50~59歳", "empNo": 180, "dept": "建材本部/大分営業所"}, {"name": "伊藤雄太", "honbu": "建材本部", "bu": "大分営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1991-01-24", "age": 35, "ageRange": "30~39歳", "empNo": 200, "dept": "建材本部/大分営業所"}, {"name": "定村武実", "honbu": "建材本部", "bu": "大分営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1998-03-28", "age": 27, "ageRange": "20~29歳", "empNo": 247, "dept": "建材本部/大分営業所"}, {"name": "内八重俊哉", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材", "sex": "男", "bday": "1983-06-11", "age": 42, "ageRange": "40~49歳", "empNo": 155, "dept": "建材本部/宮崎支店"}, {"name": "佐藤寛", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材", "sex": "男", "bday": "1973-07-08", "age": 52, "ageRange": "50~59歳", "empNo": 175, "dept": "建材本部/宮崎支店"}, {"name": "小濵一晴", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材", "sex": "男", "bday": "1977-11-06", "age": 48, "ageRange": "40~49歳", "empNo": 176, "dept": "建材本部/宮崎支店"}, {"name": "那須亮太", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材", "sex": "男", "bday": "1990-09-19", "age": 35, "ageRange": "30~39歳", "empNo": 239, "dept": "建材本部/宮崎支店"}, {"name": "飯田夏美", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1984-05-28", "age": 41, "ageRange": "40~49歳", "empNo": 279, "dept": "建材本部/宮崎支店"}, {"name": "上原瑶子", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1986-05-15", "age": 39, "ageRange": "30~39歳", "empNo": 281, "dept": "建材本部/宮崎支店"}, {"name": "横山正樹", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材", "sex": "男", "bday": "1999-07-05", "age": 26, "ageRange": "20~29歳", "empNo": 296, "dept": "建材本部/宮崎支店"}, {"name": "内八重忠明", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1960-03-04", "age": 65, "ageRange": "65歳以上", "empNo": 35, "dept": "建材本部/宮崎支店"}, {"name": "横山隆", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1968-03-27", "age": 57, "ageRange": "50~59歳", "empNo": 74, "dept": "建材本部/宮崎支店"}, {"name": "那須洋一", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1974-09-01", "age": 51, "ageRange": "50~59歳", "empNo": 82, "dept": "建材本部/宮崎支店"}, {"name": "宮田英治", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1961-05-17", "age": 64, "ageRange": "60~64歳", "empNo": 96, "dept": "建材本部/宮崎支店"}, {"name": "井上義樹", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1980-07-25", "age": 45, "ageRange": "40~49歳", "empNo": 242, "dept": "建材本部/宮崎支店"}, {"name": "渡邊勇哉", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1997-06-06", "age": 28, "ageRange": "20~29歳", "empNo": 213, "dept": "建材本部/宮崎支店"}, {"name": "宮田直樹", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1985-01-28", "age": 41, "ageRange": "40~49歳", "empNo": 229, "dept": "建材本部/宮崎支店"}, {"name": "田所拓朗", "honbu": "建材本部", "bu": "宮崎支店", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1998-01-20", "age": 28, "ageRange": "20~29歳", "empNo": 230, "dept": "建材本部/宮崎支店"}, {"name": "小川勝", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1963-03-25", "age": 62, "ageRange": "60~64歳", "empNo": 41, "dept": "建材本部/鹿児島営業所"}, {"name": "下和田保", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1965-09-24", "age": 60, "ageRange": "60~64歳", "empNo": 125, "dept": "建材本部/鹿児島営業所"}, {"name": "竹之下達也", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1958-09-18", "age": 67, "ageRange": "65歳以上", "empNo": 70, "dept": "建材本部/鹿児島営業所"}, {"name": "福元麻子", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1982-08-26", "age": 43, "ageRange": "40~49歳", "empNo": 271, "dept": "建材本部/鹿児島営業所"}, {"name": "大宅義雄", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1982-02-20", "age": 43, "ageRange": "40~49歳", "empNo": 275, "dept": "建材本部/鹿児島営業所"}, {"name": "畠中憲幸", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1968-08-22", "age": 57, "ageRange": "50~59歳", "empNo": 305, "dept": "建材本部/鹿児島営業所"}, {"name": "鶴留康太", "honbu": "建材本部", "bu": "鹿児島営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "2000-08-29", "age": 25, "ageRange": "20~29歳", "empNo": 306, "dept": "建材本部/鹿児島営業所"}, {"name": "甲斐淳林", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1964-03-05", "age": 61, "ageRange": "60~64歳", "empNo": 85, "dept": "建材本部/熊本営業所"}, {"name": "松葉和敏", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1985-06-16", "age": 40, "ageRange": "40~49歳", "empNo": 181, "dept": "建材本部/熊本営業所"}, {"name": "竹田絢香", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1995-05-30", "age": 30, "ageRange": "30~39歳", "empNo": 273, "dept": "建材本部/熊本営業所"}, {"name": "長谷川美帆", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "事務職", "sex": "女", "bday": "1986-03-02", "age": 39, "ageRange": "30~39歳", "empNo": 298, "dept": "建材本部/熊本営業所"}, {"name": "野中裕二", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1968-03-27", "age": 57, "ageRange": "50~59歳", "empNo": 183, "dept": "建材本部/熊本営業所"}, {"name": "中河主昌", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1970-09-23", "age": 55, "ageRange": "50~59歳", "empNo": 207, "dept": "建材本部/熊本営業所"}, {"name": "田﨑浩久", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1971-02-13", "age": 54, "ageRange": "50~59歳", "empNo": 267, "dept": "建材本部/熊本営業所"}, {"name": "𠮷木史", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1973-11-22", "age": 52, "ageRange": "50~59歳", "empNo": 228, "dept": "建材本部/熊本営業所"}, {"name": "立石義文", "honbu": "建材本部", "bu": "熊本営業所", "ka": "", "kubun": "建材技能工", "sex": "男", "bday": "1986-11-06", "age": 39, "ageRange": "30~39歳", "empNo": 295, "dept": "建材本部/熊本営業所"}, {"name": "木田寛士", "honbu": "建材本部", "bu": "福岡営業所", "ka": "", "kubun": "建材", "sex": "男", "bday": "1973-03-24", "age": 52, "ageRange": "50~59歳", "empNo": 80, "dept": "建材本部/福岡営業所"}, {"name": "永友努", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1963-09-27", "age": 62, "ageRange": "60~64歳", "empNo": 127, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "星村俊文", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1964-06-22", "age": 61, "ageRange": "60~64歳", "empNo": 126, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "佐藤史崇", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1983-03-25", "age": 42, "ageRange": "40~49歳", "empNo": 130, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "古川仁子", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "事務職", "sex": "女", "bday": "1969-01-10", "age": 57, "ageRange": "50~59歳", "empNo": 91, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "和田憲昌", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1976-05-28", "age": 49, "ageRange": "40~49歳", "empNo": 196, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "岩本郷子", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "事務職", "sex": "女", "bday": "1971-06-20", "age": 54, "ageRange": "50~59歳", "empNo": 222, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "宮﨑渉一郎", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1981-04-09", "age": 44, "ageRange": "40~49歳", "empNo": 235, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "神田孝介", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1996-11-22", "age": 29, "ageRange": "20~29歳", "empNo": 246, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "川路速豊", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材", "sex": "男", "bday": "1994-10-24", "age": 31, "ageRange": "30~39歳", "empNo": 251, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "糸山将史", "honbu": "建材本部", "bu": "福岡営業所", "ka": "防水事業", "kubun": "建材技能工", "sex": "男", "bday": "1973-06-24", "age": 52, "ageRange": "50~59歳", "empNo": 217, "dept": "建材本部/福岡営業所/防水事業"}, {"name": "水谷政治", "honbu": "建材本部", "bu": "福岡営業所", "ka": "ﾘﾆｭｰｱﾙ", "kubun": "建材", "sex": "男", "bday": "1961-11-11", "age": 64, "ageRange": "60~64歳", "empNo": 32, "dept": "建材本部/福岡営業所/ﾘﾆｭｰｱﾙ"}, {"name": "太田智道", "honbu": "建材本部", "bu": "福岡営業所", "ka": "ﾘﾆｭｰｱﾙ", "kubun": "建材", "sex": "男", "bday": "1973-02-13", "age": 52, "ageRange": "50~59歳", "empNo": 111, "dept": "建材本部/福岡営業所/ﾘﾆｭｰｱﾙ"}, {"name": "三町将樹", "honbu": "建材本部", "bu": "福岡営業所", "ka": "ﾘﾆｭｰｱﾙ", "kubun": "建材", "sex": "男", "bday": "1994-06-07", "age": 31, "ageRange": "30~39歳", "empNo": 269, "dept": "建材本部/福岡営業所/ﾘﾆｭｰｱﾙ"}, {"name": "藤崎有香", "honbu": "建材本部", "bu": "福岡営業所", "ka": "ﾘﾆｭｰｱﾙ", "kubun": "事務職", "sex": "女", "bday": "1996-08-27", "age": 29, "ageRange": "20~29歳", "empNo": 285, "dept": "建材本部/福岡営業所/ﾘﾆｭｰｱﾙ"}, {"name": "土山美奈子", "honbu": "建材本部", "bu": "福岡営業所", "ka": "ﾘﾆｭｰｱﾙ", "kubun": "事務職", "sex": "女", "bday": "1985-08-05", "age": 40, "ageRange": "40~49歳", "empNo": 294, "dept": "建材本部/福岡営業所/ﾘﾆｭｰｱﾙ"}];
+
+// ===== LOGIN =====
+let CUR=null;
+const deptSet=new Set();
+EMP.forEach(e=>{let d=e.honbu;if(e.bu)d+='/'+e.bu;if(e.ka)d+='/'+e.ka;deptSet.add(d)});
+const dSel=document.getElementById('loginDept');
+[...deptSet].sort().forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;dSel.appendChild(o)});
+
+function onDeptSel(){
+  const dept=dSel.value,nS=document.getElementById('loginName');
+  nS.innerHTML='<option value="">氏名を選択</option>';
+  if(!dept){nS.disabled=true;return}
+  nS.disabled=false;
+  EMP.filter(e=>{let d=e.honbu;if(e.bu)d+='/'+e.bu;if(e.ka)d+='/'+e.ka;return d===dept}).forEach(e=>{
+    const o=document.createElement('option');o.value=e.name;o.textContent=e.name;nS.appendChild(o)});
+}
+function onNameSel(){
+  const name=document.getElementById('loginName').value;
+  const info=document.getElementById('loginInfo'),btn=document.getElementById('loginBtn');
+  if(!name){info.style.display='none';btn.disabled=true;return}
+  const e=EMP.find(x=>x.name===name);
+  if(e){info.style.display='block';info.innerHTML='<b>'+e.name+'</b>（'+e.kubun+'）/ '+e.age+'歳 / '+e.dept;btn.disabled=false}
+}
+function doLogin(){
+  const name=document.getElementById('loginName').value;
+  CUR=EMP.find(x=>x.name===name);
+  if(!CUR)return;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('f_name').value=CUR.name;
+  document.getElementById('f_kubun').value=CUR.kubun;
+  document.getElementById('f_age').value=CUR.ageRange;
+  document.getElementById('f_dept').value=CUR.dept;
+  // Set dept filter to user's department
+  deptFilt=CUR.dept.split('/')[0];
+}
+
+// ===== EVENTS =====
+document.getElementById('lvG').innerHTML=Array.from({length:10},(_,i)=>'<div class="lb" data-v="'+(i+1)+'">'+(i+1)+'</div>').join('');
+document.querySelectorAll('.cg .ch').forEach(c=>c.onclick=()=>{c.classList.toggle('on');if(c.dataset.v==='その他'&&c.closest('#cExp')){document.getElementById('otherInp').classList.toggle('show',c.classList.contains('on'))}});
+document.querySelectorAll('.cg .ck').forEach(c=>c.onclick=()=>c.classList.toggle('on'));
+document.querySelectorAll('.lb').forEach(b=>b.onclick=()=>{document.querySelectorAll('.lb').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
+document.addEventListener('click',e=>{if(e.target.classList.contains('lkdt')){const g=e.target.parentElement,v=+e.target.dataset.v;g.querySelectorAll('.lkdt').forEach(d=>d.classList.toggle('on',+d.dataset.v<=v))}});
+document.querySelectorAll('.ni').forEach(b=>b.onclick=()=>{loadDB();loadPhotos();document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.p).classList.add('on');if(b.dataset.p==='pA')rAnl('simple');if(b.dataset.p==='pD')rUserList()});
+document.querySelectorAll('#aT .tp').forEach(t=>t.onclick=()=>{document.querySelectorAll('#aT .tp').forEach(x=>x.classList.remove('on'));t.classList.add('on');rAnl(t.dataset.t)});
+document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
+
+// ===== DATA (shared via localStorage) =====
+let DB=[],idc=0,deptFilt='all';
+var DEMO_DATA=[
+{n:'志田和弘',dept:'土木本部/土木部',ku:'土木',ar:'50~59歳',e:['墜落しそうになった'],d:'足場手すりが外れ、寄りかかった際にぐらついた。',c:['確認不足','作業環境'],l:8,w:'2/5 AM10 3階足場',wk:'外壁仕上げ',m:'足場点検チェックリスト導入',st:{workload:3,overtime:3,hardwork:3,fatigue:3,exhausted:3,sluggish:2,tense:3,anxiety:2,restless:2,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:2},we:{pace:2,autonomy:2,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:3,happiness:2},av:['注意不足','焦り'],ac:['KY活動','朝礼夕礼'],ss:'review'},
+{n:'児玉大佑',dept:'土木本部/土木部',ku:'土木',ar:'40~49歳',e:['機械等に激突されそうになった'],d:'クレーン旋回時に吊り荷が近くを通過。',c:['連絡・連携ミス','確認不足'],l:9,w:'2/4 PM2 橋脚下部',wk:'クレーン作業',m:'合図者常時配置',st:{workload:2,overtime:2,hardwork:3,fatigue:2,exhausted:2,sluggish:1,tense:4,anxiety:3,restless:3,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:2,autonomy:2,voice:1,boss_talk:1,peer_talk:2,boss_help:1,peer_help:2,boss_consult:1,peer_consult:2,vigor:2,pride:2,happiness:2},av:['連携不足','慣れ・油断'],ac:['現地MT','コミュニケーション','災害事例'],ss:'new'},
+{n:'田島禾楓',dept:'土木本部/土木部',ku:'土木',ar:'20歳未満',e:['転倒しそうになった'],d:'資材間を通行中、配管につまずいて転倒しかけた。',c:['作業環境','視界不良'],l:3,w:'1/31 PM3 資材置場',wk:'資材運搬',m:'4S活動強化、通路確保',st:{workload:3,overtime:2,hardwork:3,fatigue:3,exhausted:2,sluggish:2,tense:2,anxiety:2,restless:1,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:2,autonomy:1,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:2,happiness:2},av:['注意不足','経験不足'],ac:['4S','見える化'],ss:'done'}
+];
+function loadDB(){
+  try{var s=localStorage.getItem('hh_reports');if(s){DB=JSON.parse(s);idc=DB.reduce(function(m,r){return Math.max(m,r.id||0)},0);return}}catch(e){}
+  DEMO_DATA.forEach(function(r,i){r.id=++idc;r.date='2026-02-0'+(8-i);DB.push(r)});saveDB();
+}
+function saveDB(){
+  if(typeof HHDB!=='undefined'&&HHDB.useFirebase()){HHDB.saveReports(DB);HHDB.savePhotos(DB);try{var data=DB.map(function(r){var c=Object.assign({},r);delete c.photos;return c});localStorage.setItem('hh_reports',JSON.stringify(data));if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});localStorage.setItem('hh_photos',JSON.stringify(ph))}}catch(e){}return}
+  try{var data=DB.map(function(r){var c=Object.assign({},r);delete c.photos;return c});localStorage.setItem('hh_reports',JSON.stringify(data));
+  if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});try{localStorage.setItem('hh_photos',JSON.stringify(ph))}catch(e){}}
+  }catch(e){console.warn('localStorage save failed',e)}
+}
+function loadPhotos(){
+  try{var s=localStorage.getItem('hh_photos');if(s){var ph=JSON.parse(s);DB.forEach(function(r){if(ph[r.id])r.photos=ph[r.id]})}}catch(e){}
+}
+function doDataInit(){
+  if(typeof HHDB==='undefined'||!HHDB.useFirebase()){loadDB();loadPhotos();return}
+  HHDB.init(function(){
+    HHDB.loadReports(DEMO_DATA,function(arr){
+      arr.forEach(function(r,i){if(!r.id){r.id=i+1;r.date=r.date||'2026-02-0'+(8-i)}});
+      try{localStorage.setItem('hh_reports',JSON.stringify(arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c})))}catch(e){}
+      HHDB.loadPhotos(arr,function(){
+        var ph={};arr.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
+        if(Object.keys(ph).length){try{localStorage.setItem('hh_photos',JSON.stringify(ph))}catch(e){}}
+        loadDB();loadPhotos();
+      });
+    });
+    HHDB.onReportsChange(function(arr){if(arr&&arr.length){try{localStorage.setItem('hh_reports',JSON.stringify(arr));loadDB();loadPhotos();rAnl&&rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');rUserList&&rUserList()}catch(e){}}});
+  });
+}
+doDataInit();
+
+// ===== DEPT FILTER =====
+function buildDeptFilter(containerId){
+  const depts=[{v:'all',l:'全体'},{v:'総務部',l:'総務部'},{v:'土木本部',l:'土木本部（全体）'},{v:'土木本部/土木部',l:'┗ 土木部'},{v:'土木本部/綜合プラント',l:'┗ 綜合プラント'},{v:'土木本部/高千穂営業所',l:'┗ 高千穂営業所'},{v:'建材本部',l:'建材本部（全体）'},{v:'建材本部/延岡営業所',l:'┗ 延岡営業所'},{v:'建材本部/宮崎支店',l:'┗ 宮崎支店'},{v:'建材本部/大分営業所',l:'┗ 大分営業所'},{v:'建材本部/熊本営業所',l:'┗ 熊本営業所'},{v:'建材本部/福岡営業所',l:'┗ 福岡営業所'},{v:'建材本部/鹿児島営業所',l:'┗ 鹿児島営業所'}];
+  document.getElementById(containerId).innerHTML=depts.map(d=>'<button class="dfp'+(d.v===deptFilt?' on':'')+'" data-d="'+d.v+'" onclick="setDeptF(\''+d.v+'\')">'+d.l+'</button>').join('');
+}
+function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple')}
+function getF(){return deptFilt==='all'?DB:DB.filter(r=>r.dept.startsWith(deptFilt))}
+function getFForUserList(){if(!CUR)return[];return DB.filter(r=>r.dept.startsWith(CUR.dept.split('/')[0]))}
+
+// ===== USER LIST (報告者・部署・区分年齢・背景要因は非表示) =====
+function rUserList(){
+  var fd=getFForUserList();
+  var el=document.getElementById('rL');if(!el)return;
+  el.innerHTML=fd.map(function(r){
+    var bc=r.l>=7?'bf':r.l>=4?'bt2':'bcl';
+    var sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
+    var eFirst=(Array.isArray(r.e)?r.e[0]:'')||(r.e&&typeof r.e==='object'?Object.values(r.e)[0]:'')||'';
+    return'<div class="rc" onclick="sDtUser('+r.id+')"><div class="rt"><span class="bd2 '+bc+'">'+(eFirst||'').substring(0,10)+'</span><span style="font-size:10px;font-weight:700;color:'+(r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)')+'">Lv.'+r.l+'</span></div><div class="rde">'+r.d+'</div><div class="rm"><span>'+sl+'</span><span>'+r.date+'</span></div></div>';
+  }).join('')||'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
+}
+function _arrJoin(v){return (Array.isArray(v)?v.join('、'):'')||'—'}
+function sDtUser(id){
+  var r=DB.find(function(x){return x.id===id});if(!r)return;
+  var e0=(Array.isArray(r.e)?r.e[0]:'')||(r.e&&typeof r.e==='object'?Object.values(r.e)[0]:'')||'報告';
+  document.getElementById('mT').textContent=e0+' — 詳細';
+  var sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
+  var h='<div class="dl"><span class="dk">日時・場所</span><span class="dv">'+(r.w||r.date)+'</span></div><div class="dl"><span class="dk">災害レベル</span><span class="dv" style="color:'+(r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)')+'">Lv.'+(r.l||'—')+'</span></div><div class="dl"><span class="dk">ステータス</span><span class="dv">'+sl+'</span></div><div class="dbk"><div class="dbt">体験</div><div class="dbtx">'+_arrJoin(r.e)+'</div></div><div class="dbk"><div class="dbt">詳細</div><div class="dbtx">'+(r.d||'—')+'</div></div><div class="dbk"><div class="dbt">原因</div><div class="dbtx">'+_arrJoin(r.c)+'</div></div><div class="dbk"><div class="dbt">対策</div><div class="dbtx">'+(r.m||'—')+'</div></div>';
+  if(r.photos&&r.photos.length)h+='<div class="dbk"><div class="dbt">📷 現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div></div>';
+  h+='<div class="dbk"><div class="dbt">回避できなかった理由</div><div class="dbtx">'+_arrJoin(r.av)+'</div></div><div class="dbk"><div class="dbt">回避に役立つ活動</div><div class="dbtx">'+_arrJoin(r.ac)+'</div></div>';
+  document.getElementById('mI').innerHTML=h;
+  document.getElementById('modal').classList.add('show');
+}
+function showComDetail(title,content){
+  document.getElementById('mT').textContent=title;
+  document.getElementById('mI').innerHTML=content;
+  document.getElementById('modal').classList.add('show');
+}
+function showCauseReporters(cause){
+  var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});
+  var photos=[];
+  fd.forEach(function(r){if(r.photos&&r.photos.length)r.photos.forEach(function(p){photos.push(p)})});
+  var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';
+  if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';
+  else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';
+  h+='</div>';
+  showComDetail('発生原因：'+cause,h);
+}
+var modalEl=document.getElementById('modal');if(modalEl)modalEl.onclick=function(e){if(e.target.id==='modal')e.target.classList.remove('show')};
+
+// ===== PHOTO HANDLING =====
+var pendingPhotos=[];
+var MAX_PHOTOS=5;
+function handlePhotos(inp){
+  var files=Array.from(inp.files);
+  inp.value='';
+  if(!files.length)return;
+  if(pendingPhotos.length+files.length>MAX_PHOTOS){
+    alert('写真は最大'+MAX_PHOTOS+'枚までです');
+    files=files.slice(0,MAX_PHOTOS-pendingPhotos.length);
+  }
+  var remaining=files.length;
+  files.forEach(function(file){
+    if(pendingPhotos.length>=MAX_PHOTOS){remaining--;return}
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var rawDataUrl=e.target.result;
+      var img=new Image();
+      img.onload=function(){
+        try{
+          var canvas=document.createElement('canvas');
+          var maxW=1200,maxH=1200;
+          var w=img.width,h=img.height;
+          if(w>maxW||h>maxH){
+            var ratio=Math.min(maxW/w,maxH/h);
+            w=Math.round(w*ratio);h=Math.round(h*ratio);
+          }
+          canvas.width=w;canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          pendingPhotos.push(canvas.toDataURL('image/jpeg',0.7));
+        }catch(err){
+          pendingPhotos.push(rawDataUrl);
+        }
+        remaining--;
+        renderPhotoPreview();
+      };
+      img.onerror=function(){
+        pendingPhotos.push(rawDataUrl);
+        remaining--;
+        renderPhotoPreview();
+      };
+      img.src=rawDataUrl;
+    };
+    reader.onerror=function(){
+      remaining--;
+      renderPhotoPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function removePhoto(i){
+  pendingPhotos.splice(i,1);
+  renderPhotoPreview();
+}
+function renderPhotoPreview(){
+  var pv=document.getElementById('photoPreview');
+  var ct=document.getElementById('photoCount');
+  pv.innerHTML='';
+  pendingPhotos.forEach(function(src,i){
+    var div=document.createElement('div');div.className='photo-thumb';
+    var img=document.createElement('img');img.src=src;
+    img.onclick=(function(idx){return function(){showFullPhoto(null,idx)}})(i);
+    var btn=document.createElement('button');btn.className='photo-del';btn.innerHTML='&times;';
+    btn.onclick=(function(idx){return function(e){e.stopPropagation();removePhoto(idx)}})(i);
+    div.appendChild(img);div.appendChild(btn);pv.appendChild(div);
+  });
+  ct.textContent=pendingPhotos.length>0?pendingPhotos.length+'/'+MAX_PHOTOS+'枚':'';
+}
+function showFullPhoto(dummy,i){
+  var src=pendingPhotos[i]||dummy;
+  if(event&&event.target&&event.target.src)src=event.target.src;
+  var ov=document.createElement('div');
+  ov.className='photo-full-overlay';
+  ov.innerHTML='<img src="'+src+'">';
+  ov.onclick=function(){document.body.removeChild(ov)};
+  document.body.appendChild(ov);
+}
+function showFullPhotoSrc(src){
+  var ov=document.createElement('div');
+  ov.className='photo-full-overlay';
+  ov.innerHTML='<img src="'+src+'">';
+  ov.onclick=function(){document.body.removeChild(ov)};
+  document.body.appendChild(ov);
+}
+
+// ===== SUBMIT =====
+function doSubmit(){
+  const ds=document.getElementById('f_desc').value.trim();
+  const exp=[...document.querySelectorAll('#cExp .ch.on')].map(c=>c.dataset.v);
+  if(!CUR){alert('ログインしてください');return}
+  if(!ds||!exp.length){alert('必須項目を入力してください');return}
+  const gL=id=>{const o={};document.querySelectorAll('#'+id+' .lkd').forEach(g=>{o[g.dataset.f]=g.querySelectorAll('.lkdt.on').length});return o};
+  const otherText=document.getElementById('f_other').value;
+  if(exp.includes('その他')&&otherText)exp[exp.indexOf('その他')]='その他:'+otherText;
+  DB.unshift({id:++idc,date:document.getElementById('f_date').value,n:CUR.name,dept:CUR.dept,ku:CUR.kubun,ar:CUR.ageRange,e:exp,w:document.getElementById('f_ww').value,wk:document.getElementById('f_wk').value,d:ds,m:document.getElementById('f_msr').value,photos:pendingPhotos.slice(),c:[...document.querySelectorAll('#cC .ch.on')].map(c=>c.dataset.v),l:+(document.querySelector('.lb.on')?.dataset.v||0),st:gL('lkS'),we:gL('lkW'),av:[...document.querySelectorAll('#cAv .ch.on')].map(c=>c.dataset.v),ac:[...document.querySelectorAll('#cAc .ck.on')].map(c=>c.dataset.v),ss:'new'});
+  saveDB();
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+  document.querySelectorAll('.fi:not([readonly]),.ft').forEach(el=>el.value='');
+  document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
+  document.querySelectorAll('.ch.on,.ck.on,.lb.on,.lkdt.on').forEach(el=>el.classList.remove('on'));
+  document.getElementById('otherInp').classList.remove('show');
+  pendingPhotos=[];renderPhotoPreview();
+}
+
+// ===== ANALYTICS (NO behind factors) =====
+var curExpFilter='all';
+function rAnl(type){
+  buildDeptFilter('dfAnl');
+  const ct=document.getElementById('aC');
+  if(type==='simple')ct.innerHTML=anlSimple();
+  else if(type==='byexp'){curExpFilter='all';ct.innerHTML=anlByExp()}
+  else if(type==='resil')ct.innerHTML=anlResil();
+  else ct.innerHTML=anlActs();
+}
+function anlAge(fd){
+  const ageRanges=['20歳未満','20~29歳','30~39歳','40~49歳','50~59歳','60~64歳','65歳以上'];
+  const ac2={};ageRanges.forEach(a=>ac2[a]=0);fd.forEach(r=>{if(r.ar&&ac2[r.ar]!==undefined)ac2[r.ar]++});
+  const sa=ageRanges.filter(a=>ac2[a]>0);const ma=Math.max(...sa.map(a=>ac2[a]),1);
+  const cl2=['#66BB6A','#43A047','#2E7D32','#F9A825','#E53935','#0277BD','#7B1FA2'];
+  let h='<div class="cb"><div class="cht"><span class="chd" style="background:#7B1FA2"></span>年齢別報告件数</div><div class="hb">';
+  sa.forEach((a,i)=>{h+='<div class="hr"><div class="hl" style="width:72px">'+a+'</div><div class="htk"><div class="hfl" style="width:'+(ac2[a]/ma)*100+'%;background:'+cl2[ageRanges.indexOf(a)%7]+'"><span class="hv">'+ac2[a]+'</span></div></div></div>'});
+  if(!sa.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div><div class="guide-box"><b>📊 活用法：</b>特定の年齢層に報告が集中している場合、<b>重点安全教育</b>や<b>メンター配置</b>を検討してください。</div></div>';
+  return h;
+}
+function anlByExp(){
+  var fd=getF();
+  var expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
+  var sh=function(t){return t.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','')};
+  var ec={};expTypes.forEach(function(t){ec[t]=0});fd.forEach(function(r){r.e.forEach(function(e){if(ec[e]!==undefined)ec[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ec[k]++}})});
+  var se=expTypes.filter(function(t){return ec[t]>0});
+  var cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
+  // 体験タイプ選択ボタン
+  var h='<div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容を選択</div>';
+  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
+  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="curExpFilter=\'all\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px">すべて（'+fd.length+'件）</button>';
+  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="curExpFilter=\''+t+'\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
+  h+='</div></div>';
+  // フィルタ適用
+  var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return r.e.some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
+  if(!filtered.length){h+='<div class="cb cb-wide" style="text-align:center;padding:32px;color:var(--t3)">該当データがありません</div>';return h}
+  h+='<div class="cb cb-wide" style="background:var(--acg);border-color:var(--ac);padding:12px"><span style="font-size:13px;font-weight:700;color:var(--ac)">'+(curExpFilter==='all'?'全体':sh(curExpFilter))+'</span><span style="font-size:12px;color:var(--t2);margin-left:8px">'+filtered.length+'件</span></div>';
+  // 発生原因
+  var cc={};filtered.forEach(function(r){if(Array.isArray(r.c))r.c.forEach(function(c){cc[c]=(cc[c]||0)+1})});
+  var sc2=Object.entries(cc).sort(function(a,b){return b[1]-a[1]});var mc=Math.max.apply(null,sc2.map(function(x){return x[1]}).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>発生原因</div><div class="hb">';
+  sc2.forEach(function(x,i){var cause=x[0];h+='<div class="hr cause-click" onclick="showCauseReporters(\''+cause.replace(/'/g,"\\'")+'\')" style="cursor:pointer" title="クリックで現場写真を表示"><div class="hl">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mc)*100+'%;background:'+cl[(i+3)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>';});
+  if(!sc2.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  // 災害レベル分布
+  var lc={};for(var i=1;i<=10;i++)lc[i]=0;filtered.forEach(function(r){if(r.l)lc[r.l]++});var ml=Math.max.apply(null,Object.values(lc).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--bl)"></span>災害レベル分布</div><div class="trw">';
+  for(var i=1;i<=10;i++){var v=lc[i];h+='<div class="tc"><div class="tb2" style="height:'+(v?((v/ml)*100):3)+'%;background:'+(i>=7?'var(--rd)':i>=4?'var(--yl)':'var(--gn)')+'"></div><div class="tl2">'+i+'</div></div>'}
+  h+='</div></div>';
+  // 年齢別
+  h+=anlAge(filtered);
+  // レジリエンス（回避できなかった理由）
+  var av={};filtered.forEach(function(r){if(Array.isArray(r.av))r.av.forEach(function(a){av[a]=(av[a]||0)+1})});
+  var sav=Object.entries(av).sort(function(a,b){return b[1]-a[1]});var mav=Math.max.apply(null,sav.map(function(x){return x[1]}).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--rd)"></span>回避できなかった理由</div><div class="hb">';
+  sav.forEach(function(x,i){h+='<div class="hr"><div class="hl" style="width:90px">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mav)*100+'%;background:'+cl[(i+5)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
+  if(!sav.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  // 活動分析
+  var ac={};filtered.forEach(function(r){if(Array.isArray(r.ac))r.ac.forEach(function(a){ac[a]=(ac[a]||0)+1})});
+  var sac=Object.entries(ac).sort(function(a,b){return b[1]-a[1]});var mac=Math.max.apply(null,sac.map(function(x){return x[1]}).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--gn)"></span>回避に役立つ活動</div><div class="hb">';
+  sac.forEach(function(x,i){h+='<div class="hr"><div class="hl" style="width:90px">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mac)*100+'%;background:'+cl[(i+2)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
+  if(!sac.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  return h;
+}
+function anlSimple(){
+  const fd=getF();
+  const expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
+  const ec={};expTypes.forEach(t=>ec[t]=0);fd.forEach(r=>r.e.forEach(e=>{if(ec[e]!==undefined)ec[e]++;else{const k=expTypes.find(t=>e.startsWith(t.substring(0,2)));if(k)ec[k]++}}));
+  const se=expTypes.filter(t=>ec[t]>0).sort((a,b)=>ec[b]-ec[a]);const me=Math.max(...se.map(t=>ec[t]),1);
+  const cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
+  const sh=t=>t.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');
+  const cc={};fd.forEach(r=>{if(Array.isArray(r.c))r.c.forEach(c=>cc[c]=(cc[c]||0)+1)});
+  const sc2=Object.entries(cc).sort((a,b)=>b[1]-a[1]);const mc=Math.max(...sc2.map(x=>x[1]),1);
+  const lc={};for(let i=1;i<=10;i++)lc[i]=0;fd.forEach(r=>{if(r.l)lc[r.l]++});const ml=Math.max(...Object.values(lc),1);
+  return '<div class="cb"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容</div><div class="hb">'+se.map((t,i)=>'<div class="hr"><div class="hl">'+sh(t)+'</div><div class="htk"><div class="hfl" style="width:'+(ec[t]/me)*100+'%;background:'+cl[i%12]+'"><span class="hv">'+ec[t]+'</span></div></div></div>').join('')+'</div><div class="guide-box"><b>📊 読み方：</b>最も多い体験カテゴリを重点的に対策してください。</div></div><div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>発生原因</div><div class="hb">'+sc2.map(([t,v],i)=>'<div class="hr cause-click" onclick="showCauseReporters(\''+t.replace(/'/g,"\\'")+'\')" style="cursor:pointer" title="クリックで現場写真を表示"><div class="hl">'+t+'</div><div class="htk"><div class="hfl" style="width:'+(v/mc)*100+'%;background:'+cl[(i+3)%12]+'"><span class="hv">'+v+'</span></div></div></div>').join('')+'</div></div><div class="cb"><div class="cht"><span class="chd" style="background:var(--bl)"></span>災害レベル分布</div><div class="trw">'+Array.from({length:10},(_,i)=>{const v=lc[i+1];return '<div class="tc"><div class="tb2" style="height:'+(v?((v/ml)*100):3)+'%;background:'+(i+1>=7?'var(--rd)':i+1>=4?'var(--yl)':'var(--gn)')+'"></div><div class="tl2">'+(i+1)+'</div></div>'}).join('')+'</div></div>'+anlAge(fd);
+}
+function anlResil(){
+  const fd=getF();
+  const cc={};fd.forEach(r=>{if(Array.isArray(r.av))r.av.forEach(a=>cc[a]=(cc[a]||0)+1)});
+  const sa=Object.entries(cc).sort((a,b)=>b[1]-a[1]);const ma=Math.max(...sa.map(x=>x[1]),1);
+  const cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7'];
+  let h='<div class="cb"><div class="cht"><span class="chd" style="background:var(--rd)"></span>回避できなかった理由</div><div class="hb">';
+  sa.forEach(([a,v],i)=>{h+='<div class="hr"><div class="hl" style="width:90px">'+a+'</div><div class="htk"><div class="hfl" style="width:'+(v/ma)*100+'%;background:'+cl[i%8]+'"><span class="hv">'+v+'</span></div></div></div>'});
+  if(!sa.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  return h;
+}
+function anlActs(){
+  const fd=getF();
+  const ac={};fd.forEach(r=>{if(Array.isArray(r.ac))r.ac.forEach(a=>ac[a]=(ac[a]||0)+1)});
+  const sa=Object.entries(ac).sort((a,b)=>b[1]-a[1]);const ma=Math.max(...sa.map(x=>x[1]),1);
+  const cl=['#2DC6A6','#38BDF8','#A78BFA','#F0B429','#E8652B','#E5383B','#FF8B55','#6EE7B7'];
+  let h='<div class="cb"><div class="cht"><span class="chd" style="background:var(--gn)"></span>回避に役立つ活動</div><div class="hb">';
+  sa.forEach(([a,v],i)=>{h+='<div class="hr"><div class="hl" style="width:90px">'+a+'</div><div class="htk"><div class="hfl" style="width:'+(v/ma)*100+'%;background:'+cl[i%8]+'"><span class="hv">'+v+'</span></div></div></div>'});
+  if(!sa.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  return h;
+}
+
+function syncUI(){loadDB();loadPhotos();var pg=document.querySelector('.pg.on');if(pg&&pg.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg&&pg.id==='pD')rUserList()}
+window.addEventListener('focus',syncUI);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)syncUI()});
+window.addEventListener('storage',function(e){if(e.key==='hh_reports'||e.key==='hh_photos')syncUI()});
+(function(){var b=document.getElementById('syncBanner');if(b&&typeof HHDB!=='undefined'&&!HHDB.useFirebase()){b.style.display='block';b.textContent='⚠ 複数端末同期オフ：携帯・PCで別データになります。owner.html の設定タブでFirebase設定をしてください。'}})();
+</script>
+</body>
+</html>
