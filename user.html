@@ -514,13 +514,11 @@ input[type="file"].photo-input{display:none}
     <div class="ocr-title">📑 報告用紙を読み取る（任意）</div>
     <div class="ocr-drop" id="ocrDropZone">
       <div class="ocr-btns">
-        <button type="button" class="ocr-pick-btn" id="ocrBtnCamera"><span class="ocr-pick-ico">📷</span><span class="ocr-pick-label">カメラで撮影</span></button>
-        <button type="button" class="ocr-pick-btn" id="ocrBtnFile"><span class="ocr-pick-ico">📁</span><span class="ocr-pick-label">画像/PDFを選択</span></button>
+        <button type="button" class="ocr-pick-btn" id="ocrBtnFile"><span class="ocr-pick-ico">📷</span><span class="ocr-pick-label">カメラ/画像/PDFを選択</span></button>
       </div>
       <p class="sub" style="margin-top:8px">手書き報告用紙を撮影またはファイル添付</p>
       <p class="sub">ドラッグ＆ドロップにも対応</p>
       <input type="file" id="ocrFileInput" accept=".pdf,image/*" style="display:none">
-      <input type="file" id="ocrCameraInput" accept="image/*" capture="environment" style="display:none">
     </div>
     <div class="ocr-preview" id="ocrPreview"><img id="ocrPreviewImg"></div>
     <div class="ocr-prog" id="ocrProg"><div class="ocr-prog-bar" id="ocrProgBar"></div></div>
@@ -1570,8 +1568,6 @@ if(pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com
 
 var dropZone=document.getElementById('ocrDropZone');
 var fileInput=document.getElementById('ocrFileInput');
-var cameraInput=document.getElementById('ocrCameraInput');
-var btnCamera=document.getElementById('ocrBtnCamera');
 var btnFileBtn=document.getElementById('ocrBtnFile');
 var previewEl=document.getElementById('ocrPreview');
 var previewImg=document.getElementById('ocrPreviewImg');
@@ -1587,12 +1583,10 @@ if(!dropZone||!fileInput)return;
 var _ocrText='';
 
 if(btnFileBtn)btnFileBtn.addEventListener('click',function(e){e.stopPropagation();fileInput.click()});
-if(btnCamera)btnCamera.addEventListener('click',function(e){e.stopPropagation();cameraInput.click()});
 dropZone.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.add('dragover')});
 dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('dragover')});
 dropZone.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.remove('dragover');if(e.dataTransfer&&e.dataTransfer.files.length)processFile(e.dataTransfer.files[0])});
 fileInput.addEventListener('change',function(){if(fileInput.files.length)processFile(fileInput.files[0]);fileInput.value=''});
-if(cameraInput)cameraInput.addEventListener('change',function(){if(cameraInput.files.length)processFile(cameraInput.files[0]);cameraInput.value=''});
 if(btnClear)btnClear.addEventListener('click',resetOcr);
 if(btnFill)btnFill.addEventListener('click',fillDescription);
 
