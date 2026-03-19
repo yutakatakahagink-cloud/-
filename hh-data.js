@@ -1,5 +1,5 @@
 /**
- * 新ヒヤリハット報告 - 共有データ層
+ * 安全衛生管理 - 共有データ層
  * Firebase が設定されていればクラウド同期、なければ localStorage
  */
 (function(){
@@ -12,6 +12,8 @@
   function getPhotosRef(){return db?db.ref(DB_PATH+'/hh_photos'):null}
   function getAdminsRef(){return db?db.ref(DB_PATH+'/hh_admins'):null}
   function getOwnerPassRef(){return db?db.ref(DB_PATH+'/hh_owner_pass'):null}
+  function getRequestsRef(){return db?db.ref(DB_PATH+'/hh_requests'):null}
+  function getDisasterRef(){return db?db.ref(DB_PATH+'/hh_disaster_reports'):null}
 
   window.HHDB={
     useFirebase:function(){return useFirebase},
@@ -149,6 +151,58 @@
         return;
       }
       getOwnerPassRef().set(pass);
+    },
+    loadRequests:function(onLoaded){
+      if(!useFirebase||!db){
+        try{var s=localStorage.getItem('hh_requests');onLoaded(s?JSON.parse(s):[])}catch(e){onLoaded([])}
+        return;
+      }
+      getRequestsRef().once('value',function(snap){
+        var v=snap.val();
+        var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
+        onLoaded(arr);
+      },function(){onLoaded([]);});
+    },
+    saveRequests:function(arr){
+      if(!useFirebase||!db){
+        try{localStorage.setItem('hh_requests',JSON.stringify(arr))}catch(e){}
+        return;
+      }
+      getRequestsRef().set(arr);
+    },
+    onRequestsChange:function(cb){
+      if(!useFirebase||!db){return}
+      getRequestsRef().on('value',function(snap){
+        var v=snap.val();
+        var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
+        if(typeof cb==='function')cb(arr);
+      });
+    },
+    loadDisasterReports:function(onLoaded){
+      if(!useFirebase||!db){
+        try{var s=localStorage.getItem('hh_disaster_reports');onLoaded(s?JSON.parse(s):[])}catch(e){onLoaded([])}
+        return;
+      }
+      getDisasterRef().once('value',function(snap){
+        var v=snap.val();
+        var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
+        onLoaded(arr);
+      },function(){onLoaded([]);});
+    },
+    saveDisasterReports:function(arr){
+      if(!useFirebase||!db){
+        try{localStorage.setItem('hh_disaster_reports',JSON.stringify(arr))}catch(e){}
+        return;
+      }
+      getDisasterRef().set(arr);
+    },
+    onDisasterChange:function(cb){
+      if(!useFirebase||!db){return}
+      getDisasterRef().on('value',function(snap){
+        var v=snap.val();
+        var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
+        if(typeof cb==='function')cb(arr);
+      });
     }
   };
 })();
