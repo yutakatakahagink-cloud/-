@@ -174,7 +174,7 @@ input[type="file"].photo-input{display:none}
 .photo-del:hover,.remove-btn:hover{background:#dc2626}
 .photo-thumb .filename,.preview-item .filename{position:absolute;bottom:0;left:0;right:0;padding:4px 6px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .photo-empty{text-align:center;color:var(--t3);padding:16px;font-size:12px}
-.ocr-pick-btn{display:inline-block;padding:10px 20px;background:#fff;border:2px solid #81C784;border-radius:var(--r);cursor:pointer;transition:all .2s;font-family:inherit;font-size:13px;font-weight:600;color:var(--t1)}
+.ocr-pick-btn{display:block;width:100%;padding:10px 20px;background:#fff;border:2px solid #81C784;border-radius:var(--r);cursor:pointer;transition:all .2s;font-family:inherit;font-size:13px;font-weight:600;color:var(--t1);text-align:center;box-sizing:border-box}
 .ocr-pick-btn:hover,.ocr-pick-btn:active{background:var(--acg);border-color:var(--ac)}
 .ocr-preview{margin-top:10px;display:none;text-align:center}
 .ocr-preview.show{display:block!important}
@@ -501,8 +501,9 @@ input[type="file"].photo-input{display:none}
 <div class="pg" id="pR"><div class="fw">
   <a href="javascript:void(0)" class="back" onclick="goTo('pMenu')">← メニューへ戻る</a>
 
+  <div class="sd">報告用紙を読み取る（任意）</div>
   <div id="ocrBox" style="margin-bottom:10px">
-    <div id="ocrDropZone" style="text-align:center">
+    <div id="ocrDropZone">
       <button type="button" class="ocr-pick-btn" id="ocrBtnFile">📷 カメラ/画像/PDFを選択</button>
       <input type="file" id="ocrFileInput" accept=".pdf,image/*" style="display:none">
     </div>
