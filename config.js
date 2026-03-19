@@ -6,13 +6,13 @@
 window.HH_BASE_URL = "https://yutakatakahagink-cloud.github.io/-/";
 
 window.HH_FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCbp1jk4JKacRzomhwI1he2BmZo27kcoY0",
+  authDomain: "hiyarihatt-report.firebaseapp.com",
+  databaseURL: "https://hiyarihatt-report-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hiyarihatt-report",
+  storageBucket: "hiyarihatt-report.firebasestorage.app",
+  messagingSenderId: "482488701359",
+  appId: "1:482488701359:web:92e80abb1ed54b90a41f5a"
 };
 
 // config.firebase.json があれば読み込んで上書き（編集不要で設定可能）
