@@ -40,6 +40,10 @@ select,input,textarea,button{color:var(--t1)}
 .lb{width:40px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'IBM Plex Sans',sans-serif;background:#fff;border:1.5px solid #81C784;color:#558B2F;cursor:pointer;transition:all .2s}
 .lb.on{border-color:var(--ac);color:var(--ac);background:var(--acg)}
 .lkg{display:flex;flex-direction:column;gap:8px}
+.lk-hdr{display:flex;align-items:flex-end;gap:8px;padding:0 10px;margin-bottom:-4px}
+.lk-hdr-spacer{flex:1}
+.lk-hdr-labels{display:flex;gap:4px;flex-shrink:0}
+.lk-hdr-lb{width:28px;text-align:center;font-size:8px;font-weight:600;color:var(--ac);line-height:1.2}
 .lki{background:#fff;border-radius:var(--rs);border:1px solid #81C784;padding:9px 10px;display:flex;align-items:center;gap:8px}
 .lkl{font-size:11px;flex:1;color:var(--t1);line-height:1.3}
 .lkd{display:flex;gap:4px;flex-shrink:0}
@@ -640,8 +644,7 @@ input[type="file"].photo-input{display:none}
   <div class="lg" id="lvG"></div>
 
   <div class="sd">背後要因：あなたの状態</div>
-  <p style="font-size:10px;color:var(--t3);margin-bottom:10px">1＝全くない ～ 4＝とてもあった</p>
-  <div class="lkg" id="lkS"><div class="lki"><span class="lkl">仕事量が多かった</span><div class="lkd" data-f="workload"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+  <div class="lkg" id="lkS"><div class="lk-hdr"><div class="lk-hdr-spacer"></div><div class="lk-hdr-labels"><div class="lk-hdr-lb">そうだ</div><div class="lk-hdr-lb">まぁ<br>そうだ</div><div class="lk-hdr-lb">やや<br>ちがう</div><div class="lk-hdr-lb">ちがう</div></div></div><div class="lki"><span class="lkl">仕事量が多かった</span><div class="lkd" data-f="workload"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
 <div class="lki"><span class="lkl">時間内に処理しきれなかった</span><div class="lkd" data-f="overtime"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
 <div class="lki"><span class="lkl">一生懸命働く必要があった</span><div class="lkd" data-f="hardwork"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
 <div class="lki"><span class="lkl">ひどく疲れた</span><div class="lkd" data-f="fatigue"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
@@ -657,7 +660,7 @@ input[type="file"].photo-input{display:none}
 <div class="lki"><span class="lkl">よく眠れない</span><div class="lkd" data-f="sleep"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div></div>
 
   <div class="sd">仕事・職場環境</div>
-  <div class="lkg" id="lkW"><div class="lki"><span class="lkl">自分のペースで仕事ができた</span><div class="lkd" data-f="pace"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
+  <div class="lkg" id="lkW"><div class="lk-hdr"><div class="lk-hdr-spacer"></div><div class="lk-hdr-labels"><div class="lk-hdr-lb">そうだ</div><div class="lk-hdr-lb">まぁ<br>そうだ</div><div class="lk-hdr-lb">やや<br>ちがう</div><div class="lk-hdr-lb">ちがう</div></div></div><div class="lki"><span class="lkl">自分のペースで仕事ができた</span><div class="lkd" data-f="pace"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
 <div class="lki"><span class="lkl">仕事の順番・やり方を決められた</span><div class="lkd" data-f="autonomy"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
 <div class="lki"><span class="lkl">方針に意見を反映できた</span><div class="lkd" data-f="voice"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
 <div class="lki"><span class="lkl">上司と気軽に話ができる</span><div class="lkd" data-f="boss_talk"><div class="lkdt" data-v="1">1</div><div class="lkdt" data-v="2">2</div><div class="lkdt" data-v="3">3</div><div class="lkdt" data-v="4">4</div></div></div>
