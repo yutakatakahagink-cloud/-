@@ -539,15 +539,13 @@ input[type="file"].photo-input{display:none}
   <div class="fg"><label class="fl">対策</label><textarea class="ft" id="f_msr" placeholder="再発防止策" style="min-height:60px"></textarea></div>
 
   <div class="sd">現場写真</div>
-  <div class="fg photo-area">
-    <div class="drop-zone" id="hhDropZone">
-      <div class="icon">📷</div>
-      <p>クリックまたはドラッグ＆ドロップで画像を追加</p>
-      <p class="sub">PNG, JPG, GIF, WebP, HEIC 対応（最大5枚）</p>
-      <input type="file" class="photo-input" id="f_hh_photo" accept="image/*,.heic,.heif" multiple>
+  <div class="fg" style="margin-bottom:10px">
+    <div id="hhDropZone" style="text-align:center">
+      <button type="button" class="ocr-pick-btn" id="hhPhotoBtn">📷 カメラ/画像を選択（最大5枚）</button>
+      <input type="file" class="photo-input" id="f_hh_photo" accept="image/*,.heic,.heif" multiple style="display:none">
     </div>
     <div class="photo-preview" id="photoPreview">
-      <div class="photo-empty" id="photoEmpty">添付された画像がここに表示されます</div>
+      <div class="photo-empty" id="photoEmpty" style="display:none"></div>
     </div>
     <div class="photo-count" id="photoCount"></div>
   </div>
@@ -622,7 +620,8 @@ input[type="file"].photo-input{display:none}
         }
       });
     }
-    dz.addEventListener('click',function(e){if(e.target.closest('.photo-del'))return;inp.value='';inp.click()});
+    var hhPhotoBtn=document.getElementById('hhPhotoBtn');
+    if(hhPhotoBtn)hhPhotoBtn.addEventListener('click',function(e){e.stopPropagation();inp.value='';inp.click()});
     inp.addEventListener('change',function(){if(inp.files&&inp.files.length){handle(inp.files);inp.value=''}});
     dz.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz.classList.add('dragover')});
     dz.addEventListener('dragleave',function(){dz.classList.remove('dragover')});
