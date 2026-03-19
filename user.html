@@ -1579,9 +1579,8 @@ rDash();
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-// ===== OCR: Tesseract.js (ブラウザ内日本語OCR) =====
+// ===== OCR: Gemini Vision API =====
 (function(){
 var pdfjsLib=window['pdfjs-dist/build/pdf']||window.pdfjsLib;
 if(pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1669,24 +1668,48 @@ async function processFile(file){
       previewEl.classList.add('show');
     }
 
-    setProgress(35,'文字認識を準備中（初回は日本語データをダウンロードします）...');
+    setProgress(35,'Gemini Vision APIで文字認識中...');
+
+    var geminiKey=window.HH_GEMINI_API_KEY||'';
+    if(!geminiKey){throw new Error('Gemini APIキーが設定されていません。config.jsを確認してください。')}
 
     var allText=[];
     for(var p=0;p<imageDataUrls.length;p++){
       var pLabel=imageDataUrls.length>1?'ページ'+(p+1)+'/'+imageDataUrls.length+' ':'';
-      setProgress(35+Math.floor((p/imageDataUrls.length)*55),pLabel+'文字を認識中...');
+      setProgress(35+Math.floor((p/imageDataUrls.length)*55),pLabel+'AI文字認識中...');
 
-      var result=await Tesseract.recognize(imageDataUrls[p],'jpn+eng',{
-        logger:function(m){
-          if(m.status==='recognizing text'){
-            var pct=35+Math.floor((p/imageDataUrls.length)*55)+Math.floor(m.progress*55/imageDataUrls.length);
-            setProgress(pct,pLabel+'認識中... '+Math.round(m.progress*100)+'%');
-          }
-        }
+      var base64=imageDataUrls[p].replace(/^data:image\/[a-z]+;base64,/,'');
+      var mimeType=imageDataUrls[p].match(/^data:(image\/[a-z]+);/);
+      mimeType=mimeType?mimeType[1]:'image/png';
+
+      var body={
+        contents:[{
+          parts:[
+            {text:"この画像に書かれている文字を全て正確に読み取ってください。手書き文字も含めて、できるだけ正確にテキスト化してください。レイアウトや改行もできるだけ元の文書に忠実に再現してください。読み取った文字のみを出力し、説明や補足は不要です。"},
+            {inline_data:{mime_type:mimeType,data:base64}}
+          ]
+        }]
+      };
+
+      var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+geminiKey,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body)
       });
-      if(result&&result.data&&result.data.text){
+
+      if(!resp.ok){
+        var errText=await resp.text();
+        throw new Error('Gemini API エラー ('+resp.status+'): '+errText);
+      }
+
+      var json=await resp.json();
+      var text='';
+      if(json.candidates&&json.candidates[0]&&json.candidates[0].content&&json.candidates[0].content.parts){
+        text=json.candidates[0].content.parts.map(function(pt){return pt.text||''}).join('');
+      }
+      if(text){
         if(imageDataUrls.length>1)allText.push('--- ページ '+(p+1)+' ---');
-        allText.push(result.data.text.trim());
+        allText.push(text.trim());
       }
     }
 
