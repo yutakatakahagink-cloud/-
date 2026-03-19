@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>新ヒヤリハット報告（所有者）</title>
+<title>安全衛生管理（所有者）</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
 // ===== QR Code Generator (self-contained, no CDN needed) =====
@@ -111,6 +111,7 @@ select,input,textarea,button{color:var(--t1)}
 .rc:active{background:var(--bg5)}
 .rt{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
 .bd2{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
+.bd2.pending{background:rgba(229,56,59,.12);color:var(--rd)}.bd2.in_progress{background:rgba(240,180,41,.12);color:var(--yl)}.bd2.resolved{background:rgba(45,198,166,.12);color:var(--gn)}
 .bf{background:rgba(229,56,59,.12);color:var(--rd)}.bt2{background:rgba(240,180,41,.12);color:var(--yl)}.bm{background:rgba(167,139,250,.12);color:var(--pr)}.bdr{background:rgba(56,189,248,.12);color:var(--bl)}.bcl{background:rgba(45,198,166,.12);color:var(--gn)}.bo{background:rgba(83,98,116,.12);color:var(--t2)}
 .rde{font-size:12px;font-weight:500;line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rm{display:flex;gap:10px;font-size:10px;color:var(--t3)}
@@ -180,6 +181,8 @@ select,input,textarea,button{color:var(--t1)}
 .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#2E7D32,#43A047);border:none;border-radius:var(--r);color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(46,125,50,.25)}
 .login-btn:disabled{opacity:.4;cursor:not-allowed}
 .user-pill{padding:5px 12px;border-radius:14px;font-size:10px;background:#fff;border:1px solid #81C784;color:#2E7D32;cursor:pointer;font-weight:600}
+.top-btn{display:inline-flex;align-items:center;justify-content:center;width:102px;height:31px;padding:0 16px;border-radius:10px;font-size:12px;background:#fff;border:1px solid #81C784;color:#2E7D32;cursor:pointer;font-weight:600;text-decoration:none;font-family:inherit;white-space:nowrap;box-sizing:border-box}
+.top-btn:hover,.top-btn:active{background:var(--acg);border-color:var(--ac)}
 .other-inp{display:none;margin-top:6px}.other-inp.show{display:block}
 .dept-flt{display:flex;gap:5px;padding:8px 16px;overflow-x:auto}
 .dfp{padding:4px 10px;border-radius:10px;font-size:9px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;cursor:pointer;white-space:nowrap;font-family:inherit}
@@ -295,7 +298,7 @@ select,input,textarea,button{color:var(--t1)}
 <!-- LOGIN: 所有者モード (password only) -->
 <div class="login-overlay" id="loginScreen">
 <div class="login-card">
-  <div class="login-logo"><div class="ico">⚠</div><div class="ttl">新ヒヤリハット報告（所有者）</div></div>
+  <div class="login-logo"><div class="ico">⚠</div><div class="ttl">安全衛生管理（所有者）</div></div>
   <p style="text-align:center;font-size:12px;color:var(--t3);margin-bottom:16px;font-weight:600">所有者ログイン</p>
   <label class="login-lbl">所有者パスワード</label>
   <input class="fi" type="password" id="ownerPass" placeholder="所有者パスワードを入力" style="margin-bottom:12px" autocomplete="current-password">
@@ -306,7 +309,7 @@ select,input,textarea,button{color:var(--t1)}
 </div>
 
 <div class="tst" id="toast">✓ 操作が完了しました</div>
-<div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t">新ヒヤリハット報告（所有者）</div><div class="hdr-s">建災防方式 安全管理システム</div></div></div><div class="user-pill" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div>
+<div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t">安全衛生管理（所有者）</div><div class="hdr-s">建災防方式 安全管理システム</div></div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><a href="kensaibou_hiyarihatto_v3.html" class="top-btn">トップ画面に戻る</a><div class="user-pill" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div></div>
 
 <!-- DASHBOARD -->
 <div class="pg on" id="pD">
@@ -339,6 +342,15 @@ select,input,textarea,button{color:var(--t1)}
     <div class="cb com-card" onclick="showComDetail('対策進捗',document.getElementById('aTk_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>対策進捗</div><div id="aTk"></div><div class="com-tap">タップで詳細を表示</div><div id="aTk_full" style="display:none"></div></div>
     <div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--bl)"></span>📜 法改正</div><div id="cLaw"></div></div>
   </div>
+</div>
+
+<!-- 安全衛生要望 -->
+<div class="pg" id="pReq">
+  <div class="ls"><div class="lh"><div class="lt">安全衛生要望一覧</div><select class="fp" id="reqStatusF" onchange="rReqList()" style="padding:6px 10px"><option value="all">すべて</option><option value="pending">未対応</option><option value="in_progress">取り掛かり中</option><option value="resolved">解決済み</option></select></div><div id="reqL"></div></div>
+</div>
+<!-- 災害発生報告 -->
+<div class="pg" id="pDis">
+  <div class="ls"><div class="lh"><div class="lt">災害発生報告一覧</div></div><div id="disL"></div></div>
 </div>
 
 <!-- OWNER SETTINGS -->
@@ -441,6 +453,7 @@ select,input,textarea,button{color:var(--t1)}
   <div class="guide-box" style="margin-top:12px">
     <b>📱 QRコードについて：</b><br>
     各QRコードを印刷して配布してください。スキャンすると該当ページが開きます。<br>
+    <b style="color:var(--ac);margin-top:6px;display:inline-block">※ 報告項目などを修正してもQRコードは変わりません。印刷したQRコードはそのままご利用ください。</b><br>
     <b>使用者</b>：作業員が報告入力・一覧・分析を利用<br>
     <b>管理者</b>：ID/パスワードでログイン後、一覧・分析・委員会を利用<br>
     <b>所有者</b>：パスワードでログイン後、全機能を利用（設定で変更可能）<br><br>
@@ -458,10 +471,12 @@ select,input,textarea,button{color:var(--t1)}
 <!-- MODAL -->
 <div class="mbg" id="modal"><div class="mbd"><div class="mp"></div><div class="mh" id="mT"></div><div id="mI"></div></div></div>
 
-<!-- NAV: 一覧, 分析, 委員会, 設定 (NO 報告 tab) -->
+<!-- NAV: 一覧, 分析, 要望, 災害, 委員会, 設定 -->
 <nav class="nav">
   <button class="ni on" data-p="pD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>一覧</button>
   <button class="ni" data-p="pA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>分析</button>
+  <button class="ni" data-p="pReq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>要望</button>
+  <button class="ni" data-p="pDis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>災害</button>
   <button class="ni" data-p="pC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>委員会</button>
   <button class="ni" data-p="pO"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定</button>
 </nav>
@@ -538,12 +553,12 @@ function updateSyncStatus(){
   if(useFb){box.style.display='none';bar.style.display='block';bar.style.background='rgba(46,125,50,.12)';bar.style.border='1px solid rgba(46,125,50,.3)';bar.textContent='✅ 複数端末同期: オン (Firebase) — 携帯・PCで同一データが表示されます';}
   else{box.style.display='block';bar.style.display='block';bar.style.background='rgba(244,67,54,.08)';bar.style.border='1px solid rgba(244,67,54,.25)';bar.textContent='⚠ 複数端末同期: オフ — 各端末で別々のデータになります。上記の設定を行ってください。';}
 }
-document.querySelectorAll('.ni').forEach(b=>b.onclick=()=>{loadDB();loadPhotos();document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.p).classList.add('on');if(b.dataset.p==='pD')rDash();if(b.dataset.p==='pA')rAnl('simple');if(b.dataset.p==='pC')rCom();if(b.dataset.p==='pO'){renderAdminList();generateAllQR();updateSyncStatus()}});
+document.querySelectorAll('.ni').forEach(b=>b.onclick=()=>{loadDB();loadPhotos();document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.p).classList.add('on');if(b.dataset.p==='pD')rDash();if(b.dataset.p==='pA')rAnl('simple');if(b.dataset.p==='pC')rCom();if(b.dataset.p==='pReq')rReqList();if(b.dataset.p==='pDis')rDisList();if(b.dataset.p==='pO'){renderAdminList();generateAllQR();updateSyncStatus()}});
 document.querySelectorAll('#aT .tp').forEach(t=>t.onclick=()=>{document.querySelectorAll('#aT .tp').forEach(x=>x.classList.remove('on'));t.classList.add('on');rAnl(t.dataset.t)});
 document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')e.target.classList.remove('show')};
 
 // ===== DATA (shared via localStorage) =====
-let DB=[],idc=0,cFi='all',deptFilt='all';
+let DB=[],idc=0,cFi='all',deptFilt='all',REQ_LIST=[],DIS_LIST=[];
 const FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
 var DEMO_DATA=[
 {n:'志田和弘',dept:'土木本部/土木部',ku:'土木',ar:'50~59歳',e:['墜落しそうになった'],d:'足場手すりが外れ、寄りかかった際にぐらついた。転落危険。',c:['確認不足','作業環境'],l:8,w:'2/5 AM10 3階足場',wk:'外壁仕上げ',m:'足場点検チェックリスト導入',st:{workload:3,overtime:3,hardwork:3,fatigue:3,exhausted:3,sluggish:2,tense:3,anxiety:2,restless:2,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:2},we:{pace:2,autonomy:2,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:3,happiness:2},av:['注意不足','焦り'],ac:['KY活動','朝礼夕礼'],ss:'review'},
@@ -568,10 +583,17 @@ function saveDB(){
 function loadPhotos(){
   try{var s=localStorage.getItem('hh_photos');if(s){var ph=JSON.parse(s);DB.forEach(function(r){if(ph[r.id])r.photos=ph[r.id]})}}catch(e){}
 }
+function loadReqDis(cb){
+  if(typeof HHDB==='undefined'){try{var s=localStorage.getItem('hh_requests');REQ_LIST=s?JSON.parse(s):[]}catch(e){REQ_LIST=[]};try{var d=localStorage.getItem('hh_disaster_reports');DIS_LIST=d?JSON.parse(d):[]}catch(e){DIS_LIST=[]};if(cb)cb();return}
+  var todo=2;
+  function done(){todo--;if(todo<=0&&cb)cb()}
+  HHDB.loadRequests(function(arr){REQ_LIST=arr||[];done()});
+  HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];done()});
+}
 function doDataInit(){
   if(typeof HHDB==='undefined'||!HHDB.useFirebase()){
     var p=localStorage.getItem('hh_owner_pass');OWNER_PASS=p||'owner2026';
-    loadDB();loadPhotos();return;
+    loadDB();loadPhotos();loadReqDis();return;
   }
   HHDB.init(function(){
     HHDB.loadOwnerPass(function(p){OWNER_PASS=p||'owner2026'});
@@ -585,8 +607,12 @@ function doDataInit(){
         loadDB();loadPhotos();
       });
     });
+    HHDB.loadRequests(function(arr){REQ_LIST=arr||[]});
+    HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[]});
     HHDB.onReportsChange(function(arr){if(arr&&arr.length){try{localStorage.setItem('hh_reports',JSON.stringify(arr));loadDB();loadPhotos();rDash&&rDash();rAnl&&rAnl('simple');rCom&&rCom();renderAdminList&&renderAdminList()}catch(e){}}});
     HHDB.onAdminsChange(function(admins){if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins));renderAdminList&&renderAdminList()}catch(e){}}});
+    HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(document.querySelector('#pReq.pg.on'))rReqList()});
+    HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
   });
 }
 doDataInit();
@@ -611,7 +637,56 @@ function buildDeptFilter(containerId){
   document.getElementById(containerId).innerHTML=depts.map(d=>`<button class="dfp${d.v===deptFilt?' on':''}" data-d="${d.v}" onclick="setDeptF('${d.v}')">${d.l}</button>`).join('');
 }
 function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom()}
-function getF(){return deptFilt==='all'?DB:DB.filter(r=>r.dept.startsWith(deptFilt))}
+
+// ===== 要望・災害 =====
+function rReqList(){
+  loadReqDis(function(){
+  var fs=document.getElementById('reqStatusF');var fv=fs?fs.value:'all';
+  var list=fv==='all'?REQ_LIST:REQ_LIST.filter(r=>r.status===fv);
+  var SL={pending:'未対応',in_progress:'取り掛かり中',resolved:'解決済み'};
+  var el=document.getElementById('reqL');if(!el)return;
+  el.innerHTML=list.length?list.map(function(r){
+    var st=SL[r.status]||'未対応';var sc='bd2 '+(r.status||'pending');
+    return'<div class="rc" style="margin-bottom:8px"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div><div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
+      ['pending','in_progress','resolved'].map(s=>'<button class="fp" onclick="setReqStatus(\''+r.id+'\',\''+s+'\')" style="padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #81C784;background:#fff;cursor:pointer'+(r.status===s?';border-color:var(--ac);color:var(--ac)':'')+'">'+SL[s]+'</button>').join('')+
+    '</div></div>';
+  }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
+  });
+}
+function setReqStatus(id,s){
+  var r=REQ_LIST.find(x=>String(x.id)===String(id));if(!r)return;
+  r.status=s;
+  if(typeof HHDB!=='undefined')HHDB.saveRequests(REQ_LIST);
+  else try{localStorage.setItem('hh_requests',JSON.stringify(REQ_LIST))}catch(e){}
+  rReqList();
+}
+function rDisList(){
+  loadReqDis(function(){
+  var list=DIS_LIST.slice().sort(function(a,b){return(b.datetime||b.date||'').localeCompare(a.datetime||a.date||'')});
+  var el=document.getElementById('disL');if(!el)return;
+  el.innerHTML=list.length?list.map(function(r){
+    var dt=r.datetime||r.date||'—';var plc=r.place||r.basho||'—';var v=r.victim||'—';var typ=r.type||r.jiko||r.keigen||'—';
+    return'<div class="rc" onclick="showDisDetail(\''+String(r.id||'').replace(/'/g,"\\'")+'\')" style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 bf">'+typ+'</span></div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+r.reporter+'</div></div>';
+  }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
+  });
+}
+function showDisDetail(id){
+  var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
+  var lines;
+  if(r.format==='excel'){
+    var victimExt=(r.victim_age?r.victim_age+'才 ':'')+(r.victim_birth?r.victim_birth:'');
+    lines=[['災害件名',r.keigen],['災害日時',r.datetime],['災害場所',r.basho||r.place],['災害場所の住所',r.basho_jusho],['被災者住所',r.jusho],['氏名',r.victim],['年齢・生年月日',victimExt],['職種',r.victim_dept],['雇入年月日',r.hire_date],['経験年数',r.exp],['傷病名(損害状況)',r.shobyomei],['病院名',r.byoin],['後遺症の可能性',r.koui],['休業見込(損害見込額)',r.kyugyo],['現認者',r.gennin_aru==='有'?('有 職名:'+(r.shokumei||'')+' 氏名:'+(r.gennin||'')):(r.gennin_aru||'無')],['(人)教訓',r.kyukun_person],['(設備)教訓',r.kyukun_equip],['(管理)教訓',r.kyukun_mgmt],['起因物',r.kiinbutsu],['不安全状態',r.fuanzen],['不安全行動',r.fuanzen_kodo],['事故の型',r.jiko],['管理の欠陥',r.kanri],['●場所',r.basho_detail],['●作業',r.sagyo],['○物・環境的要因',r.genin_busshi],['○人的要因',r.genin_jin],['●結果',r.kekka],['本人(こうすればよかった)',r.kaizen_honin],['監督者(こうすればよかった)',r.kaizen_kantoku],['【対策】',r.taisaku],['報告書作成者',r.reporter]];
+  }else{
+    lines=[['事業の種類',r.gyoshu],['事業場名',r.jigyosho],['所在地',r.address],['労働者数',r.workers],['事故発生日時',r.datetime],['発生場所',r.place],['機器種類',r.machine],['事故の種類',r.type],['被害者氏名',r.victim],['被害者所属',r.victim_dept],['人的被害',r.human_damage],['物的被害',r.material_damage],['発生状況',r.situation],['発生原因',r.cause],['再発防止措置',r.measure],['報告書作成者',r.reporter]];
+  }
+  var h='';
+  lines.forEach(function(p){if(p[1])h+='<div class="dl"><span class="dk">'+p[0]+'</span><span class="dv">'+p[1]+'</span></div>'});
+  if(r.situation_img)h+='<div class="dbk"><div class="dbt">発生状況図</div><div class="modal-photos"><img src="'+r.situation_img+'" onclick="showFullPhotoSrc(this.src)" style="max-width:280px;border-radius:8px;cursor:pointer"></div></div>';
+  document.getElementById('mT').textContent='災害発生報告 詳細';
+  document.getElementById('mI').innerHTML=h||'<p style="color:var(--t3)">内容なし</p>';
+  document.getElementById('modal').classList.add('show');
+}
+function getF(){return deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt))}
 
 // ===== OWNER: ADMIN MANAGEMENT =====
 function renderAdminList(){
@@ -666,6 +741,7 @@ function changeOwnerPass(){
 
 // ===== QR CODE GENERATION =====
 let qrInstances={};
+var QR_URL_KEYS={user:'hh_qr_url_user',admin:'hh_qr_url_admin',owner:'hh_qr_url_owner'};
 function getBaseUrl(){
   if(typeof window.HH_BASE_URL==='string'&&window.HH_BASE_URL){return window.HH_BASE_URL.replace(/\/?$/,'/')}
   var href=window.location.href;
@@ -681,10 +757,12 @@ function getPageUrl(type){
   if(type==='owner')return getOwnerPageUrl();
   return getUserPageUrl();
 }
+function getSavedQRUrl(type){try{var s=localStorage.getItem(QR_URL_KEYS[type]);return s||''}catch(e){return ''}}
+function saveQRUrl(type,url){try{if(url)localStorage.setItem(QR_URL_KEYS[type],url);else localStorage.removeItem(QR_URL_KEYS[type])}catch(e){}}
 function resetQRUrl(type){
   type=type||'user';
   var inp=document.getElementById(type==='user'?'qrUrlInput':type==='admin'?'qrAdminUrlInput':'qrOwnerUrlInput');
-  if(inp){inp.value=getPageUrl(type);generateQR(type)}
+  if(inp){inp.value=getPageUrl(type);saveQRUrl(type,inp.value);generateQR(type)}
 }
 function generateQR(type){
   type=type||'user';
@@ -693,11 +771,13 @@ function generateQR(type){
   var urlDispId=type==='user'?'qrCurrentUrl':type==='admin'?'qrCurrentUrlAdmin':'qrCurrentUrlOwner';
   var inp=document.getElementById(inpId);
   var url=inp?inp.value.trim():'';
+  var savedUrl=getSavedQRUrl(type);
   var defaultUrl=getPageUrl(type);
   if(!url||url===type+'.html'||url===type){
-    url=defaultUrl;
+    url=savedUrl||defaultUrl;
     if(inp)inp.value=url;
   }
+  saveQRUrl(type,url);
   var container=document.getElementById(containerId);
   var urlDisp=document.getElementById(urlDispId);
   if(!container)return;
@@ -716,7 +796,7 @@ function generateQR(type){
 function generateAllQR(){
   ['user','admin','owner'].forEach(function(t){
     var inp=document.getElementById(t==='user'?'qrUrlInput':t==='admin'?'qrAdminUrlInput':'qrOwnerUrlInput');
-    if(inp&&!inp.value.trim())inp.value=getPageUrl(t);
+    if(inp&&!inp.value.trim())inp.value=getSavedQRUrl(t)||getPageUrl(t);
     generateQR(t);
   });
 }
@@ -728,7 +808,7 @@ function rDash(){
   document.getElementById('sT').textContent=fd.length;
   document.getElementById('sH').textContent=fd.filter(r=>r.l>=7).length;
   document.getElementById('sD').textContent=fd.filter(r=>r.ss==='done').length;
-  const ec={};fd.forEach(r=>r.e.forEach(e=>ec[e]=(ec[e]||0)+1));
+  const ec={};fd.forEach(r=>(r.e||[]).forEach(e=>ec[e]=(ec[e]||0)+1));
   document.getElementById('sR').textContent=Object.values(ec).filter(c=>c>1).reduce((s,c)=>s+c,0);
   rList();
 }
@@ -739,7 +819,7 @@ function rList(){
     const bc=r.e[0]?.includes('墜落')?'bf':r.e[0]?.includes('転倒')?'bt2':r.e[0]?.includes('激突')||r.e[0]?.includes('機械')?'bm':r.e[0]?.includes('落下')?'bdr':r.e[0]?.includes('倒')?'bcl':'bo';
     const dc=r.ss==='new'?'dn':r.ss==='review'?'dr':'dd';
     const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
-    return`<div class="rc" onclick="sDt(${r.id})"><div class="rt"><span class="bd2 ${bc}">${(r.e[0]||'').substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l}</span></div><div class="rde">${r.d}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${r.n}</span><span>${r.dept.split('/').pop()}</span><span>${r.date}</span></div></div>`;
+    return`<div class="rc" onclick="sDt(${r.id})"><div class="rt"><span class="bd2 ${bc}">${(r.e[0]||'').substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l}</span></div><div class="rde">${r.d}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${r.n}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date}</span></div></div>`;
   }).join('')||'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
 }
 function cycF(){const i=FI.indexOf(cFi);cFi=FI[(i+1)%4];document.getElementById('fB').textContent=FL[cFi]+' ▾';rList()}
@@ -751,22 +831,22 @@ function sDt(id){
   const dot=v=>'●'.repeat(v||0)+'○'.repeat(4-(v||0));
   const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
   let h=`
-    <div class="dl"><span class="dk">報告者</span><span class="dv">${r.n}</span></div>
-    <div class="dl"><span class="dk">部署</span><span class="dv">${r.dept}</span></div>
+    <div class="dl"><span class="dk">報告者</span><span class="dv">${r.n||'—'}</span></div>
+    <div class="dl"><span class="dk">部署</span><span class="dv">${r.dept||'—'}</span></div>
     <div class="dl"><span class="dk">区分/年齢</span><span class="dv">${r.ku||'—'}/${r.ar||'—'}</span></div>
     <div class="dl"><span class="dk">日時・場所</span><span class="dv">${r.w||r.date}</span></div>
     <div class="dl"><span class="dk">災害レベル</span><span class="dv" style="color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l}</span></div>
     <div class="dl"><span class="dk">ステータス</span><span class="dv">${sl}</span></div>
-    <div class="dbk"><div class="dbt">体験</div><div class="dbtx">${r.e.join('、')}</div></div>
-    <div class="dbk"><div class="dbt">詳細</div><div class="dbtx">${r.d}</div></div>
-    <div class="dbk"><div class="dbt">原因</div><div class="dbtx">${r.c.join('、')||'—'}</div></div>
+    <div class="dbk"><div class="dbt">体験</div><div class="dbtx">${(r.e||[]).join('、')}</div></div>
+    <div class="dbk"><div class="dbt">詳細</div><div class="dbtx">${r.d||'—'}</div></div>
+    <div class="dbk"><div class="dbt">原因</div><div class="dbtx">${(r.c||[]).join('、')||'—'}</div></div>
     <div class="dbk"><div class="dbt">対策</div><div class="dbtx">${r.m||'—'}</div></div>
     ${r.photos&&r.photos.length?'<div class="dbk"><div class="dbt">📷 現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(p=>'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">').join('')+'</div></div>':''}
-    <div class="dbk"><div class="dbt">回避できなかった理由</div><div class="dbtx">${r.av.join('、')||'—'}</div></div>
-    <div class="dbk"><div class="dbt">回避に役立つ活動</div><div class="dbtx">${r.ac.join('、')||'—'}</div></div>`;
+    <div class="dbk"><div class="dbt">回避できなかった理由</div><div class="dbtx">${(r.av||[]).join('、')||'—'}</div></div>
+    <div class="dbk"><div class="dbt">回避に役立つ活動</div><div class="dbtx">${(r.ac||[]).join('、')||'—'}</div></div>`;
   // Owner always sees stress data
-  h+=`<div class="dbk"><div class="dbt">🔒 背後要因（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot(r.st[k])}</span>`).join('')}</div></div>`;
-  h+=`<div class="dbk"><div class="dbt">🔒 職場環境（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot(r.we[k])}</span>`).join('')}</div></div>`;
+  h+=`<div class="dbk"><div class="dbt">🔒 背後要因（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.st||{})[k])}</span>`).join('')}</div></div>`;
+  h+=`<div class="dbk"><div class="dbt">🔒 職場環境（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.we||{})[k])}</span>`).join('')}</div></div>`;
   h+=`<div class="abs"><button class="ab abr" onclick="setSS(${r.id},'review')">確認中</button><button class="ab abd" onclick="setSS(${r.id},'done')">対策完了</button></div>`;
   document.getElementById('mI').innerHTML=h;
   document.getElementById('modal').classList.add('show');
@@ -790,7 +870,7 @@ function anlByExp(){
   var fd=getF();
   var expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
   var sh=function(t){return t.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','')};
-  var ec={};expTypes.forEach(function(t){ec[t]=0});fd.forEach(function(r){r.e.forEach(function(e){if(ec[e]!==undefined)ec[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ec[k]++}})});
+  var ec={};expTypes.forEach(function(t){ec[t]=0});fd.forEach(function(r){(r.e||[]).forEach(function(e){if(ec[e]!==undefined)ec[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ec[k]++}})});
   var se=expTypes.filter(function(t){return ec[t]>0});
   var cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
   var h='<div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容を選択</div>';
@@ -798,10 +878,10 @@ function anlByExp(){
   h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="curExpFilter=\'all\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px">すべて（'+fd.length+'件）</button>';
   se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="curExpFilter=\''+t+'\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
   h+='</div></div>';
-  var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return r.e.some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
+  var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
   if(!filtered.length){h+='<div class="cb cb-wide" style="text-align:center;padding:32px;color:var(--t3)">該当データがありません</div>';return h}
   h+='<div class="cb cb-wide" style="background:var(--acg);border-color:var(--ac);padding:12px"><span style="font-size:13px;font-weight:700;color:var(--ac)">'+(curExpFilter==='all'?'全体':sh(curExpFilter))+'</span><span style="font-size:12px;color:var(--t2);margin-left:8px">'+filtered.length+'件</span></div>';
-  var cc={};filtered.forEach(function(r){r.c.forEach(function(c){cc[c]=(cc[c]||0)+1})});
+  var cc={};filtered.forEach(function(r){(r.c||[]).forEach(function(c){cc[c]=(cc[c]||0)+1})});
   var sc2=Object.entries(cc).sort(function(a,b){return b[1]-a[1]});var mc=Math.max.apply(null,sc2.map(function(x){return x[1]}).concat([1]));
   h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>発生原因</div><div class="hb">';
   sc2.forEach(function(x,i){var cause=x[0];h+='<div class="hr cause-click" onclick="showCauseReporters(\''+cause.replace(/'/g,"\\'")+'\')" style="cursor:pointer" title="クリックで現場写真を表示"><div class="hl">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mc)*100+'%;background:'+cl[(i+3)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>';});
@@ -812,13 +892,13 @@ function anlByExp(){
   for(var i=1;i<=10;i++){var v=lc[i];h+='<div class="tc"><div class="tb2" style="height:'+(v?((v/ml)*100):3)+'%;background:'+(i>=7?'var(--rd)':i>=4?'var(--yl)':'var(--gn)')+'"></div><div class="tl2">'+i+'</div></div>'}
   h+='</div></div>';
   h+=anlAge(filtered);
-  var av={};filtered.forEach(function(r){r.av.forEach(function(a){av[a]=(av[a]||0)+1})});
+  var av={};filtered.forEach(function(r){(r.av||[]).forEach(function(a){av[a]=(av[a]||0)+1})});
   var sav=Object.entries(av).sort(function(a,b){return b[1]-a[1]});var mav=Math.max.apply(null,sav.map(function(x){return x[1]}).concat([1]));
   h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--rd)"></span>回避できなかった理由</div><div class="hb">';
   sav.forEach(function(x,i){h+='<div class="hr"><div class="hl" style="width:90px">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mav)*100+'%;background:'+cl[(i+5)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
   if(!sav.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
   h+='</div></div>';
-  var ac={};filtered.forEach(function(r){r.ac.forEach(function(a){ac[a]=(ac[a]||0)+1})});
+  var ac={};filtered.forEach(function(r){(r.ac||[]).forEach(function(a){ac[a]=(ac[a]||0)+1})});
   var sac=Object.entries(ac).sort(function(a,b){return b[1]-a[1]});var mac=Math.max.apply(null,sac.map(function(x){return x[1]}).concat([1]));
   h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--gn)"></span>回避に役立つ活動</div><div class="hb">';
   sac.forEach(function(x,i){h+='<div class="hr"><div class="hl" style="width:90px">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mac)*100+'%;background:'+cl[(i+2)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
@@ -840,11 +920,11 @@ function anlAge(fd){
 function anlSimple(){
   const fd=getF();
   const expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
-  const ec={};expTypes.forEach(t=>ec[t]=0);fd.forEach(r=>r.e.forEach(e=>{if(ec[e]!==undefined)ec[e]++;else{const k=expTypes.find(t=>e.startsWith(t.substring(0,2)));if(k)ec[k]++}}));
+  const ec={};expTypes.forEach(t=>ec[t]=0);fd.forEach(r=>(r.e||[]).forEach(e=>{if(ec[e]!==undefined)ec[e]++;else{const k=expTypes.find(t=>e.startsWith(t.substring(0,2)));if(k)ec[k]++}}));
   const se=expTypes.filter(t=>ec[t]>0).sort((a,b)=>ec[b]-ec[a]);const me=Math.max(...se.map(t=>ec[t]),1);
   const cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
   const sh=t=>t.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');
-  const cc={};fd.forEach(r=>r.c.forEach(c=>cc[c]=(cc[c]||0)+1));
+  const cc={};fd.forEach(r=>(r.c||[]).forEach(c=>cc[c]=(cc[c]||0)+1));
   const sc2=Object.entries(cc).sort((a,b)=>b[1]-a[1]);const mc=Math.max(...sc2.map(x=>x[1]),1);
   const lc={};for(let i=1;i<=10;i++)lc[i]=0;fd.forEach(r=>{if(r.l)lc[r.l]++});const ml=Math.max(...Object.values(lc),1);
   return`<div class="cb"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容</div><div class="hb">${se.map((t,i)=>`<div class="hr"><div class="hl">${sh(t)}</div><div class="htk"><div class="hfl" style="width:${(ec[t]/me)*100}%;background:${cl[i%12]}"><span class="hv">${ec[t]}</span></div></div></div>`).join('')}</div><div class="guide-box"><b>📊 読み方：</b>最も多い体験カテゴリを重点的に対策してください。同じ種類が繰り返される場合、根本原因の分析と対策の見直しが必要です。</div></div>
@@ -855,7 +935,7 @@ function anlBehind(){
   const fd=getF();
   const gs=[{n:'仕事の要求度',k:['workload','overtime','hardwork'],na:6.69,c:'var(--rd)'},{n:'疲労感',k:['fatigue','exhausted','sluggish'],na:8.54,c:'var(--ac)'},{n:'不安感',k:['tense','anxiety','restless'],na:9.06,c:'var(--yl)'},{n:'抑うつ感',k:['depressed','bothered','gloomy'],na:9.50,c:'var(--pr)'},{n:'身体愁訴',k:['appetite','sleep'],na:9.96,c:'var(--bl)'}];
   const ws=[{n:'仕事のコントロール',k:['pace','autonomy','voice'],na:8.04,c:'var(--gn)'},{n:'上司の支援',k:['boss_talk','boss_help','boss_consult'],na:8.60,c:'var(--bl)'},{n:'同僚の支援',k:['peer_talk','peer_help','peer_consult'],na:8.72,c:'var(--pr)'},{n:'ワーク・エンゲイジメント',k:['vigor','pride','happiness'],na:7.02,c:'var(--yl)'}];
-  const avg=(keys,field)=>{if(!fd.length)return 0;let s=0,ct=0;fd.forEach(r=>{const d=field==='st'?r.st:r.we;keys.forEach(k=>{s+=(d[k]||0);ct++})});return ct?(s/ct):0};
+  const avg=(keys,field)=>{if(!fd.length)return 0;let s=0,ct=0;fd.forEach(r=>{const d=field==='st'?(r.st||{}):(r.we||{});keys.forEach(k=>{s+=(d[k]||0);ct++})});return ct?(s/ct):0};
   const toS=v=>(v/4)*12;
   let h='<div class="cb"><div class="cht"><span class="chd" style="background:var(--ac)"></span>背後要因分析（全国平均比較）🔒</div><p style="font-size:10px;color:var(--t3);margin-bottom:12px">上=現場平均 下=全国平均（建災防R2年調査換算値）</p>';
   [...gs,...ws].forEach(g=>{
@@ -869,7 +949,7 @@ function anlBehind(){
 }
 function anlResil(){
   const fd=getF();
-  const cc={};fd.forEach(r=>r.av.forEach(a=>cc[a]=(cc[a]||0)+1));
+  const cc={};fd.forEach(r=>(r.av||[]).forEach(a=>cc[a]=(cc[a]||0)+1));
   const sa=Object.entries(cc).sort((a,b)=>b[1]-a[1]);const ma=Math.max(...sa.map(x=>x[1]),1);
   const cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7'];
   let h='<div class="cb"><div class="cht"><span class="chd" style="background:var(--rd)"></span>回避できなかった理由</div><div class="hb">';
@@ -880,7 +960,7 @@ function anlResil(){
 }
 function anlActs(){
   const fd=getF();
-  const ac={};fd.forEach(r=>r.ac.forEach(a=>ac[a]=(ac[a]||0)+1));
+  const ac={};fd.forEach(r=>(r.ac||[]).forEach(a=>ac[a]=(ac[a]||0)+1));
   const sa=Object.entries(ac).sort((a,b)=>b[1]-a[1]);const ma=Math.max(...sa.map(x=>x[1]),1);
   const cl=['#2DC6A6','#38BDF8','#A78BFA','#F0B429','#E8652B','#E5383B','#FF8B55','#6EE7B7'];
   let h='<div class="cb"><div class="cht"><span class="chd" style="background:var(--gn)"></span>回避に役立つ活動</div><div class="hb">';
@@ -899,13 +979,13 @@ function rCom(){
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
   let sm=`<div class="com-section"><strong>報告状況</strong><p>報告総数 ${fd.length}件、高レベル(Lv.7+) <span style="color:var(--rd);font-weight:700">${hi.length}件</span></p></div>`;
-  const ec={};fd.forEach(r=>r.e.forEach(e=>ec[e]=(ec[e]||0)+1));
+  const ec={};fd.forEach(r=>(r.e||[]).forEach(e=>ec[e]=(ec[e]||0)+1));
   const te=Object.entries(ec).sort((a,b)=>b[1]-a[1])[0];
   if(te)sm+=`<div class="com-section"><strong>最頻出体験</strong><p>${te[0]}（${te[1]}件）→ 再発防止が急務</p></div>`;
-  const hStr=fd.filter(r=>{const v=Object.values(r.st);return(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
+  const hStr=fd.filter(r=>{const v=Object.values(r.st||{});return(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
   sm+=`<div class="com-section"><strong>高ストレス報告</strong><p>${hStr.length}件（${fd.length?Math.round(hStr.length/fd.length*100):0}%）</p></div>`;
   const supK=['boss_talk','boss_help','boss_consult'],supL={boss_talk:'上司対話',boss_help:'上司支援',boss_consult:'上司相談'};
-  let lowS=[];supK.forEach(k=>{const a=fd.reduce((s,r)=>s+(r.we[k]||0),0)/(fd.length||1);if(a<2.5)lowS.push({k,a})});
+  let lowS=[];supK.forEach(k=>{const a=fd.reduce((s,r)=>s+((r.we||{})[k]||0),0)/(fd.length||1);if(a<2.5)lowS.push({k,a})});
   if(lowS.length){sm+=`<div class="com-section"><strong style="color:var(--rd)">⚠ 上司支援スコア低</strong><p>${lowS.map(l=>supL[l.k]+'('+l.a.toFixed(1)+'/4)').join('、')}</p><p style="font-size:12px;color:var(--t3);margin-top:8px">責任者が情報を堰き止めている可能性。匿名報告ルート整備を推奨</p></div>`}
   document.getElementById('cS').innerHTML=sm;
   document.getElementById('cS_full').innerHTML='<div class="com-detail">'+sm+'</div>';
@@ -914,11 +994,11 @@ function rCom(){
   const expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
   const expToMeasure={ '墜落しそうになった':'足場点検・高所作業の安全手順・墜落制止用器具の使用徹底','転倒しそうになった':'4S・通路確保・滑り止め・照明改善','機械等に激突されそうになった':'合図者配置・進入禁止区域の明確化・声掛けルール','ものが落下してきた':'落下防止ネット・工具の落下防止ワイヤー・開口部の囲い','ものが倒れかかってきた':'仮設の固定・計測頻度・警報システム','自分からぶつかりそうになった':'通路確保・視界確保・注意喚起','はさまれそうになった':'安全ガード・インターロック・作業手順の見直し','切られそうになった':'刃物の管理・保護具・作業手順の教育','やけどしそうになった':'熱源の隔離・保護具・緊急措置の周知','感電しそうになった':'絶縁確認・仮設電気の点検・感電防止教育','交通事故になりそうだった':'誘導員配置・バックモニター・後方確認の義務化','その他':'個別事象に応じた対策検討'};
   const causeToMeasure={ '確認不足':'チェックリスト導入・ダブルチェック・朝礼での確認事項周知','連絡・連携ミス':'声掛けルール・合図の統一・無線の活用','作業環境':'4S・照明・通路確保・危険区域の明示','設備・機械':'定期点検・安全装置の確認・修理・更新','不注意行動':'KY活動強化・休憩の確保・焦りを生む工程の見直し','視界不良':'照明改善・視界確保・安全標識の設置'};
-  var ecCom={};expTypes.forEach(function(t){ecCom[t]=0});fd.forEach(function(r){r.e.forEach(function(e){if(ecCom[e]!==undefined)ecCom[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ecCom[k]++}})});
+  var ecCom={};expTypes.forEach(function(t){ecCom[t]=0});fd.forEach(function(r){(r.e||[]).forEach(function(e){if(ecCom[e]!==undefined)ecCom[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ecCom[k]++}})});
   var seCom=expTypes.filter(function(t){return ecCom[t]>0}).sort(function(a,b){return ecCom[b]-ecCom[a]});
   var byExpData=[];var byExpHtml='';
   seCom.forEach(function(exp){
-    var sub=fd.filter(function(r){return r.e.some(function(e){return e===exp||e.startsWith(exp.substring(0,2))})});
+    var sub=fd.filter(function(r){return (r.e||[]).some(function(e){return e===exp||e.startsWith(exp.substring(0,2))})});
     byExpData.push({exp:exp,sub:sub});
     var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');
     byExpHtml+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:6px">'+expShort+'（'+sub.length+'件）</div>';
@@ -961,13 +1041,13 @@ function rCom(){
   document.getElementById('cLaw').innerHTML='<div style="font-size:10px;color:var(--t3);margin-bottom:10px">※施行予定日・内容は変更される場合があります。</div>'+enactedBox+upcomingBox;
 
   // Critical: high stress x high risk
-  const crit=fd.filter(r=>{const v=Object.values(r.st);return r.l>=7&&(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
-  var cLHtml=crit.length?crit.map(r=>{const v=Object.values(r.st);const av=(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1);return`<div class="rc" onclick="event.stopPropagation();sDt(${r.id})" style="margin-bottom:5px"><div class="rt"><span class="bd2 bf">${(r.e[0]||'').substring(0,8)}</span><span style="font-size:9px;color:var(--rd);font-weight:700">Lv.${r.l}/ストレス${av}</span></div><div class="rde">${r.d}</div><div class="rm"><span>${r.n}</span><span>${r.dept.split('/').pop()}</span></div></div>`}).join(''):'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
+  const crit=fd.filter(r=>{const v=Object.values(r.st||{});return r.l>=7&&(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
+  var cLHtml=crit.length?crit.map(r=>{const v=Object.values(r.st||{});const av=(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1);return`<div class="rc" onclick="event.stopPropagation();sDt(${r.id})" style="margin-bottom:5px"><div class="rt"><span class="bd2 bf">${(r.e[0]||'').substring(0,8)}</span><span style="font-size:9px;color:var(--rd);font-weight:700">Lv.${r.l}/ストレス${av}</span></div><div class="rde">${r.d}</div><div class="rm"><span>${r.n}</span><span>${(r.dept||'').split('/').pop()}</span></div></div>`}).join(''):'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
   document.getElementById('cL').innerHTML=cLHtml;
   document.getElementById('cL_full').innerHTML='<div class="com-detail">'+cLHtml+'</div>';
 
   // Dept stress comparison
-  const sites={};fd.forEach(r=>{if(!r.dept)return;const s=r.dept.split('/').slice(0,2).join('/');if(!sites[s])sites[s]={ct:0,stS:0,lS:0,hc:0};sites[s].ct++;const sv=Object.values(r.st);sites[s].stS+=sv.reduce((a,b)=>a+b,0)/sv.length;sites[s].lS+=r.l;if(r.l>=7)sites[s].hc++});
+  const sites={};fd.forEach(r=>{if(!r.dept)return;const s=r.dept.split('/').slice(0,2).join('/');if(!sites[s])sites[s]={ct:0,stS:0,lS:0,hc:0};sites[s].ct++;const sv=Object.values(r.st||{});sites[s].stS+=sv.reduce((a,b)=>a+b,0)/sv.length;sites[s].lS+=r.l;if(r.l>=7)sites[s].hc++});
   const se=Object.entries(sites).sort((a,b)=>b[1].hc-a[1].hc);
   const scl={'土木本部/土木部':'var(--ac)','土木本部/高千穂営業所':'var(--yl)','建材本部/宮崎支店':'var(--bl)','建材本部/延岡営業所':'var(--pr)'};
   var sStrHtml=se.map(([n,d])=>{const as=(d.stS/d.ct).toFixed(1),al=(d.lS/d.ct).toFixed(1),co=scl[n]||'var(--t2)';return`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${co};margin-bottom:3px">${n.split('/').pop()}（${d.ct}件）</div><div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:50px;font-size:9px;color:var(--t3)">ストレス</span><div class="crt"><div class="crf" style="width:${(as/4)*100}%;background:${co}"></div></div><span class="crv" style="color:${co}">${as}</span></div><div style="display:flex;gap:6px;align-items:center"><span style="width:50px;font-size:9px;color:var(--t3)">危険度</span><div class="crt"><div class="crf" style="width:${(al/10)*100}%;background:${co};opacity:.6"></div></div><span class="crv" style="color:${co}">${al}</span></div></div>`}).join('');
@@ -976,7 +1056,7 @@ function rCom(){
   // Suggestions
   let sg='';
   if(fd.length){
-    const stK=Object.keys(fd[0]?.st||{});const stA={};stK.forEach(k=>{stA[k]=fd.reduce((s,r)=>s+(r.st[k]||0),0)/(fd.length||1)});
+    const stK=Object.keys(fd[0]?.st||{});const stA={};stK.forEach(k=>{stA[k]=fd.reduce((s,r)=>s+((r.st||{})[k]||0),0)/(fd.length||1)});
     const top3=Object.entries(stA).sort((a,b)=>b[1]-a[1]).slice(0,3);
     const sMap={workload:'工程管理の見直しと適正人員配置を。',overtime:'作業時間管理と残業削減策を委員会議題に。',hardwork:'労働強度分散と交代制導入を。',fatigue:'定期休憩義務化と勤務間インターバル確保を。',exhausted:'連続勤務日数制限と休日確保ルール策定を。',sluggish:'健康チェック実施と体調不良申告体制整備を。',tense:'KY活動の質向上と心理的安全性確保を。',anxiety:'不安要因の特定と対策を委員会で議論。メンタルヘルス相談窓口周知も。',restless:'作業前の準備時間確保と焦りを生む工程見直しを。',depressed:'産業医面談活用と職場コミュニケーション活性化を。',bothered:'安全表彰・成功体験共有等のモチベーション向上策を。',gloomy:'職場環境改善（休憩室・照明・温度管理等）と定期面談を。',appetite:'栄養バランス啓発と食事環境改善を。',sleep:'勤務スケジュール見直しと睡眠衛生教育を。'};
     const sL={workload:'仕事量過多',overtime:'時間不足',hardwork:'労働強度',fatigue:'疲労',exhausted:'消耗',sluggish:'倦怠',tense:'緊張',anxiety:'不安',restless:'焦り',depressed:'抑うつ',bothered:'意欲低下',gloomy:'気分不良',appetite:'食欲低下',sleep:'不眠'};
@@ -989,9 +1069,10 @@ function rCom(){
   document.getElementById('sug_full').innerHTML='<div class="com-detail">'+sg+'</div>';
 
   // Action tracker
-  const acts=[{t:'足場点検チェックリスト導入',s:'土木本部',ss:'done'},{t:'合図者常時配置ルール策定',s:'土木本部',ss:'review'},{t:'落下防止ワイヤー徹底',s:'土木本部',ss:'done'},{t:'バックモニター確認義務化',s:'建材本部',ss:'review'},{t:'計測頻度増加・警報導入',s:'土木本部',ss:'new'},{t:'匿名報告ルート整備',s:'全社',ss:'new'}];
-  var aTkCard=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:11px;font-weight:500">${a.t}</div><div style="font-size:9px;color:var(--t3)">${a.s}</div></div><span style="font-size:9px;font-weight:700;color:${c}">${l}</span></div>`}).join('');
-  var aTkModal=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div class="com-section" style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)"><span style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:14px;font-weight:500">${a.t}</div><div style="font-size:12px;color:var(--t3);margin-top:4px">${a.s}</div></div><span style="font-size:12px;font-weight:700;color:${c}">${l}</span></div>`}).join('');
+  const allActs=[{t:'足場点検チェックリスト導入',s:'土木本部',ss:'done'},{t:'合図者常時配置ルール策定',s:'土木本部',ss:'review'},{t:'落下防止ワイヤー徹底',s:'土木本部',ss:'done'},{t:'バックモニター確認義務化',s:'建材本部',ss:'review'},{t:'計測頻度増加・警報導入',s:'土木本部',ss:'new'},{t:'匿名報告ルート整備',s:'全社',ss:'new'}];
+  const acts=deptFilt==='all'?allActs:allActs.filter(a=>a.s==='全社'||a.s.startsWith(deptFilt)||deptFilt.startsWith(a.s));
+  var aTkCard=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:11px;font-weight:500">${a.t}</div><div style="font-size:9px;color:var(--t3)">${a.s}</div></div><span style="font-size:9px;font-weight:700;color:${c}">${l}</span></div>`}).join('')||'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
+  var aTkModal=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div class="com-section" style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)"><span style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:14px;font-weight:500">${a.t}</div><div style="font-size:12px;color:var(--t3);margin-top:4px">${a.s}</div></div><span style="font-size:12px;font-weight:700;color:${c}">${l}</span></div>`}).join('')||'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
   document.getElementById('aTk').innerHTML=aTkCard;
   document.getElementById('aTk_full').innerHTML='<div class="com-detail">'+aTkModal+'</div>';
 }
