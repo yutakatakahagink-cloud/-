@@ -174,27 +174,27 @@ input[type="file"].photo-input{display:none}
 .photo-del:hover,.remove-btn:hover{background:#dc2626}
 .photo-thumb .filename,.preview-item .filename{position:absolute;bottom:0;left:0;right:0;padding:4px 6px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .photo-empty{text-align:center;color:var(--t3);padding:16px;font-size:12px}
-.ocr-box{background:#fff;border:2px solid #81C784;border-radius:var(--r);padding:16px;margin-bottom:20px}
-.ocr-box .ocr-title{font-size:13px;font-weight:700;color:var(--ac);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.ocr-drop{border:2px dashed #A5D6A7;border-radius:var(--rs);padding:20px 12px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fdf8}
+.ocr-box{background:#fff;border:2px solid #81C784;border-radius:var(--r);padding:10px 12px;margin-bottom:12px}
+.ocr-box .ocr-title{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ocr-drop{border:2px dashed #A5D6A7;border-radius:var(--rs);padding:10px 10px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fdf8}
 .ocr-drop:hover,.ocr-drop.dragover{border-color:var(--ac);background:var(--acg)}
 .ocr-drop p{color:var(--t2);margin:0;font-size:12px}
 .ocr-drop p.sub{font-size:10px;margin-top:4px;color:var(--t3)}
 .ocr-btns{display:flex;gap:10px;justify-content:center}
-.ocr-pick-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 20px;background:#fff;border:2px solid #81C784;border-radius:var(--r);cursor:pointer;transition:all .2s;font-family:inherit;min-width:120px}
+.ocr-pick-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;background:#fff;border:2px solid #81C784;border-radius:var(--r);cursor:pointer;transition:all .2s;font-family:inherit;min-width:100px}
 .ocr-pick-btn:hover,.ocr-pick-btn:active{background:var(--acg);border-color:var(--ac);transform:translateY(-1px)}
-.ocr-pick-ico{font-size:1.8rem}
+.ocr-pick-ico{font-size:1.3rem}
 .ocr-pick-label{font-size:11px;font-weight:600;color:var(--t1)}
 .ocr-preview{margin-top:10px;display:none;text-align:center}
-.ocr-preview.show{display:block}
+.ocr-preview.show{display:block!important}
 .ocr-preview img{max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bd)}
 .ocr-prog{width:100%;height:6px;background:#C8E6C9;border-radius:3px;overflow:hidden;margin:8px 0;display:none}
-.ocr-prog.show{display:block}
+.ocr-prog.show{display:block!important}
 .ocr-prog-bar{height:100%;background:linear-gradient(90deg,#2E7D32,#66BB6A);border-radius:3px;transition:width .3s ease;width:0%}
 .ocr-status{font-size:11px;color:var(--t2);margin-top:4px;display:none}
-.ocr-status.show{display:block}
+.ocr-status.show{display:block!important}
 .ocr-result{margin-top:10px;display:none}
-.ocr-result.show{display:block}
+.ocr-result.show{display:block!important}
 .ocr-result-text{background:#f8fdf8;border:1px solid #A5D6A7;border-radius:var(--rs);padding:12px;max-height:200px;overflow-y:auto;font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
 .ocr-actions{display:flex;gap:8px;margin-top:10px}
 .ocr-btn{flex:1;padding:10px;border-radius:var(--rs);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:none}
@@ -516,14 +516,13 @@ input[type="file"].photo-input{display:none}
       <div class="ocr-btns">
         <button type="button" class="ocr-pick-btn" id="ocrBtnFile"><span class="ocr-pick-ico">📷</span><span class="ocr-pick-label">カメラ/画像/PDFを選択</span></button>
       </div>
-      <p class="sub" style="margin-top:8px">手書き報告用紙を撮影またはファイル添付</p>
-      <p class="sub">ドラッグ＆ドロップにも対応</p>
+      <p class="sub" style="margin-top:4px">手書き報告用紙を撮影またはファイル添付（ドラッグ＆ドロップ対応）</p>
       <input type="file" id="ocrFileInput" accept=".pdf,image/*" style="display:none">
     </div>
-    <div class="ocr-preview" id="ocrPreview"><img id="ocrPreviewImg"></div>
-    <div class="ocr-prog" id="ocrProg"><div class="ocr-prog-bar" id="ocrProgBar"></div></div>
-    <div class="ocr-status" id="ocrStatus"></div>
-    <div class="ocr-result" id="ocrResult">
+    <div class="ocr-preview" id="ocrPreview" style="display:none"><img id="ocrPreviewImg"></div>
+    <div class="ocr-prog" id="ocrProg" style="display:none"><div class="ocr-prog-bar" id="ocrProgBar"></div></div>
+    <div class="ocr-status" id="ocrStatus" style="display:none"></div>
+    <div class="ocr-result" id="ocrResult" style="display:none">
       <div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:4px">読み取り結果：</div>
       <div class="ocr-result-text" id="ocrResultText"></div>
       <div class="ocr-actions">
