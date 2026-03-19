@@ -1639,81 +1639,78 @@ async function processFile(file){
   showProgress();
   setProgress(5,'ファイルを読み込み中...');
 
+  var geminiKey=window.HH_GEMINI_API_KEY||'';
+  if(!geminiKey){alert('Gemini APIキーが設定されていません。');dropZone.style.display='';hideProgress();return}
+
   try{
-    var imageDataUrls=[];
+    var fileParts=[];
+    var previewUrl=null;
 
     if(isPdf){
-      setProgress(10,'PDFを解析中...');
-      if(!pdfjsLib){throw new Error('PDF.jsが読み込まれていません。ページを再読み込みしてください。')}
+      setProgress(10,'PDFを読み込み中...');
       var buf=await file.arrayBuffer();
-      var pdf=await pdfjsLib.getDocument({data:buf}).promise;
-      for(var i=1;i<=pdf.numPages;i++){
-        setProgress(10+Math.floor((i/pdf.numPages)*20),'ページ '+i+'/'+pdf.numPages+' を変換中...');
-        var page=await pdf.getPage(i);
-        var scale=2;
-        var vp=page.getViewport({scale:scale});
-        var canvas=document.createElement('canvas');
-        canvas.width=vp.width;canvas.height=vp.height;
-        await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-        imageDataUrls.push(canvas.toDataURL('image/png'));
+      var base64Pdf=btoa(new Uint8Array(buf).reduce(function(d,b){return d+String.fromCharCode(b)},''));
+      fileParts.push({inline_data:{mime_type:'application/pdf',data:base64Pdf}});
+
+      if(pdfjsLib){
+        try{
+          var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+          var pg=await pdf.getPage(1);
+          var vp=pg.getViewport({scale:1.5});
+          var cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+          await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+          previewUrl=cv.toDataURL('image/png');
+        }catch(e){}
       }
     }else{
       setProgress(15,'画像を読み込み中...');
       var dataUrl=await readFileAsDataUrl(file);
-      imageDataUrls.push(dataUrl);
+      previewUrl=dataUrl;
+      var base64Img=dataUrl.replace(/^data:[^;]+;base64,/,'');
+      var mimeMatch=dataUrl.match(/^data:([^;]+);/);
+      var mimeType=mimeMatch?mimeMatch[1]:'image/png';
+      fileParts.push({inline_data:{mime_type:mimeType,data:base64Img}});
     }
 
-    if(imageDataUrls.length>0){
-      previewImg.src=imageDataUrls[0];
+    if(previewUrl){
+      previewImg.src=previewUrl;
       previewEl.classList.add('show');
     }
 
-    setProgress(35,'Gemini Vision APIで文字認識中...');
+    setProgress(40,'Gemini AIで文字認識中...');
 
-    var geminiKey=window.HH_GEMINI_API_KEY||'';
-    if(!geminiKey){throw new Error('Gemini APIキーが設定されていません。config.jsを確認してください。')}
+    var prompt='あなたはOCR専門のアシスタントです。この' + (isPdf?'PDF文書':'画像') + 'に書かれている文字を全て正確に読み取ってテキスト化してください。\n\n' +
+      '【重要なルール】\n' +
+      '・手書き文字も印刷文字も全て正確に読み取ること\n' +
+      '・日本語の文書です。漢字・ひらがな・カタカナ・数字を正確に認識すること\n' +
+      '・チェックボックスやマル印がある場合は、チェック済みの項目を明記すること\n' +
+      '・表やフォームの構造がある場合は「項目名: 値」の形式で出力すること\n' +
+      '・読み取った文字のみを出力し、説明や補足は一切不要です\n' +
+      '・文字が不鮮明でも、文脈から最も可能性の高い文字を推測して出力すること';
 
-    var allText=[];
-    for(var p=0;p<imageDataUrls.length;p++){
-      var pLabel=imageDataUrls.length>1?'ページ'+(p+1)+'/'+imageDataUrls.length+' ':'';
-      setProgress(35+Math.floor((p/imageDataUrls.length)*55),pLabel+'AI文字認識中...');
+    var body={
+      contents:[{parts:[{text:prompt}].concat(fileParts)}],
+      generationConfig:{temperature:0.1,maxOutputTokens:4096}
+    };
 
-      var base64=imageDataUrls[p].replace(/^data:image\/[a-z]+;base64,/,'');
-      var mimeType=imageDataUrls[p].match(/^data:(image\/[a-z]+);/);
-      mimeType=mimeType?mimeType[1]:'image/png';
+    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+geminiKey,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
 
-      var body={
-        contents:[{
-          parts:[
-            {text:"この画像に書かれている文字を全て正確に読み取ってください。手書き文字も含めて、できるだけ正確にテキスト化してください。レイアウトや改行もできるだけ元の文書に忠実に再現してください。読み取った文字のみを出力し、説明や補足は不要です。"},
-            {inline_data:{mime_type:mimeType,data:base64}}
-          ]
-        }]
-      };
-
-      var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+geminiKey,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(body)
-      });
-
-      if(!resp.ok){
-        var errText=await resp.text();
-        throw new Error('Gemini API エラー ('+resp.status+'): '+errText);
-      }
-
-      var json=await resp.json();
-      var text='';
-      if(json.candidates&&json.candidates[0]&&json.candidates[0].content&&json.candidates[0].content.parts){
-        text=json.candidates[0].content.parts.map(function(pt){return pt.text||''}).join('');
-      }
-      if(text){
-        if(imageDataUrls.length>1)allText.push('--- ページ '+(p+1)+' ---');
-        allText.push(text.trim());
-      }
+    if(!resp.ok){
+      var errBody=await resp.text();
+      throw new Error('Gemini API エラー ('+resp.status+'): '+errBody);
     }
 
-    _ocrText=allText.join('\n\n');
+    var json=await resp.json();
+    var text='';
+    if(json.candidates&&json.candidates[0]&&json.candidates[0].content&&json.candidates[0].content.parts){
+      text=json.candidates[0].content.parts.map(function(pt){return pt.text||''}).join('');
+    }
+
+    _ocrText=text.trim();
     setProgress(100,'読み取り完了');
 
     setTimeout(function(){
