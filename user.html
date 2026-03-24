@@ -214,6 +214,8 @@ input[type="file"].photo-input{display:none}
   .pg{max-width:none}
   .mbd{max-width:none}
   .fw{padding:0 32px 24px}
+  .cs{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:stretch}
+  .cs>.cb-wide,.cs>.ic{grid-column:span 2}
   .dis-form-mobile{display:none}
   .dis-form-pc{display:block;width:100%;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;border:1px solid #333}
   #pDis .fw{max-width:none;padding:0 10px 16px;width:100%;box-sizing:border-box}
@@ -1014,7 +1016,7 @@ var modal=document.getElementById('modal');if(modal)modal.onclick=e=>{if(e.targe
 document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
 
 // ===== DATA =====
-var DB=[],idc=0,cFi='all',deptFilt='all';
+var DB=[],idc=0,cFi='all',deptFilt='all',curExpFilter='all';
 var REQ_LIST=[],DIS_LIST=[];
 var pendingPhotos=window._hhPhotos||[];var disPendingPhotos=[],disPendingPhotosPC=[];
 var FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
@@ -1500,33 +1502,62 @@ function setSS(id,s){const r=DB.find(x=>x.id===id);if(r){r.ss=s;if(typeof HHDB!=
 
 // ===== ANALYTICS =====
 function rAnl(type){
-  // 使用者の場合、部署フィルタを自分の部署に固定
   if(ROLE==='user'&&CUR){
     const uDept=CUR.honbu||(CUR.dept?CUR.dept.split('/')[0]:'');
     if(uDept&&deptFilt==='all'){deptFilt=uDept}
   }
   buildDeptFilter('dfAnl');
-  // 使用者・管理者は背後要因タブ非表示
   document.querySelectorAll('#aT .tp').forEach(t=>{
-    if(t.dataset.t==='behind')t.style.display=(ROLE==='owner')?'inline-block':'none';
+    if(t.dataset.t==='behind')t.style.display='none';
+    else t.style.display='inline-block';
   });
-  if(type==='behind'&&ROLE!=='owner'){type='simple';document.querySelectorAll('#aT .tp').forEach(x=>x.classList.remove('on'));document.querySelector('#aT .tp[data-t="simple"]').classList.add('on')}
+  if(type==='behind'){type='simple';document.querySelectorAll('#aT .tp').forEach(x=>x.classList.remove('on'));var sb=document.querySelector('#aT .tp[data-t="simple"]');if(sb)sb.classList.add('on')}
   const ct=document.getElementById('aC');
   if(type==='simple')ct.innerHTML=anlSimple();
-  else if(type==='byexp')ct.innerHTML=anlByExp();
+  else if(type==='byexp'){curExpFilter='all';ct.innerHTML=anlByExp()}
   else if(type==='behind')ct.innerHTML=anlBehind();
   else if(type==='resil')ct.innerHTML=anlResil();
   else ct.innerHTML=anlActs();
 }
 function anlByExp(){
-  const fd=getF();
-  const ec={};fd.forEach(r=>(r.e||[]).forEach(e=>{const k=e.split(':')[0];ec[k]=(ec[k]||0)+1}));
-  const se=Object.entries(ec).sort((a,b)=>b[1]-a[1]);const me=Math.max(...se.map(x=>x[1]),1);
-  const sh=t=>t.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','').replace('その他:','');
-  let h='<div class="cb"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験別分析</div><div class="byexp-grid">';
-  se.forEach(([t,v])=>{h+=`<div class="byexp-item">${sh(t)}：${v}件</div>`});
-  if(!se.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
-  h+='</div></div>';return h;
+  var fd=getF();
+  var expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
+  var sh=function(t){return t.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','')};
+  var ec={};expTypes.forEach(function(t){ec[t]=0});fd.forEach(function(r){(r.e||[]).forEach(function(e){if(ec[e]!==undefined)ec[e]++;else{var k=expTypes.find(function(t){return e.startsWith(t.substring(0,2))});if(k)ec[k]++}})});
+  var se=expTypes.filter(function(t){return ec[t]>0});
+  var cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
+  var h='<div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容を選択</div>';
+  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
+  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="curExpFilter=\'all\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px">すべて（'+fd.length+'件）</button>';
+  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="curExpFilter=\''+t+'\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
+  h+='</div></div>';
+  var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
+  if(!filtered.length){h+='<div class="cb cb-wide" style="text-align:center;padding:32px;color:var(--t3)">該当データがありません</div>';return h}
+  h+='<div class="cb cb-wide" style="background:var(--acg);border-color:var(--ac);padding:12px"><span style="font-size:13px;font-weight:700;color:var(--ac)">'+(curExpFilter==='all'?'全体':sh(curExpFilter))+'</span><span style="font-size:12px;color:var(--t2);margin-left:8px">'+filtered.length+'件</span></div>';
+  var cc={};filtered.forEach(function(r){(r.c||[]).forEach(function(c){cc[c]=(cc[c]||0)+1})});
+  var sc2=Object.entries(cc).sort(function(a,b){return b[1]-a[1]});var mc=Math.max.apply(null,sc2.map(function(x){return x[1]}).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>発生原因</div><div class="hb">';
+  sc2.forEach(function(x,i){var cause=x[0];h+='<div class="hr cause-click" onclick="showCauseReporters(\''+cause.replace(/'/g,"\\'")+'\')" style="cursor:pointer" title="クリックで現場写真を表示"><div class="hl">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mc)*100+'%;background:'+cl[(i+3)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
+  if(!sc2.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  var lc={};for(var i=1;i<=10;i++)lc[i]=0;filtered.forEach(function(r){if(r.l)lc[r.l]++});var ml=Math.max.apply(null,Object.values(lc).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--bl)"></span>災害レベル分布</div><div class="trw">';
+  for(var i=1;i<=10;i++){var v=lc[i];h+='<div class="tc"><div class="tb2" style="height:'+(v?((v/ml)*100):3)+'%;background:'+(i>=7?'var(--rd)':i>=4?'var(--yl)':'var(--gn)')+'"></div><div class="tl2">'+i+'</div></div>'}
+  h+='</div></div>';
+  h+=anlAge(filtered);
+  var av={};filtered.forEach(function(r){(r.av||[]).forEach(function(a){av[a]=(av[a]||0)+1})});
+  var sav=Object.entries(av).sort(function(a,b){return b[1]-a[1]});var mav=Math.max.apply(null,sav.map(function(x){return x[1]}).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--rd)"></span>回避できなかった理由</div><div class="hb">';
+  sav.forEach(function(x,i){h+='<div class="hr"><div class="hl" style="width:90px">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mav)*100+'%;background:'+cl[(i+5)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
+  if(!sav.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  var ac={};filtered.forEach(function(r){(r.ac||[]).forEach(function(a){ac[a]=(ac[a]||0)+1})});
+  var sac=Object.entries(ac).sort(function(a,b){return b[1]-a[1]});var mac=Math.max.apply(null,sac.map(function(x){return x[1]}).concat([1]));
+  h+='<div class="cb"><div class="cht"><span class="chd" style="background:var(--gn)"></span>回避に役立つ活動</div><div class="hb">';
+  sac.forEach(function(x,i){h+='<div class="hr"><div class="hl" style="width:90px">'+x[0]+'</div><div class="htk"><div class="hfl" style="width:'+(x[1]/mac)*100+'%;background:'+cl[(i+2)%12]+'"><span class="hv">'+x[1]+'</span></div></div></div>'});
+  if(!sac.length)h+='<p style="color:var(--t3);font-size:11px;text-align:center;padding:16px">データなし</p>';
+  h+='</div></div>';
+  return h;
 }
 function anlAge(fd){
   const ageRanges=['20歳未満','20~29歳','30~39歳','40~49歳','50~59歳','60~64歳','65歳以上'];
@@ -1550,7 +1581,7 @@ function anlSimple(){
   const sc2=Object.entries(cc).sort((a,b)=>b[1]-a[1]);const mc=Math.max(...sc2.map(x=>x[1]),1);
   const lc={};for(let i=1;i<=10;i++)lc[i]=0;fd.forEach(r=>{if(r.l)lc[r.l]++});const ml=Math.max(...Object.values(lc),1);
   return`<div class="cb"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容</div><div class="hb">${se.map((t,i)=>`<div class="hr"><div class="hl">${sh(t)}</div><div class="htk"><div class="hfl" style="width:${(ec[t]/me)*100}%;background:${cl[i%12]}"><span class="hv">${ec[t]}</span></div></div></div>`).join('')}</div><div class="guide-box"><b>📊 読み方：</b>最も多い体験カテゴリを重点的に対策してください。同じ種類が繰り返される場合、根本原因の分析と対策の見直しが必要です。</div></div>
-  <div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>発生原因</div><div class="hb">${sc2.map(([t,v],i)=>`<div class="hr"><div class="hl">${t}</div><div class="htk"><div class="hfl" style="width:${(v/mc)*100}%;background:${cl[(i+3)%12]}"><span class="hv">${v}</span></div></div></div>`).join('')}</div><div class="guide-box"><b>📊 活用法：</b>「確認不足」「連絡ミス」が上位なら<b>組織的な仕組み（チェックリスト・声掛けルール）</b>で対策。「設備・機械」が上位なら<b>設備投資・点検強化</b>を委員会で提案。</div></div>
+  <div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>発生原因</div><div class="hb">${sc2.map(([t,v],i)=>`<div class="hr cause-click" onclick="showCauseReporters('${t.replace(/'/g,"\\'")}')" style="cursor:pointer" title="クリックで現場写真を表示"><div class="hl">${t}</div><div class="htk"><div class="hfl" style="width:${(v/mc)*100}%;background:${cl[(i+3)%12]}"><span class="hv">${v}</span></div></div></div>`).join('')}</div><div class="guide-box"><b>📊 活用法：</b>「確認不足」「連絡ミス」が上位なら<b>組織的な仕組み（チェックリスト・声掛けルール）</b>で対策。「設備・機械」が上位なら<b>設備投資・点検強化</b>を委員会で提案。</div></div>
   <div class="cb"><div class="cht"><span class="chd" style="background:var(--bl)"></span>災害レベル分布</div><div class="trw">${Array.from({length:10},(_,i)=>{const v=lc[i+1];return`<div class="tc"><div class="tb2" style="height:${v?((v/ml)*100):3}%;background:${i+1>=7?'var(--rd)':i+1>=4?'var(--yl)':'var(--gn)'}"></div><div class="tl2">${i+1}</div></div>`}).join('')}</div><div class="guide-box"><b>📊 注目点：</b>Lv.7以上が増加傾向なら<b>緊急対策会議</b>を開催。Lv.1-3が多い場合は報告文化が根付いている良い兆候。ただし軽微な事象でも繰り返しは重大事故の予兆です。</div></div>`+anlAge(fd);
 }
 function anlBehind(){
