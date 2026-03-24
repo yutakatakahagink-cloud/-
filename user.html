@@ -685,10 +685,6 @@ input[type="file"].photo-input{display:none}
 <!-- MODAL -->
 <div class="mbg" id="modal"><div class="mbd"><div class="mp"></div><div class="mh" id="mT"></div><div id="mI"></div></div></div>
 
-<!-- NAV（使用者用：メニューのみ） -->
-<nav class="nav">
-  <button class="ni on" data-p="pMenu" id="navMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>メニュー</button>
-</nav>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -770,7 +766,7 @@ function applyRole(){
   navBtns.forEach(b=>{b.style.display='flex'});
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
-  document.querySelector('[data-p="pMenu"]').classList.add('on');
+  var navMenuBtn=document.querySelector('[data-p="pMenu"]');if(navMenuBtn)navMenuBtn.classList.add('on');
   document.getElementById('pMenu').classList.add('on');
   var reqBack=document.getElementById('reqBack');if(reqBack)reqBack.style.display='';
   var reqForm=document.getElementById('reqFormArea');if(reqForm)reqForm.style.display='';
@@ -1693,17 +1689,25 @@ async function processFile(file){
       generationConfig:{temperature:0.1,maxOutputTokens:4096}
     };
 
-    var models=['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro'];
+    var models=['gemini-1.5-flash','gemini-1.5-pro','gemini-2.0-flash'];
     var json=null;
+    var lastErr='';
     for(var mi=0;mi<models.length;mi++){
       var url='https://generativelanguage.googleapis.com/v1beta/models/'+models[mi]+':generateContent?key='+geminiKey;
-      setProgress(45+mi*10,models[mi]+' で認識中...');
-      var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      if(resp.ok){json=await resp.json();break}
-      if(resp.status===429&&mi<models.length-1){continue}
-      var errBody=await resp.text();
-      throw new Error('Gemini API エラー ('+resp.status+'): '+errBody);
+      setProgress(45+mi*15,models[mi]+' で認識中...');
+      try{
+        var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(resp.ok){json=await resp.json();break}
+        if(resp.status===429&&mi<models.length-1){lastErr='レート制限 ('+models[mi]+')';continue}
+        var errBody=await resp.text();
+        lastErr='Gemini API エラー ('+resp.status+'): '+errBody.substring(0,200);
+        if(mi<models.length-1)continue;
+      }catch(fetchErr){
+        lastErr=fetchErr.message;
+        if(mi<models.length-1)continue;
+      }
     }
+    if(!json)throw new Error(lastErr||'全てのモデルで読み取りに失敗しました');
 
     var text='';
     if(json&&json.candidates&&json.candidates[0]&&json.candidates[0].content&&json.candidates[0].content.parts){
