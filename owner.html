@@ -144,6 +144,8 @@ select,input,textarea,button{color:var(--t1)}
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px}
 .mbg.show{display:flex}
 .mbd{background:#fff;border-radius:14px;width:100%;max-width:540px;max-height:85vh;overflow-y:auto;padding:24px 24px 32px;animation:su .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.mbd.dis-detail-wide{max-width:1200px;max-height:92vh}
+@media(max-width:767px){.mbd.dis-detail-wide{max-width:100%}}
 @keyframes su{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 .mp{width:32px;height:3px;background:var(--t3);border-radius:2px;margin:0 auto 14px}
 .mh{font-size:15px;font-weight:700;margin-bottom:14px}
@@ -555,7 +557,7 @@ function updateSyncStatus(){
 }
 document.querySelectorAll('.ni').forEach(b=>b.onclick=()=>{loadDB();loadPhotos();document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.p).classList.add('on');if(b.dataset.p==='pD')rDash();if(b.dataset.p==='pA')rAnl('simple');if(b.dataset.p==='pC')rCom();if(b.dataset.p==='pReq')rReqList();if(b.dataset.p==='pDis')rDisList();if(b.dataset.p==='pO'){renderAdminList();generateAllQR();updateSyncStatus()}});
 document.querySelectorAll('#aT .tp').forEach(t=>t.onclick=()=>{document.querySelectorAll('#aT .tp').forEach(x=>x.classList.remove('on'));t.classList.add('on');rAnl(t.dataset.t)});
-document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')e.target.classList.remove('show')};
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal'){e.target.classList.remove('show');var mb=e.target.querySelector('.mbd');if(mb)mb.classList.remove('dis-detail-wide')}};
 
 // ===== DATA (shared via localStorage) =====
 let DB=[],idc=0,cFi='all',deptFilt='all',REQ_LIST=[],DIS_LIST=[];
@@ -672,19 +674,75 @@ function rDisList(){
 }
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
-  var lines;
-  if(r.format==='excel'){
-    var victimExt=(r.victim_age?r.victim_age+'才 ':'')+(r.victim_birth?r.victim_birth:'');
-    lines=[['災害件名',r.keigen],['災害日時',r.datetime],['災害場所',r.basho||r.place],['災害場所の住所',r.basho_jusho],['被災者住所',r.jusho],['氏名',r.victim],['年齢・生年月日',victimExt],['職種',r.victim_dept],['雇入年月日',r.hire_date],['経験年数',r.exp],['傷病名(損害状況)',r.shobyomei],['病院名',r.byoin],['後遺症の可能性',r.koui],['休業見込(損害見込額)',r.kyugyo],['現認者',r.gennin_aru==='有'?('有 職名:'+(r.shokumei||'')+' 氏名:'+(r.gennin||'')):(r.gennin_aru||'無')],['(人)教訓',r.kyukun_person],['(設備)教訓',r.kyukun_equip],['(管理)教訓',r.kyukun_mgmt],['起因物',r.kiinbutsu],['不安全状態',r.fuanzen],['不安全行動',r.fuanzen_kodo],['事故の型',r.jiko],['管理の欠陥',r.kanri],['●場所',r.basho_detail],['●作業',r.sagyo],['○物・環境的要因',r.genin_busshi],['○人的要因',r.genin_jin],['●結果',r.kekka],['本人(こうすればよかった)',r.kaizen_honin],['監督者(こうすればよかった)',r.kaizen_kantoku],['【対策】',r.taisaku],['報告書作成者',r.reporter]];
-  }else{
-    lines=[['事業の種類',r.gyoshu],['事業場名',r.jigyosho],['所在地',r.address],['労働者数',r.workers],['事故発生日時',r.datetime],['発生場所',r.place],['機器種類',r.machine],['事故の種類',r.type],['被害者氏名',r.victim],['被害者所属',r.victim_dept],['人的被害',r.human_damage],['物的被害',r.material_damage],['発生状況',r.situation],['発生原因',r.cause],['再発防止措置',r.measure],['報告書作成者',r.reporter]];
-  }
-  var h='';
-  lines.forEach(function(p){if(p[1])h+='<div class="dl"><span class="dk">'+p[0]+'</span><span class="dv">'+p[1]+'</span></div>'});
-  if(r.situation_img)h+='<div class="dbk"><div class="dbt">発生状況図</div><div class="modal-photos"><img src="'+r.situation_img+'" onclick="showFullPhotoSrc(this.src)" style="max-width:280px;border-radius:8px;cursor:pointer"></div></div>';
+  var V=function(v){var s=v!=null?String(v):'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
+  var birthParts=(r.birth||'').split('-');var by=birthParts[0]||'',bm=birthParts[1]||'',bd=birthParts[2]||'';
+  var expParts=(r.exp||'').split('-');var expY=expParts[0]||'',expM=expParts[1]||'';
+  var disImgs=r.situation_imgs&&r.situation_imgs.length?r.situation_imgs:(r.situation_img?[r.situation_img]:[]);
+  var imgsHtml=disImgs.length?disImgs.map(function(src){return'<img src="'+src+'" onclick="showFullPhotoSrc(this.src)" style="max-width:200px;border-radius:6px;cursor:pointer;margin:4px">'}).join(''):'';
+  var isMobile=window.innerWidth<768;
+  var bdr=isMobile?'border-bottom:1px solid #333;':'border-right:1px solid #333;';
+  var cols=isMobile?'1fr':'1fr 1fr 1fr';
+  var row=function(l,v){return'<div style="display:flex;align-items:stretch;border-bottom:1px solid #333;min-height:28px"><div style="flex-shrink:0;width:90px;padding:4px 8px;background:#e8e8e8;border-right:1px solid #333;display:flex;align-items:center;font-size:10pt;line-height:1.3">'+l+'</div><div style="flex:1;min-width:0;padding:4px 6px;display:flex;align-items:center;background:#fff;font-size:10pt;word-break:break-all">'+v+'</div></div>'};
+  var sub=function(l,v){return'<div style="display:flex;align-items:stretch;border-bottom:1px solid #ddd;min-height:28px"><div style="flex-shrink:0;width:70px;padding:4px 6px;background:#f0f0f0;border-right:1px solid #ddd;display:flex;align-items:center;font-size:9.5pt">'+l+'</div><div style="flex:1;min-width:0;padding:4px 6px;display:flex;align-items:center;background:#fff;font-size:10pt;word-break:break-all">'+v+'</div></div>'};
+  var gs=function(l){return'<div style="display:flex;border-bottom:1px solid #333"><div style="flex-shrink:0;width:90px;padding:8px 6px;background:#e8e8e8;border-right:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9.5pt;line-height:1.4">'+l+'</div><div style="flex:1;display:flex;flex-direction:column;min-width:0">'};
+  var ge='</div></div>';
+  var ss=function(t,v){return'<div style="padding:6px 10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:10pt;margin-bottom:4px">'+t+'</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:30px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(v)+'</div></div>'};
+  var h='<div style="border:1px solid #333;border-radius:6px;overflow:hidden;background:#fff;font-family:Meiryo,sans-serif;font-size:10.5pt">';
+  h+='<div style="border-bottom:1px solid #333;padding:10px;text-align:center;font-weight:bold;font-size:16pt;background:#D9D9D9">災害事故(人身・物損)発生報告書</div>';
+  h+='<div style="display:grid;grid-template-columns:'+cols+';gap:0;'+(isMobile?'':'min-height:400px')+'">';
+  h+='<div style="'+bdr+'display:flex;flex-direction:column"><div style="display:flex;flex-direction:column;gap:0;font-size:10.5pt">';
+  h+=row('工事件名',V(r.keigen||''));
+  h+=row('災害日時',V(r.datetime||''));
+  h+=row('災害場所',V(r.basho||r.place||''));
+  h+=row('住所',V(r.basho_jusho||''));
+  h+=gs('被災者又は<br>事故者');
+  h+=sub('住所',V(r.jusho||''));
+  h+=sub('氏名',V(r.victim||'')+' 年齢:'+V(r.age||'')+'才 生年月日:'+V(by)+'年'+V(bm)+'月'+V(bd)+'日 職種:'+V(r.victim_dept||''));
+  h+=sub('雇入年月日',V(r.hire_date||'')+' 経験年数:'+V(expY)+'年'+V(expM)+'カ月');
+  h+=ge;
+  h+=gs('被災(事故)の<br>程度');
+  h+=sub('傷病名<br>(損害状況)',V(r.shobyomei||''));
+  h+=sub('病院名',V(r.byoin||'')+' 後遺症:'+V(r.koui||''));
+  h+=sub('休業見込<br>(損害見込額)',V(r.kyugyo||''));
+  h+=ge;
+  h+=row('現認者',r.gennin_aru==='有'?('有 職名:'+V(r.shokumei||'')+' 氏名:'+V(r.gennin_name||r.gennin||'')):V(r.gennin_aru||'無'));
+  h+=gs('人・設備・管理に<br>ついての教訓');
+  h+=sub('(人)',V(r.kyukun_person||''));
+  h+=sub('(設備)',V(r.kyukun_equip||''));
+  h+=sub('(管理)',V(r.kyukun_mgmt||''));
+  h+=ge;
+  h+='<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">労災原因分類</div>';
+  h+=row('起因物',V(r.kiinbutsu||''));
+  h+=row('不安全状態',V(r.fuanzen||''));
+  h+=row('不安全行動',V(r.fuanzen_kodo||''));
+  h+=row('事故の型',V(r.jiko||''));
+  h+=row('管理の欠陥',V(r.kanri||''));
+  h+='</div></div>';
+  h+='<div style="'+bdr+'display:flex;flex-direction:column;padding:0">';
+  h+='<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">災害発生状況</div>';
+  h+=ss('●場所(・・・で)',r.basho_detail||'');
+  h+=ss('●作業(・・・しているとき)',r.sagyo||'');
+  h+='<div style="padding:6px 10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:10pt;margin-bottom:4px">●原因(・・・であったため)</div>';
+  h+='<div style="font-size:9.5pt;color:#555;margin-bottom:2px">○物・環境的要因</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:24px;background:#f9f9f9;padding:4px 6px;border-radius:4px;margin-bottom:6px">'+V(r.genin_busshi||'')+'</div>';
+  h+='<div style="font-size:9.5pt;color:#555;margin-bottom:2px">○人的要因</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:24px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(r.genin_jin||'')+'</div></div>';
+  h+=ss('●結果(・・・した)',r.kekka||'');
+  h+='<div style="padding:6px 10px"><div style="font-weight:bold;font-size:10pt;margin-bottom:6px">こうすればよかったと思うこと</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h+='<div><div style="font-size:9.5pt;color:#555;margin-bottom:2px">本人</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:40px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(r.kaizen_honin||'')+'</div></div>';
+  h+='<div><div style="font-size:9.5pt;color:#555;margin-bottom:2px">監督者</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:40px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(r.kaizen_kantoku||'')+'</div></div>';
+  h+='</div></div></div>';
+  h+='<div style="display:flex;flex-direction:column">';
+  h+='<div style="padding:10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:11pt;margin-bottom:8px">発生状況図</div><div style="min-height:40px">'+imgsHtml+'</div></div>';
+  h+='<div style="padding:10px;flex:1"><div style="font-weight:bold;font-size:11pt;margin-bottom:8px">【対策】</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:60px;background:#f9f9f9;padding:6px 8px;border-radius:4px">'+V(r.taisaku||'')+'</div></div>';
+  h+='</div></div>';
+  h+='<div style="margin-top:12px;padding:12px;background:#f8f8f8;border:1px solid #333;border-radius:6px;font-size:11pt"><div style="margin-bottom:8px">上記のとおり相違なく報告いたします。</div><div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap">'+V(r.report_date||'')+'　責任者：'+V(r.sekininsha||'')+'</div></div>';
+  h+='</div>';
   document.getElementById('mT').textContent='災害発生報告 詳細';
-  document.getElementById('mI').innerHTML=h||'<p style="color:var(--t3)">内容なし</p>';
-  document.getElementById('modal').classList.add('show');
+  document.getElementById('mI').innerHTML=h;
+  var modal=document.getElementById('modal');
+  var mbd=modal.querySelector('.mbd');
+  mbd.classList.add('dis-detail-wide');
+  modal.classList.add('show');
 }
 function getF(){return deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt))}
 
