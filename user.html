@@ -387,7 +387,7 @@ input[type="file"].photo-input{display:none}
     document.getElementById('f_dept').value=CUR.dept;
     document.getElementById('userPill').textContent='ログイン画面へ';
     var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
-    var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value=CUR.dept;
+    var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
     document.getElementById('f_reporter').value=CUR.name;
     document.getElementById('f_victim_dept').value=CUR.dept;
     if(typeof window.HHDB!=='undefined')window.HHDB.init(function(){if(typeof doDataInit==='function')doDataInit()});
@@ -536,7 +536,6 @@ input[type="file"].photo-input{display:none}
         <div class="dis-fl-row"><div class="dis-fl-label">不安全行動</div><div class="dis-fl-input"><select class="fs" id="f_fuanzen_kodo_pc"><option value="">選択</option><option value="防護・安全装置を無効にする">防護・安全装置を無効にする</option><option value="安全措置の不履行">安全措置の不履行</option><option value="不安全な状態を放置">不安全な状態を放置</option><option value="危険な状態を作る">危険な状態を作る</option><option value="機械・装置等の指定外の使用">機械・装置等の指定外の使用</option><option value="運転中の機械装置等の掃除、注油、修理、点検等">運転中の機械装置等の掃除、注油、修理、点検等</option><option value="保護具、服装の欠陥">保護具、服装の欠陥</option><option value="危険場所への接近">危険場所への接近</option><option value="その他の不安全な行為">その他の不安全な行為</option><option value="運転の失敗(乗物)">運転の失敗(乗物)</option><option value="誤った動作">誤った動作</option><option value="その他">その他</option></select></div></div>
         <div class="dis-fl-row"><div class="dis-fl-label">事故の型</div><div class="dis-fl-input"><select class="fs" id="f_jiko_pc"><option value="">選択</option><option value="墜落、転落">墜落、転落</option><option value="転倒">転倒</option><option value="激突">激突</option><option value="激突され">激突され</option><option value="飛来、落下">飛来、落下</option><option value="破壊、倒壊">破壊、倒壊</option><option value="挟まれ、巻込まれ">挟まれ、巻込まれ</option><option value="切れ、こすれ">切れ、こすれ</option><option value="踏み抜き">踏み抜き</option><option value="おぼれ">おぼれ</option><option value="高温・低温の物との接触">高温・低温の物との接触</option><option value="有害物等との接触">有害物等との接触</option><option value="感電">感電</option><option value="爆発">爆発</option><option value="破裂">破裂</option><option value="火災">火災</option><option value="交通事故(道路)">交通事故(道路)</option><option value="交通事故(その他)">交通事故(その他)</option><option value="動作の反動、無理な動作">動作の反動、無理な動作</option><option value="その他">その他</option><option value="分類不能">分類不能</option></select></div></div>
         <div class="dis-fl-row"><div class="dis-fl-label">管理の欠陥</div><div class="dis-fl-input"><select class="fs" id="f_kanri_pc"><option value="">選択</option><option value="管理組織の欠陥">管理組織の欠陥</option><option value="規程・マニュアル不備">規程・マニュアル不備</option><option value="教育訓練不足">教育訓練不足</option><option value="部下に対する監督・指導不足">部下に対する監督・指導不足</option><option value="適正配置不十分">適正配置不十分</option><option value="健康管理不足">健康管理不足</option><option value="その他">その他</option></select></div></div>
-        <div class="dis-fl-row"><div class="dis-fl-label">報告書作成者</div><div class="dis-fl-input"><input class="fi" id="f_reporter_pc" readonly></div></div>
       </div>
     </div>
     <div class="dis-pc-center">
@@ -554,7 +553,7 @@ input[type="file"].photo-input{display:none}
       <div class="dis-right-sect"><div class="dis-rs-title">【対策】</div><textarea class="ft" id="f_taisaku_pc" placeholder="再発防止のための対策" style="width:100%;min-height:100px"></textarea></div>
     </div>
   </div>
-  <div class="dis-report-block"><div class="dis-report-msg">上記のとおり相違なく報告いたします。</div><div class="dis-report-date"><input class="fi" type="date" id="f_report_date_pc" style="width:140px">　責任者：<input class="fi" id="f_sekininsha_pc" placeholder="責任者名" style="width:120px"></div></div>
+  <div class="dis-report-block"><div class="dis-report-msg">上記のとおり相違なく報告いたします。</div><div class="dis-report-date" style="justify-content:flex-end"><input class="fi" type="date" id="f_report_date_pc" style="width:140px">　責任者：<input class="fi" id="f_sekininsha_pc" placeholder="責任者名" style="width:120px" readonly></div></div>
   <button class="sub" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
   </div>
   </div>
@@ -918,7 +917,7 @@ function doLogin(){
   document.getElementById('f_dept').value=CUR.dept;
   document.getElementById('userPill').textContent='ログイン画面へ';
   var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
-  var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value=CUR.dept;
+  var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
   document.getElementById('f_reporter').value=CUR.name;
   document.getElementById('f_victim_dept').value=CUR.dept;
   if(typeof HHDB!=='undefined')HHDB.init(function(){doDataInit()});
@@ -1153,10 +1152,11 @@ function fillDisFormDefaults(){
   if(!CUR)return;
   document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
   var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
-  var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value=CUR.dept;
+  var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
   document.getElementById('f_reporter').value=CUR.name;
   document.getElementById('f_victim_dept').value=CUR.dept;
   var rd=document.getElementById('f_report_date_pc');if(rd)rd.value=new Date().toISOString().slice(0,10);
+  var sk=document.getElementById('f_sekininsha_pc');if(sk)sk.value=CUR.name;
   var now=new Date();
   var dy=document.getElementById('f_dt_y_pc'),dm=document.getElementById('f_dt_m_pc'),dd=document.getElementById('f_dt_d_pc'),dh=document.getElementById('f_dt_h_pc'),dmin=document.getElementById('f_dt_min_pc');
   if(dy){dy.value=String(now.getFullYear());dm.value=String(now.getMonth()+1).padStart(2,'0');dd.value=String(now.getDate()).padStart(2,'0');dh.value=String(now.getHours()).padStart(2,'0');dmin.value=String(now.getMinutes()).padStart(2,'0');updateDisDtWeek()}
