@@ -16,7 +16,8 @@ window.HH_FIREBASE_CONFIG = {
 };
 
 // Gemini Vision API キー（OCR用）
-window.HH_GEMINI_API_KEY = "AIzaSyD7AR8qx5eUJJl4luEc9ydBFC15FpI_7Gw";
+// Gemini APIキーはlocalStorageから取得（初回使用時にブラウザで入力）
+window.HH_GEMINI_API_KEY = "";
 
 // config.firebase.json があれば読み込んで上書き（編集不要で設定可能）
 (function(){

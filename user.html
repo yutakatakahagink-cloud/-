@@ -1635,8 +1635,12 @@ async function processFile(file){
   showProgress();
   setProgress(5,'ファイルを読み込み中...');
 
-  var geminiKey=window.HH_GEMINI_API_KEY||'';
-  if(!geminiKey){alert('Gemini APIキーが設定されていません。');dropZone.style.display='';hideProgress();return}
+  var geminiKey=localStorage.getItem('hh_gemini_key')||window.HH_GEMINI_API_KEY||'';
+  if(!geminiKey){
+    geminiKey=prompt('Gemini APIキーを入力してください（初回のみ）:','');
+    if(!geminiKey){dropZone.style.display='';hideProgress();return}
+  }
+  localStorage.setItem('hh_gemini_key',geminiKey);
 
   try{
     var fileParts=[];
@@ -1732,7 +1736,12 @@ async function processFile(file){
   }catch(err){
     hideProgress();
     dropZone.style.display='';
-    alert('読み取りエラー: '+err.message);
+    if(err.message&&(err.message.indexOf('403')>=0||err.message.indexOf('401')>=0||err.message.indexOf('leaked')>=0||err.message.indexOf('PERMISSION_DENIED')>=0)){
+      localStorage.removeItem('hh_gemini_key');
+      alert('APIキーが無効です。再度お試しください。次回、新しいキーの入力を求められます。');
+    }else{
+      alert('読み取りエラー: '+err.message);
+    }
     console.error('OCR error:',err);
   }
 }
