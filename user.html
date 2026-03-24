@@ -481,11 +481,14 @@ input[type="file"].photo-input{display:none}
   <div class="sd">事故の発生状況</div>
   <div class="fg"><label class="fl">発生状況<span class="rq">*</span></label><textarea class="ft" id="f_situation" placeholder="事故がどのように発生したか具体的に記入"></textarea></div>
   <div class="fg"><label class="fl">発生状況図（画像添付）</label>
-    <button type="button" class="ocr-pick-btn" id="disPhotoBtn" onclick="document.getElementById('f_situation_img').click()" style="display:block;width:100%">📷 カメラ/画像を選択（1枚）</button>
-    <input type="file" class="photo-input" id="f_situation_img" accept="image/*" onchange="if(this.files&&this.files.length)handleDisPhoto(this.files)">
+    <div id="disDropZone" style="text-align:center">
+      <button type="button" class="ocr-pick-btn" id="disPhotoBtn">📷 カメラ/画像を選択（最大5枚）</button>
+      <input type="file" class="photo-input" id="f_situation_img" accept="image/*,.heic,.heif" multiple style="display:none">
+    </div>
     <div class="photo-preview" id="disPhotoPreview">
       <div class="photo-empty" id="disPhotoEmpty" style="display:none"></div>
     </div>
+    <div class="photo-count" id="disPhotoCount"></div>
   </div>
   <div class="sd">事故の原因・対策</div>
   <div class="fg"><label class="fl">発生原因</label><textarea class="ft" id="f_cause" placeholder="事故の原因を記入"></textarea></div>
@@ -547,7 +550,7 @@ input[type="file"].photo-input{display:none}
       </div>
     </div>
     <div class="dis-pc-right">
-      <div class="dis-right-sect"><div class="dis-rs-title">発生状況図</div><button type="button" class="ocr-pick-btn" id="disPhotoBtnPC" onclick="document.getElementById('f_situation_img_pc').click()" style="display:block;width:100%">📷 カメラ/画像を選択（1枚）</button><input type="file" class="photo-input" id="f_situation_img_pc" accept="image/*" onchange="if(this.files&&this.files.length)handleDisPhotoPC(this.files)"><div class="photo-preview" id="disPhotoPreviewPC" style="min-height:60px"><div class="photo-empty" id="disPhotoEmptyPC" style="display:none"></div></div></div>
+      <div class="dis-right-sect"><div class="dis-rs-title">発生状況図</div><div id="disDropZonePC" style="text-align:center"><button type="button" class="ocr-pick-btn" id="disPhotoBtnPC">📷 カメラ/画像を選択（最大5枚）</button><input type="file" class="photo-input" id="f_situation_img_pc" accept="image/*,.heic,.heif" multiple style="display:none"></div><div class="photo-preview" id="disPhotoPreviewPC" style="min-height:60px"><div class="photo-empty" id="disPhotoEmptyPC" style="display:none"></div></div><div class="photo-count" id="disPhotoCountPC"></div></div>
       <div class="dis-right-sect"><div class="dis-rs-title">【対策】</div><textarea class="ft" id="f_taisaku_pc" placeholder="再発防止のための対策" style="width:100%;min-height:100px"></textarea></div>
     </div>
   </div>
@@ -555,6 +558,74 @@ input[type="file"].photo-input{display:none}
   <button class="sub" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
   </div>
   </div>
+  <script>
+  (function(){
+    function setupDisPhotos(btnId,inpId,previewId,emptyId,countId,storageKey){
+      var btn=document.getElementById(btnId);
+      var inp=document.getElementById(inpId);
+      var preview=document.getElementById(previewId);
+      var empty=document.getElementById(emptyId);
+      var countEl=document.getElementById(countId);
+      if(!btn||!inp||!preview)return;
+      window[storageKey]=window[storageKey]||[];
+      window[storageKey+'_names']=window[storageKey+'_names']||[];
+      function render(){
+        preview.querySelectorAll('.photo-thumb').forEach(function(n){n.remove()});
+        if(empty)empty.style.display=window[storageKey].length?'none':'block';
+        window[storageKey].forEach(function(url,i){
+          var d=document.createElement('div');d.className='photo-thumb';
+          var img=document.createElement('img');img.src=url;d.appendChild(img);
+          var del=document.createElement('button');del.type='button';del.className='photo-del';del.title='\u524a\u9664';del.textContent='\u00d7';
+          del.onclick=function(e){e.stopPropagation();window[storageKey].splice(i,1);window[storageKey+'_names'].splice(i,1);render()};
+          d.appendChild(del);
+          var sp=document.createElement('span');sp.className='filename';sp.textContent=window[storageKey+'_names'][i]||('\u753b\u50cf'+(i+1));d.appendChild(sp);
+          preview.appendChild(d);
+        });
+        if(countEl)countEl.textContent=window[storageKey].length>0?window[storageKey].length+'/5\u679a':'';
+      }
+      function isHeic(file){
+        var name=(file.name||'').toLowerCase();
+        var type=(file.type||'').toLowerCase();
+        return name.endsWith('.heic')||name.endsWith('.heif')||type==='image/heic'||type==='image/heif';
+      }
+      function readUrl(blob){return new Promise(function(ok,ng){var r=new FileReader();r.onload=function(){ok(r.result)};r.onerror=ng;r.readAsDataURL(blob)})}
+      function addPhoto(dataUrl,fileName,phId){
+        var ph=phId?document.getElementById(phId):null;if(ph)ph.remove();
+        if(window[storageKey].length<5){window[storageKey].push(dataUrl);window[storageKey+'_names'].push(fileName);render()}
+      }
+      function showLoading(fileName){
+        if(empty)empty.style.display='none';
+        var id='_dld_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+        var d=document.createElement('div');d.className='photo-thumb';d.id=id;
+        d.style.display='flex';d.style.alignItems='center';d.style.justifyContent='center';d.style.background='#e2e8f0';
+        d.innerHTML='<div style="text-align:center;padding:8px"><div style="width:24px;height:24px;border:3px solid #81C784;border-top-color:transparent;border-radius:50%;animation:_spin 0.8s linear infinite;margin:0 auto"></div><div style="font-size:9px;color:#558B2F;margin-top:6px">HEIC\u5909\u63db\u4e2d...</div></div>';
+        preview.appendChild(d);return id;
+      }
+      function handle(files){
+        if(!files||!files.length)return;
+        var arr=[];for(var i=0;i<files.length;i++)arr.push(files[i]);
+        arr=arr.slice(0,5-window[storageKey].length);
+        if(!arr.length)return;
+        arr.forEach(function(file){
+          if(isHeic(file)&&typeof heic2any!=='undefined'){
+            var phId=showLoading(file.name);
+            heic2any({blob:file,toType:'image/jpeg',quality:0.85}).then(function(jpegBlob){return readUrl(jpegBlob)}).then(function(dataUrl){
+              addPhoto(dataUrl,file.name.replace(/\.heic$/i,'.jpg').replace(/\.heif$/i,'.jpg'),phId);
+            }).catch(function(){var r=new FileReader();r.onload=function(){addPhoto(r.result,file.name,phId)};r.readAsDataURL(file)});
+          }else{
+            var r=new FileReader();r.onload=function(){addPhoto(r.result,file.name)};r.readAsDataURL(file);
+          }
+        });
+      }
+      btn.addEventListener('click',function(e){e.stopPropagation();inp.value='';inp.click()});
+      inp.addEventListener('change',function(){if(inp.files&&inp.files.length){handle(inp.files);inp.value=''}});
+      window[storageKey+'_render']=render;
+      window[storageKey+'_handle']=handle;
+    }
+    setupDisPhotos('disPhotoBtn','f_situation_img','disPhotoPreview','disPhotoEmpty','disPhotoCount','_disPhotos');
+    setupDisPhotos('disPhotoBtnPC','f_situation_img_pc','disPhotoPreviewPC','disPhotoEmptyPC','disPhotoCountPC','_disPhotosPC');
+  })();
+  </script>
   <!-- 管理者・所有者用：災害発生報告一覧 -->
   <div id="disListArea" class="ls" style="display:none">
     <div class="lh"><div class="lt">災害発生報告一覧</div></div>
@@ -1095,66 +1166,22 @@ function fillDisFormDefaults(){
     var he=document.getElementById('f_hire_date_pc');if(he){he.addEventListener('input',updateDisExp);he.addEventListener('change',updateDisExp)}
   }
 }
-var disPendingPhotoName='',disPendingPhotoNamePC='';
-function handleDisPhoto(files){
-  if(!files||!files.length)return;
-  var f=Array.from(files)[0];
-  if(!f.type||!f.type.startsWith('image/'))return;
-  var emptyEl=document.getElementById('disPhotoEmpty');
-  if(emptyEl)emptyEl.style.display='none';
-  var r=new FileReader();
-  r.onload=function(){disPendingPhotos=[];disPendingPhotos.push(r.result);disPendingPhotoName=f.name;renderDisPhotoPreview();var inp=document.getElementById('f_situation_img');if(inp)inp.value=''};
-  r.readAsDataURL(f);
-}
-function handleDisPhotoPC(files){
-  if(!files||!files.length)return;
-  var f=Array.from(files)[0];
-  if(!f.type||!f.type.startsWith('image/'))return;
-  var emptyEl=document.getElementById('disPhotoEmptyPC');
-  if(emptyEl)emptyEl.style.display='none';
-  var r=new FileReader();
-  r.onload=function(){disPendingPhotosPC=[];disPendingPhotosPC.push(r.result);disPendingPhotoNamePC=f.name;renderDisPhotoPreviewPC();var inp=document.getElementById('f_situation_img_pc');if(inp)inp.value=''};
-  r.readAsDataURL(f);
-}
-function renderDisPhotoPreview(){
-  var el=document.getElementById('disPhotoPreview'),emp=document.getElementById('disPhotoEmpty');if(!el)return;
-  var arr=disPendingPhotos||[];
-  if(emp)emp.style.display=arr.length?'none':'block';
-  el.querySelectorAll('.photo-thumb').forEach(function(n){n.remove()});
-  arr.forEach(function(url,i){
-    var div=document.createElement('div');div.className='photo-thumb';
-    div.innerHTML='<img src="'+url+'"><button type="button" class="photo-del" title="削除">×</button><span class="filename">'+(disPendingPhotoName||'画像')+'</span>';
-    div.querySelector('.photo-del').onclick=function(){removeDisPhoto()};
-    el.appendChild(div);
-  });
-}
-function renderDisPhotoPreviewPC(){
-  var el=document.getElementById('disPhotoPreviewPC'),emp=document.getElementById('disPhotoEmptyPC');if(!el)return;
-  var arr=disPendingPhotosPC||[];
-  if(emp)emp.style.display=arr.length?'none':'block';
-  el.querySelectorAll('.photo-thumb').forEach(function(n){n.remove()});
-  arr.forEach(function(url,i){
-    var div=document.createElement('div');div.className='photo-thumb';
-    div.innerHTML='<img src="'+url+'"><button type="button" class="photo-del" title="削除">×</button><span class="filename">'+(disPendingPhotoNamePC||'画像')+'</span>';
-    div.querySelector('.photo-del').onclick=function(){removeDisPhotoPC()};
-    el.appendChild(div);
-  });
-}
-function removeDisPhoto(){disPendingPhotos=[];disPendingPhotoName='';renderDisPhotoPreview()}
-function removeDisPhotoPC(){disPendingPhotosPC=[];disPendingPhotoNamePC='';renderDisPhotoPreviewPC()}
+function handleDisPhoto(){}
+function handleDisPhotoPC(){}
 function doDisSubmit(){
   var dt=document.getElementById('f_datetime').value,place=document.getElementById('f_place').value.trim(),victim=document.getElementById('f_victim').value.trim(),situation=document.getElementById('f_situation').value.trim();
   if(!dt||!place||!victim||!situation){alert('事故発生日時・発生場所・被害者氏名・発生状況は必須です');return}
   if(!CUR){alert('ログインしてください');return}
-  var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),status:'draft',gyoshu:document.getElementById('f_gyoshu').value,jigyosho:document.getElementById('f_jigyosho').value,address:document.getElementById('f_address').value,workers:document.getElementById('f_workers').value,datetime:dt,place:place,machine:document.getElementById('f_machine').value,type:document.getElementById('f_type').value,victim:victim,victim_dept:document.getElementById('f_victim_dept').value,human_damage:document.getElementById('f_human_damage').value,material_damage:document.getElementById('f_material_damage').value,situation:situation,cause:document.getElementById('f_cause').value,measure:document.getElementById('f_measure').value,reporter:CUR.name,situation_img:disPendingPhotos&&disPendingPhotos[0]?disPendingPhotos[0]:null};
-  disPendingPhotos=[];
+  var imgs=(window._disPhotos||[]).slice();
+  var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),status:'draft',gyoshu:document.getElementById('f_gyoshu').value,jigyosho:document.getElementById('f_jigyosho').value,address:document.getElementById('f_address').value,workers:document.getElementById('f_workers').value,datetime:dt,place:place,machine:document.getElementById('f_machine').value,type:document.getElementById('f_type').value,victim:victim,victim_dept:document.getElementById('f_victim_dept').value,human_damage:document.getElementById('f_human_damage').value,material_damage:document.getElementById('f_material_damage').value,situation:situation,cause:document.getElementById('f_cause').value,measure:document.getElementById('f_measure').value,reporter:CUR.name,situation_img:imgs[0]||null,situation_imgs:imgs};
+  if(window._disPhotos){window._disPhotos.length=0;window._disPhotos_names.length=0}
   function saveNew(){
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
     if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
     else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
     document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
     document.getElementById('f_place').value='';document.getElementById('f_victim').value='';document.getElementById('f_situation').value='';document.getElementById('f_cause').value='';document.getElementById('f_measure').value='';
-    renderDisPhotoPreview();
+    if(window._disPhotos_render)window._disPhotos_render();
     var t=document.getElementById('toastDis');if(t){t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
   }
   if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];saveNew()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};saveNew();}
@@ -1164,12 +1191,13 @@ function doDisSubmitPC(){
   var kyugyoStr=(kt==='不休'?'不休':(kd||ky)?((kd?kd+'日間 ':'')+(ky?ky+'円':'')).trim():'');
   var dy=document.getElementById('f_dt_y_pc')?.value,dm=document.getElementById('f_dt_m_pc')?.value,dd=document.getElementById('f_dt_d_pc')?.value,dh=document.getElementById('f_dt_h_pc')?.value,dmin=document.getElementById('f_dt_min_pc')?.value,dw=document.getElementById('f_dt_week_pc')?.value;
   var datetimeStr=(dy&&dm&&dd)?(dy+'年'+dm+'月'+dd+'日'+(dw?'('+dw+')':'')+' '+(dh||'')+':'+(dmin||'')+'頃'):'';
-  var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),datetime:datetimeStr,status:'draft',form:'pc',keigen:document.getElementById('f_keigen_pc')?.value,basho:document.getElementById('f_basho_pc')?.value,basho_jusho:document.getElementById('f_basho_jusho_pc')?.value,jusho:document.getElementById('f_jusho_pc')?.value,victim:document.getElementById('f_victim_pc')?.value,age:document.getElementById('f_age_pc')?.value,birth:document.getElementById('f_birth_y_pc')?.value+'-'+document.getElementById('f_birth_m_pc')?.value+'-'+document.getElementById('f_birth_d_pc')?.value,victim_dept:document.getElementById('f_victim_dept_pc')?.value,hire_date:document.getElementById('f_hire_date_pc')?.value,exp:document.getElementById('f_exp_y_pc')?.value+'-'+document.getElementById('f_exp_m_pc')?.value,shobyomei:document.getElementById('f_shobyomei_pc')?.value,byoin:document.getElementById('f_byoin_pc')?.value,koui:document.querySelector('input[name="koui_pc"]:checked')?.value,kyugyo:kyugyoStr,kyugyo_type:kt,kyugyo_days:kd,kyugyo_yen:ky,gennin:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,gennin_aru:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,shokumei:document.getElementById('f_shokumei_pc')?.value,gennin_name:document.getElementById('f_gennin_pc')?.value,basho_detail:document.getElementById('f_basho_detail_pc')?.value,sagyo:document.getElementById('f_sagyo_pc')?.value,genin_busshi:document.getElementById('f_genin_busshi_pc')?.value,genin_jin:document.getElementById('f_genin_jin_pc')?.value,kekka:document.getElementById('f_kekka_pc')?.value,kaizen_honin:document.getElementById('f_kaizen_honin_pc')?.value,kaizen_kantoku:document.getElementById('f_kaizen_kantoku_pc')?.value,situation_img:disPendingPhotosPC&&disPendingPhotosPC[0]?disPendingPhotosPC[0]:null,taisaku:document.getElementById('f_taisaku_pc')?.value,kiinbutsu:document.getElementById('f_kiinbutsu_pc')?.value,fuanzen:document.getElementById('f_fuanzen_pc')?.value,fuanzen_kodo:document.getElementById('f_fuanzen_kodo_pc')?.value,jiko:document.getElementById('f_jiko_pc')?.value,kanri:document.getElementById('f_kanri_pc')?.value,reporter:document.getElementById('f_reporter_pc')?.value,report_date:document.getElementById('f_report_date_pc')?.value,sekininsha:document.getElementById('f_sekininsha_pc')?.value};
-  disPendingPhotosPC=[];
+  var imgsPC=(window._disPhotosPC||[]).slice();
+  var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),datetime:datetimeStr,status:'draft',form:'pc',keigen:document.getElementById('f_keigen_pc')?.value,basho:document.getElementById('f_basho_pc')?.value,basho_jusho:document.getElementById('f_basho_jusho_pc')?.value,jusho:document.getElementById('f_jusho_pc')?.value,victim:document.getElementById('f_victim_pc')?.value,age:document.getElementById('f_age_pc')?.value,birth:document.getElementById('f_birth_y_pc')?.value+'-'+document.getElementById('f_birth_m_pc')?.value+'-'+document.getElementById('f_birth_d_pc')?.value,victim_dept:document.getElementById('f_victim_dept_pc')?.value,hire_date:document.getElementById('f_hire_date_pc')?.value,exp:document.getElementById('f_exp_y_pc')?.value+'-'+document.getElementById('f_exp_m_pc')?.value,shobyomei:document.getElementById('f_shobyomei_pc')?.value,byoin:document.getElementById('f_byoin_pc')?.value,koui:document.querySelector('input[name="koui_pc"]:checked')?.value,kyugyo:kyugyoStr,kyugyo_type:kt,kyugyo_days:kd,kyugyo_yen:ky,gennin:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,gennin_aru:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,shokumei:document.getElementById('f_shokumei_pc')?.value,gennin_name:document.getElementById('f_gennin_pc')?.value,basho_detail:document.getElementById('f_basho_detail_pc')?.value,sagyo:document.getElementById('f_sagyo_pc')?.value,genin_busshi:document.getElementById('f_genin_busshi_pc')?.value,genin_jin:document.getElementById('f_genin_jin_pc')?.value,kekka:document.getElementById('f_kekka_pc')?.value,kaizen_honin:document.getElementById('f_kaizen_honin_pc')?.value,kaizen_kantoku:document.getElementById('f_kaizen_kantoku_pc')?.value,situation_img:imgsPC[0]||null,situation_imgs:imgsPC,taisaku:document.getElementById('f_taisaku_pc')?.value,kiinbutsu:document.getElementById('f_kiinbutsu_pc')?.value,fuanzen:document.getElementById('f_fuanzen_pc')?.value,fuanzen_kodo:document.getElementById('f_fuanzen_kodo_pc')?.value,jiko:document.getElementById('f_jiko_pc')?.value,kanri:document.getElementById('f_kanri_pc')?.value,reporter:document.getElementById('f_reporter_pc')?.value,report_date:document.getElementById('f_report_date_pc')?.value,sekininsha:document.getElementById('f_sekininsha_pc')?.value};
+  if(window._disPhotosPC){window._disPhotosPC.length=0;window._disPhotosPC_names.length=0}
   DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
   if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
   else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
-  renderDisPhotoPreviewPC();
+  if(window._disPhotosPC_render)window._disPhotosPC_render();
   var t=document.getElementById('toastDis');if(t){t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 }
 function rDisList(){
@@ -1193,7 +1221,8 @@ function showDisDetail(id){
   }
   var h='';
   lines.forEach(function(p){if(p[1])h+='<div class="dl"><span class="dk">'+p[0]+'</span><span class="dv">'+p[1]+'</span></div>'});
-  if(r.situation_img)h+='<div class="dbk"><div class="dbt">発生状況図</div><div class="modal-photos"><img src="'+r.situation_img+'" onclick="showFullPhotoSrc(this.src)" style="max-width:280px;border-radius:8px;cursor:pointer"></div></div>';
+  var disImgs=r.situation_imgs&&r.situation_imgs.length?r.situation_imgs:(r.situation_img?[r.situation_img]:[]);
+  if(disImgs.length)h+='<div class="dbk"><div class="dbt">発生状況図（'+disImgs.length+'枚）</div><div class="modal-photos">'+disImgs.map(function(src){return'<img src="'+src+'" onclick="showFullPhotoSrc(this.src)" style="max-width:280px;border-radius:8px;cursor:pointer">'}).join('')+'</div></div>';
   document.getElementById('mT').textContent='災害発生報告 詳細';
   document.getElementById('mI').innerHTML=h||'<p style="color:var(--t3)">内容なし</p>';
   document.getElementById('modal').classList.add('show');
