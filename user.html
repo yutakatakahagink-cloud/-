@@ -1528,8 +1528,8 @@ function anlByExp(){
   var cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
   var h='<div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容を選択</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
-  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="curExpFilter=\'all\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px">すべて（'+fd.length+'件）</button>';
-  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="curExpFilter=\''+t+'\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
+  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="event.stopPropagation();curExpFilter=\'all\';setTimeout(function(){try{document.getElementById(\'aC\').innerHTML=anlByExp()}catch(e){alert(e)}},0)" style="font-size:11px">すべて（'+fd.length+'件）</button>';
+  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="event.stopPropagation();curExpFilter=\''+t+'\';setTimeout(function(){try{document.getElementById(\'aC\').innerHTML=anlByExp()}catch(e){alert(e)}},0)" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
   h+='</div></div>';
   var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
   if(!filtered.length){h+='<div class="cb cb-wide" style="text-align:center;padding:32px;color:var(--t3)">該当データがありません</div>';return h}
