@@ -209,13 +209,67 @@ input[type="file"].photo-input{display:none}
 .dis-form-pc{display:none}
 /* PC: 画面いっぱい表示 */
 @media(min-width:768px){
-  .nav{max-width:none;left:0;right:0;transform:none;border-radius:0;border-bottom:1px solid #A5D6A7}
-  .hdr{max-width:none}
-  .pg{max-width:none}
+  body{padding-top:0}
+  .nav{max-width:none;width:100%;position:fixed;top:0;bottom:auto;border-top:none;border-bottom:1px solid #A5D6A7;border-radius:0;left:0;transform:none;padding-bottom:0}
+  .ni{flex-direction:row;font-size:11px;padding:12px 16px;gap:6px}
+  .ni svg{width:18px;height:18px}
+  .ni.on::before{top:auto;bottom:0;width:100%;height:2.5px;left:0;transform:none;border-radius:3px 3px 0 0}
+  .hdr{max-width:none;margin-top:48px;padding:18px 32px 18px}
+  .hdr-t{font-size:18px}
+  .hdr-s{font-size:12px}
+  .logo{width:38px;height:38px;font-size:18px}
+  .pg{max-width:none;padding-bottom:24px;margin-top:0}
   .mbd{max-width:none}
   .fw{padding:0 32px 24px}
+  .sd{font-size:12px;margin:28px 0 14px}
+  .fg{margin-bottom:20px}
+  .fl{font-size:14px}
+  .fi,.fs,.ft{font-size:15px;padding:12px 16px}
+  .ch{padding:8px 16px;font-size:13px}
+  .ck{padding:8px 14px;font-size:12px}
+  .lb{width:48px;height:42px;font-size:14px}
+  .lki{padding:12px 14px}
+  .lkl{font-size:13px}
+  .lkdt{width:34px;height:34px;font-size:11px}
+  .sub{padding:16px;font-size:16px}
+  .login-card{max-width:460px;padding:36px 32px}
+  .login-logo .ttl{font-size:22px}
+  .login-logo .ico{width:48px;height:48px;font-size:24px}
+  .login-sel{font-size:15px;padding:14px}
+  .login-btn{font-size:16px;padding:16px}
+  .login-lbl{font-size:14px}
+  .login-inf{font-size:14px}
+  .user-pill{font-size:12px;padding:6px 16px}
+  .cb{padding:20px}
   .cs{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:stretch}
+  .cs>.cb{margin-bottom:0;display:flex;flex-direction:column}
+  .cs>.cb>.hb,.cs>.cb>.trw{flex:1}
   .cs>.cb-wide,.cs>.ic{grid-column:span 2}
+  .cht{font-size:14px}
+  .hl{font-size:12px;min-width:90px;width:90px;flex-shrink:0}
+  .hv{font-size:10px}
+  .htk{height:24px}
+  .trw{height:180px;min-height:180px}
+  .tl2{font-size:10px}
+  .cs{padding:18px 32px}
+  .tps{padding:12px 32px}
+  .tp{font-size:12px;padding:7px 16px}
+  .dept-flt{padding:10px 32px}
+  .dfp{font-size:11px;padding:6px 14px}
+  .guide-box{font-size:12px;padding:14px 16px}
+  .tst{font-size:14px;padding:12px 24px}
+  .sr{padding:18px 32px;grid-template-columns:repeat(4,1fr)}
+  .sc{padding:16px}
+  .sv{font-size:28px}
+  .sl{font-size:12px}
+  .ls{padding:0 32px 20px}
+  .lt{font-size:15px}
+  .rc{padding:16px}
+  .rde{font-size:14px}
+  .rm{font-size:12px}
+  .bd2{font-size:12px}
+  .fp{font-size:12px}
+  .byexp-grid .byexp-item{min-width:min(100%,200px);font-size:10px;padding:8px 12px}
   .dis-form-mobile{display:none}
   .dis-form-pc{display:block;width:100%;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;border:1px solid #333}
   #pDis .fw{max-width:none;padding:0 10px 16px;width:100%;box-sizing:border-box}
@@ -264,6 +318,18 @@ input[type="file"].photo-input{display:none}
   .dis-report-block{margin-top:16px;padding:12px;background:#f8f8f8;border:1px solid #333;border-radius:6px;font-size:11pt}
   .dis-report-msg{margin-bottom:8px}
   .dis-report-date{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+}
+/* ===== WIDE PC (1200px+) ===== */
+@media(min-width:1200px){
+  .nav{max-width:none}
+  .hdr{max-width:none}
+  .pg{max-width:none}
+  .fw{padding:0 48px 32px}
+  .cs{padding:20px 48px}
+  .tps{padding:14px 48px}
+  .dept-flt{padding:12px 48px}
+  .sr{padding:20px 48px}
+  .ls{padding:0 48px 24px}
 }
 /* ===== 一覧・分析・委員会用スタイル ===== */
 .sr{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px 16px}
@@ -1519,6 +1585,9 @@ function rAnl(type){
   else if(type==='resil')ct.innerHTML=anlResil();
   else ct.innerHTML=anlActs();
 }
+function setExpFilter(val){
+  try{curExpFilter=val;document.getElementById('aC').innerHTML=anlByExp()}catch(e){alert('フィルターエラー: '+e.message)}
+}
 function anlByExp(){
   var fd=getF();
   var expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
@@ -1528,8 +1597,8 @@ function anlByExp(){
   var cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
   var h='<div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容を選択</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
-  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="event.stopPropagation();curExpFilter=\'all\';setTimeout(function(){try{document.getElementById(\'aC\').innerHTML=anlByExp()}catch(e){alert(e)}},0)" style="font-size:11px">すべて（'+fd.length+'件）</button>';
-  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="event.stopPropagation();curExpFilter=\''+t+'\';setTimeout(function(){try{document.getElementById(\'aC\').innerHTML=anlByExp()}catch(e){alert(e)}},0)" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
+  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="setExpFilter(\'all\')" style="font-size:11px">すべて（'+fd.length+'件）</button>';
+  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="setExpFilter(\''+t.replace(/'/g,"\\'")+'\')" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
   h+='</div></div>';
   var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
   if(!filtered.length){h+='<div class="cb cb-wide" style="text-align:center;padding:32px;color:var(--t3)">該当データがありません</div>';return h}
