@@ -481,14 +481,10 @@ input[type="file"].photo-input{display:none}
   <div class="sd">事故の発生状況</div>
   <div class="fg"><label class="fl">発生状況<span class="rq">*</span></label><textarea class="ft" id="f_situation" placeholder="事故がどのように発生したか具体的に記入"></textarea></div>
   <div class="fg"><label class="fl">発生状況図（画像添付）</label>
-    <div class="drop-zone" id="disDropZone">
-      <div class="icon">📷</div>
-      <p>クリックまたはドラッグ＆ドロップで画像を追加</p>
-      <p class="sub">PNG, JPG, GIF, WebP 対応（1枚）</p>
-      <input type="file" class="photo-input" id="f_situation_img" accept="image/*">
-    </div>
+    <button type="button" class="ocr-pick-btn" id="disPhotoBtn" style="display:block;width:100%">📷 カメラ/画像を選択（1枚）</button>
+    <input type="file" class="photo-input" id="f_situation_img" accept="image/*">
     <div class="photo-preview" id="disPhotoPreview">
-      <div class="photo-empty" id="disPhotoEmpty">添付された画像がここに表示されます</div>
+      <div class="photo-empty" id="disPhotoEmpty" style="display:none"></div>
     </div>
   </div>
   <div class="sd">事故の原因・対策</div>
@@ -551,7 +547,7 @@ input[type="file"].photo-input{display:none}
       </div>
     </div>
     <div class="dis-pc-right">
-      <div class="dis-right-sect"><div class="dis-rs-title">発生状況図</div><div class="drop-zone" id="disDropZonePC"><div class="icon">📷</div><p>クリックまたはドラッグ＆ドロップで画像を追加</p><p class="sub">PNG, JPG, GIF, WebP 対応（1枚）</p><input type="file" class="photo-input" id="f_situation_img_pc" accept="image/*"></div><div class="photo-preview" id="disPhotoPreviewPC" style="min-height:180px"><div class="photo-empty" id="disPhotoEmptyPC">添付された画像がここに表示されます</div></div></div>
+      <div class="dis-right-sect"><div class="dis-rs-title">発生状況図</div><button type="button" class="ocr-pick-btn" id="disPhotoBtnPC" style="display:block;width:100%">📷 カメラ/画像を選択（1枚）</button><input type="file" class="photo-input" id="f_situation_img_pc" accept="image/*"><div class="photo-preview" id="disPhotoPreviewPC" style="min-height:60px"><div class="photo-empty" id="disPhotoEmptyPC" style="display:none"></div></div></div>
       <div class="dis-right-sect"><div class="dis-rs-title">【対策】</div><textarea class="ft" id="f_taisaku_pc" placeholder="再発防止のための対策" style="width:100%;min-height:100px"></textarea></div>
     </div>
   </div>
@@ -1254,21 +1250,15 @@ function initHhDropZone(){
 }
 function initDisDropZones(){
   if(window._disDropZoneReady)return;
-  var dz=document.getElementById('disDropZone'),inp=document.getElementById('f_situation_img');
-  if(dz&&inp){
+  var btn=document.getElementById('disPhotoBtn'),inp=document.getElementById('f_situation_img');
+  if(btn&&inp){
     window._disDropZoneReady=true;
-    dz.addEventListener('click',function(){inp.click()});
-    dz.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz.classList.add('dragover')});
-    dz.addEventListener('dragleave',function(e){dz.classList.remove('dragover')});
-    dz.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('dragover');var fs=e.dataTransfer&&e.dataTransfer.files;if(fs&&fs.length)handleDisPhoto(fs);inp.value=''});
+    btn.addEventListener('click',function(){inp.click()});
     inp.addEventListener('change',function(e){var fs=e.target.files;if(fs&&fs.length){handleDisPhoto(fs);inp.value=''}});
   }
-  var dz2=document.getElementById('disDropZonePC'),inp2=document.getElementById('f_situation_img_pc');
-  if(dz2&&inp2){
-    dz2.addEventListener('click',function(){inp2.click()});
-    dz2.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz2.classList.add('dragover')});
-    dz2.addEventListener('dragleave',function(e){dz2.classList.remove('dragover')});
-    dz2.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz2.classList.remove('dragover');var fs=e.dataTransfer&&e.dataTransfer.files;if(fs&&fs.length)handleDisPhotoPC(fs);inp2.value=''});
+  var btn2=document.getElementById('disPhotoBtnPC'),inp2=document.getElementById('f_situation_img_pc');
+  if(btn2&&inp2){
+    btn2.addEventListener('click',function(){inp2.click()});
     inp2.addEventListener('change',function(e){var fs=e.target.files;if(fs&&fs.length){handleDisPhotoPC(fs);inp2.value=''}});
   }
 }
@@ -1657,21 +1647,15 @@ rDash();
   }
   function safeInitDisDropZones(){
     if(window._disDropZoneReady)return;
-    var dz=document.getElementById('disDropZone'),inp=document.getElementById('f_situation_img');
-    if(dz&&inp){
+    var btn=document.getElementById('disPhotoBtn'),inp=document.getElementById('f_situation_img');
+    if(btn&&inp){
       window._disDropZoneReady=true;
-      dz.addEventListener('click',function(){inp.click()});
-      dz.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz.classList.add('dragover')});
-      dz.addEventListener('dragleave',function(e){dz.classList.remove('dragover')});
-      dz.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('dragover');var fs=e.dataTransfer&&e.dataTransfer.files;if(fs&&fs.length){if(typeof handleDisPhoto==='function')handleDisPhoto(fs);}inp.value=''});
+      btn.addEventListener('click',function(){inp.click()});
       inp.addEventListener('change',function(e){var fs=e.target.files;if(fs&&fs.length){if(typeof handleDisPhoto==='function')handleDisPhoto(fs);inp.value=''}});
     }
-    var dz2=document.getElementById('disDropZonePC'),inp2=document.getElementById('f_situation_img_pc');
-    if(dz2&&inp2){
-      dz2.addEventListener('click',function(){inp2.click()});
-      dz2.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz2.classList.add('dragover')});
-      dz2.addEventListener('dragleave',function(e){dz2.classList.remove('dragover')});
-      dz2.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dz2.classList.remove('dragover');var fs=e.dataTransfer&&e.dataTransfer.files;if(fs&&fs.length){if(typeof handleDisPhotoPC==='function')handleDisPhotoPC(fs);}inp2.value=''});
+    var btn2=document.getElementById('disPhotoBtnPC'),inp2=document.getElementById('f_situation_img_pc');
+    if(btn2&&inp2){
+      btn2.addEventListener('click',function(){inp2.click()});
       inp2.addEventListener('change',function(e){var fs=e.target.files;if(fs&&fs.length){if(typeof handleDisPhotoPC==='function')handleDisPhotoPC(fs);inp2.value=''}});
     }
   }
