@@ -8,7 +8,7 @@
 <style>
 :root{--bg:#E8F5E9;--bg2:#C8E6C9;--bg3:#A5D6A7;--bg4:#81C784;--bg5:#66BB6A;--ac:#2E7D32;--ac2:#43A047;--acg:rgba(46,125,50,0.15);--yl:#F9A825;--rd:#E53935;--gn:#00897B;--bl:#0277BD;--pr:#7B1FA2;--t1:#1B5E20;--t2:#33691E;--t3:#558B2F;--bd:#A5D6A7;--r:12px;--rs:8px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:70px}
 select,input,textarea,button{color:var(--t1)}
 .nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #A5D6A7;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0);max-width:540px;margin:0 auto}
 @media(min-width:541px){.nav{left:50%;transform:translateX(-50%);border-radius:16px 16px 0 0}}
@@ -261,6 +261,71 @@ input[type="file"].photo-input{display:none}
   .dis-report-msg{margin-bottom:8px}
   .dis-report-date{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 }
+/* ===== 一覧・分析・委員会用スタイル ===== */
+.sr{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px 16px}
+.sc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px}
+.sv{font-size:24px;font-weight:900;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-.03em}
+.sl{font-size:10px;color:var(--t3);margin-top:2px;font-weight:500}
+.sc.co .sv{color:var(--ac)}.sc.cr .sv{color:var(--rd)}.sc.cg2 .sv{color:var(--gn)}.sc.cy .sv{color:var(--yl)}
+.ls{padding:0 16px 16px}.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lt{font-size:13px;font-weight:700}
+.fp{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;font-family:inherit}
+.rc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:7px;cursor:pointer;transition:background .2s}
+.rc:active{background:var(--bg5)}
+.rt{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.bd2{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
+.bd2.pending{background:rgba(229,56,59,.12);color:var(--rd)}.bd2.in_progress{background:rgba(240,180,41,.12);color:var(--yl)}.bd2.resolved{background:rgba(45,198,166,.12);color:var(--gn)}
+.bf{background:rgba(229,56,59,.12);color:var(--rd)}.bt2{background:rgba(240,180,41,.12);color:var(--yl)}.bm{background:rgba(167,139,250,.12);color:var(--pr)}.bdr{background:rgba(56,189,248,.12);color:var(--bl)}.bcl{background:rgba(45,198,166,.12);color:var(--gn)}.bo{background:rgba(83,98,116,.12);color:var(--t2)}
+.rde{font-size:12px;font-weight:500;line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rm{display:flex;gap:10px;font-size:10px;color:var(--t3)}
+.ds{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle}
+.dn{background:var(--ac)}.dr{background:var(--yl)}.dd{background:var(--gn)}
+.cs{padding:14px 16px}
+.cb{background:#fff;border:1px solid #A5D6A7;border-radius:14px;padding:16px;margin-bottom:12px}
+.cb-wide{width:100%}
+.cht{font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.chd{width:6px;height:6px;border-radius:50%}
+.hb{display:flex;flex-direction:column;gap:7px}
+.hr{display:flex;align-items:center;gap:7px}
+.hl{width:72px;font-size:10px;color:var(--t2);text-align:right;flex-shrink:0}
+.htk{flex:1;height:20px;background:#C8E6C9;border-radius:4px;overflow:hidden}
+.hfl{height:100%;border-radius:4px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:5px}
+.hv{font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.trw{display:flex;align-items:flex-end;gap:4px;height:110px;padding-top:6px}
+.tc{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+.tb2{width:100%;max-width:24px;border-radius:3px 3px 0 0;transition:height .8s ease}
+.tl2{font-size:8px;color:var(--t3);margin-top:4px}
+.crt{flex:1;height:16px;background:#C8E6C9;border-radius:8px;overflow:hidden}
+.crf{height:100%;border-radius:8px;transition:width .8s ease}
+.crv{width:30px;font-size:10px;font-weight:700;text-align:right;font-family:'IBM Plex Sans',sans-serif}
+.dl{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bd);font-size:12px}
+.dk{color:var(--t2)}.dv{font-weight:600;text-align:right;max-width:60%}
+.dbk{padding:10px 0;border-bottom:1px solid var(--bd)}
+.dbt{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:5px}
+.dbtx{font-size:12px;line-height:1.7}
+.abs{display:flex;gap:7px;margin-top:14px}
+.ab{flex:1;padding:10px;border-radius:var(--rs);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.abr{border:1px solid var(--yl);background:rgba(240,180,41,.08);color:var(--yl)}
+.abd{border:1px solid var(--gn);background:rgba(45,198,166,.08);color:var(--gn)}
+.ic{background:linear-gradient(135deg,rgba(46,125,50,.06),rgba(102,187,106,.1));border:1px solid rgba(46,125,50,.2);border-radius:14px;padding:16px;margin-bottom:12px}
+.ict{font-size:12px;font-weight:700;color:#2E7D32;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.tps{display:flex;gap:5px;padding:10px 16px;overflow-x:auto}
+.tp{padding:5px 12px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap;cursor:pointer;background:#fff;border:1px solid #81C784;color:#558B2F;font-family:inherit}
+.tp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
+.dept-flt{display:flex;gap:5px;padding:8px 16px;overflow-x:auto}
+.dfp{padding:4px 10px;border-radius:10px;font-size:9px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;cursor:pointer;white-space:nowrap;font-family:inherit}
+.dfp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
+.guide-box{background:rgba(46,125,50,.06);border:1px solid rgba(46,125,50,.15);border-radius:var(--rs);padding:10px 12px;margin-top:8px;font-size:10px;color:#2E7D32;line-height:1.6}
+.guide-box b{color:#1B5E20}
+.byexp-grid{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.byexp-grid .byexp-item{flex:1;min-width:min(100%,260px);background:rgba(46,125,50,.06);border:1px solid rgba(46,125,50,.2);border-radius:var(--rs);padding:8px 10px;font-size:10px;line-height:1.5;border-left:3px solid var(--ac);word-break:break-word}
+.com-card{cursor:pointer;transition:background .2s}.com-card:active{background:rgba(46,125,50,.08)}
+.com-tap{font-size:9px;color:var(--t3);margin-top:6px}
+.com-detail{background:rgba(46,125,50,.06);border-left:4px solid var(--ac);padding:20px 24px;border-radius:0 var(--rs) var(--rs) 0;font-size:14px;line-height:1.9}
+.com-detail p{margin-bottom:16px}
+.com-detail .com-section{margin-bottom:20px}
+.com-detail .com-section:last-child{margin-bottom:0}
+.com-detail strong{font-size:15px}
 
 </style>
 </head>
@@ -682,8 +747,50 @@ input[type="file"].photo-input{display:none}
   <button class="sub" id="btnSubmit">報告を送信する</button>
 </div></div>
 
+<!-- DASHBOARD (一覧) -->
+<div class="pg" id="pD">
+  <div class="dept-flt" id="dfDash"></div>
+  <div class="sr">
+    <div class="sc co"><div class="sv" id="sT">0</div><div class="sl">総報告件数</div></div>
+    <div class="sc cr"><div class="sv" id="sH">0</div><div class="sl">高レベル(7以上)</div></div>
+    <div class="sc cg2"><div class="sv" id="sD">0</div><div class="sl">対策完了</div></div>
+    <div class="sc cy"><div class="sv" id="sR">0</div><div class="sl">類似事象</div></div>
+  </div>
+  <div class="ls"><div class="lh"><div class="lt">報告一覧</div><button class="fp" id="fB" onclick="cycF()">すべて ▾</button></div><div id="rL"></div></div>
+</div>
+
+<!-- ANALYTICS (分析) -->
+<div class="pg" id="pA">
+  <div class="tps" id="aT"><button class="tp on" data-t="simple">単純集計</button><button class="tp" data-t="byexp">体験別分析</button><button class="tp" data-t="resil">レジリエンス</button><button class="tp" data-t="acts">活動分析</button></div>
+  <div class="dept-flt" id="dfAnl"></div>
+  <div class="cs" id="aC"></div>
+</div>
+
+<!-- COMMITTEE (委員会) -->
+<div class="pg" id="pC">
+  <div class="dept-flt" id="dfCom"></div>
+  <div class="cs">
+    <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
+    <div class="cb cb-wide com-card" onclick="showComDetail('📊 体験別→対策提案',document.getElementById('cByExp_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp" class="byexp-grid"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
+    <div class="cb com-card" onclick="showComDetail('高ストレス×高リスク',document.getElementById('cL_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--rd)"></span>高ストレス×高リスク</div><div id="cL"></div><div class="com-tap">タップで詳細を表示</div><div id="cL_full" style="display:none"></div></div>
+    <div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>現場別ストレス傾向</div><div id="sStr"></div></div>
+    <div class="cb com-card" onclick="showComDetail('💡 改善提案',document.getElementById('sug_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>💡 改善提案</div><div class="icb" id="sug"></div><div class="com-tap">タップで詳細を表示</div><div id="sug_full" style="display:none"></div></div>
+    <div class="cb com-card" onclick="showComDetail('対策進捗',document.getElementById('aTk_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>対策進捗</div><div id="aTk"></div><div class="com-tap">タップで詳細を表示</div><div id="aTk_full" style="display:none"></div></div>
+    <div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--bl)"></span>📜 法改正</div><div id="cLaw"></div></div>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="mbg" id="modal"><div class="mbd"><div class="mp"></div><div class="mh" id="mT"></div><div id="mI"></div></div></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="ni on" data-p="pMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>メニュー</button>
+  <button class="ni" data-p="pD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>一覧</button>
+  <button class="ni" data-p="pA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>分析</button>
+  <button class="ni" data-p="pDis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>災害</button>
+  <button class="ni" data-p="pC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>委員会</button>
+</nav>
 
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -776,12 +883,12 @@ function applyRole(){
   var disForm=document.getElementById('disFormArea');if(disForm)disForm.style.display='';
   var disList=document.getElementById('disListArea');if(disList)disList.style.display='none';
 }
-function goTo(pgId){
+function goTo(pgId,opts){
+  loadDB();loadPhotos();
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
   var p=document.getElementById(pgId);if(p)p.classList.add('on');
-  var navId='pMenu'; // 使用者用：下部ナビはメニューのみ
-  var ni=document.querySelector('.ni[data-p="'+navId+'"]');if(ni)ni.classList.add('on');
+  var ni=document.querySelector('.ni[data-p="'+pgId+'"]');if(ni)ni.classList.add('on');
   if(pgId==='pReq'){
     var fa=document.getElementById('reqFormArea');var hu=document.getElementById('reqListHeaderUser');var ha=document.getElementById('reqListHeaderAdmin');
     if(fa)fa.style.display='block';if(hu)hu.style.display='block';if(ha)ha.style.display='none';
@@ -790,9 +897,17 @@ function goTo(pgId){
   if(pgId==='pR')document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
   if(pgId==='pDis'){
     var dfa=document.getElementById('disFormArea');var dla=document.getElementById('disListArea');
-    if(dfa)dfa.style.display='block';if(dla)dla.style.display='none';
-    fillDisFormDefaults();
+    if(opts&&opts.listMode){
+      if(dfa)dfa.style.display='none';if(dla)dla.style.display='block';
+      rDisList();
+    }else{
+      if(dfa)dfa.style.display='block';if(dla)dla.style.display='none';
+      fillDisFormDefaults();
+    }
   }
+  if(pgId==='pD')rDash();
+  if(pgId==='pA')rAnl('simple');
+  if(pgId==='pC')rCom();
 }
 window.goTo=goTo;
 // IS_ADMIN互換（既存コードが参照する箇所のため）
@@ -822,7 +937,8 @@ document.addEventListener('click',function(e){
   nav.addEventListener('click',function(e){
     var b=e.target.closest('.ni');
     if(!b||!b.dataset.p)return;
-    goTo(b.dataset.p);
+    var opts=b.dataset.p==='pDis'?{listMode:true}:undefined;
+    goTo(b.dataset.p,opts);
   });
 })();
 var aT=document.getElementById('aT');if(aT)aT.querySelectorAll('.tp').forEach(t=>t.onclick=()=>{aT.querySelectorAll('.tp').forEach(x=>x.classList.remove('on'));t.classList.add('on');rAnl(t.dataset.t)});
@@ -1508,6 +1624,7 @@ function rCom(){
 }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showComDetail(title,content){document.getElementById('mT').textContent=title;document.getElementById('mI').innerHTML=content;document.getElementById('modal').classList.add('show');}
+function showCauseReporters(cause){var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});var photos=[];fd.forEach(function(r){if(r.photos&&r.photos.length)r.photos.forEach(function(p){photos.push(p)})});var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';h+='</div>';showComDetail('発生原因：'+cause,h);}
 function showLawDetailByIdx(type,i){var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);var l=arr[i];if(!l)return;var h='<div class="com-detail"><div class="com-section"><strong>'+l.law+'　'+l.date+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+l.desc+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+l.impact+'</p></div>';if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+l.action+'</p></div>';if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+l.ref+'</p></div>';h+='</div>';showComDetail(l.law+'　'+l.date,h);}
 function showByExpReportDetail(expIdx,rIdx){var data=window.comByExpData;var expM=window.comExpToMeasure;var causeM=window.comCauseToMeasure;if(!data||!data[expIdx])return;var item=data[expIdx];var r=item.sub[rIdx];if(!r)return;var exp=item.exp;var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');var h='<div class="com-detail">';h+='<div class="com-section"><strong>【自由記述】</strong></div>';if(r.w){h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(r.w)+'</p></div>';}if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}h+='<div class="com-section"><strong>対策提案（詳細）</strong>';var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');if(r.c&&r.c.length){var causeStr=r.c.map(c=>causeM[c]||'').filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';h+='</div></div>';showComDetail(expShort+' の対策案',h);}
 
