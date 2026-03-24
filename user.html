@@ -8,10 +8,10 @@
 <style>
 :root{--bg:#E8F5E9;--bg2:#C8E6C9;--bg3:#A5D6A7;--bg4:#81C784;--bg5:#66BB6A;--ac:#2E7D32;--ac2:#43A047;--acg:rgba(46,125,50,0.15);--yl:#F9A825;--rd:#E53935;--gn:#00897B;--bl:#0277BD;--pr:#7B1FA2;--t1:#1B5E20;--t2:#33691E;--t3:#558B2F;--bd:#A5D6A7;--r:12px;--rs:8px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:70px}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;padding-top:60px}
 select,input,textarea,button{color:var(--t1)}
-.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #A5D6A7;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0);max-width:540px;margin:0 auto}
-@media(min-width:541px){.nav{left:50%;transform:translateX(-50%);border-radius:16px 16px 0 0}}
+.nav{position:fixed;top:0;left:0;right:0;background:#fff;border-bottom:1px solid #A5D6A7;display:flex;z-index:100;max-width:540px;margin:0 auto;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+@media(min-width:541px){.nav{left:50%;transform:translateX(-50%);border-radius:0 0 16px 16px}}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;color:var(--t3);cursor:pointer;border:none;background:none;font-family:inherit;font-size:9px;font-weight:600;position:relative;-webkit-tap-highlight-color:transparent}
 .ni.on{color:var(--ac)}.ni.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2.5px;background:var(--ac);border-radius:0 0 3px 3px}
 .ni svg{width:20px;height:20px}
@@ -209,7 +209,7 @@ input[type="file"].photo-input{display:none}
 .dis-form-pc{display:none}
 /* PC: 画面いっぱい表示 */
 @media(min-width:768px){
-  .nav{max-width:none;left:0;right:0;transform:none;border-radius:0}
+  .nav{max-width:none;left:0;right:0;transform:none;border-radius:0;border-bottom:1px solid #A5D6A7}
   .hdr{max-width:none}
   .pg{max-width:none}
   .mbd{max-width:none}
