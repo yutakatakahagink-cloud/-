@@ -990,6 +990,8 @@ function doLogin(){
   var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
   document.getElementById('f_reporter').value=CUR.name;
   document.getElementById('f_victim_dept').value=CUR.dept;
+  var uDept=CUR.honbu||(CUR.dept?CUR.dept.split('/')[0]:'');
+  if(uDept)deptFilt=uDept;
   if(typeof HHDB!=='undefined')HHDB.init(function(){doDataInit()});
   loadRequests();
   applyRole();
@@ -1568,10 +1570,6 @@ function setSS(id,s){const r=DB.find(x=>x.id===id);if(r){r.ss=s;if(typeof HHDB!=
 
 // ===== ANALYTICS =====
 function rAnl(type){
-  if(ROLE==='user'&&CUR){
-    const uDept=CUR.honbu||(CUR.dept?CUR.dept.split('/')[0]:'');
-    if(uDept&&deptFilt==='all'){deptFilt=uDept}
-  }
   buildDeptFilter('dfAnl');
   document.querySelectorAll('#aT .tp').forEach(t=>{
     if(t.dataset.t==='behind')t.style.display='none';
