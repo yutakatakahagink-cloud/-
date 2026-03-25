@@ -789,25 +789,25 @@ function rCom(){
   // 法改正（施行済み1年前まで / 施行予定1年以内）
   var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var oneYearAgo=new Date(today);oneYearAgo.setFullYear(oneYearAgo.getFullYear()-1);var oneYearLater=new Date(today);oneYearLater.setFullYear(oneYearLater.getFullYear()+1);
   var laws=[
-    {law:'労働安全衛生法',date:'2025/4/1',desc:'労働安全衛生規則改正。災害時の退避・立入禁止・火気使用禁止の対象が「労働者」から「作業に従事する者」へ拡大。個人事業者・協力業者・一人親方・資材搬入業者も対象に。',impact:'元請・下請の混在現場で、全作業者への安全措置が義務化。危険箇所での退避指示は全員に適用。',action:'元請は現場の全作業者リストを把握し、退避訓練・立入禁止区域の周知を徹底。下請・一人親方への保護具使用の周知義務も。',ref:'労働安全衛生規則第528条の2等'},
-    {law:'労働安全衛生法',date:'2026/1/1',desc:'労働安全衛生法改正の第1段階施行。個人事業者等への安全衛生対策の枠組み整備、化学物質による健康障害防止の強化等。',impact:'建設現場の一人親方・協力業者への対策準備が本格化。',action:'一人親方・協力業者の把握、化学物質取扱いのSDS確認体制の整備。',ref:'労働安全衛生法改正法（2025年公布）'},
-    {law:'労働安全衛生法',date:'2026/4/1',desc:'個人事業者等への安全衛生対策拡大。フリーランス・一人親方も保護対象に明確化。ストレスチェックは50人未満事業場にも義務化（従来は努力義務）。化学物質のSDS交付厳格化、高齢者災害防止推進、ボイラー・クレーン等の製造許可・検査制度見直し。',impact:'建設現場の一人親方・協力業者にも安全衛生教育・健康管理が適用。小規模事業場でもストレスチェック必須に。',action:'一人親方への安全衛生教育受講の案内、ストレスチェック体制の整備（50人未満も）、化学物質取扱いのSDS確認徹底。',ref:'労働安全衛生法改正法（2025年公布）'},
-    {law:'労働安全衛生法',date:'2026/10/1',desc:'労働安全衛生法改正の第3段階施行。機械等による労働災害防止の促進、業務上災害報告制度の創設等。',impact:'労働災害の報告・分析体制の強化。機械の安全装置・定期検査の徹底。',action:'業務上災害報告のルール整備、機械の安全装置・点検記録の見直し。',ref:'労働安全衛生法改正法'},
-    {law:'労働安全衛生法',date:'2027/4/1',desc:'作業場所管理事業者に混在作業時の連絡調整等を義務付け。個人事業者に機械の安全装置・定期自主検査・安全衛生教育受講を義務化。特別教育対象業務拡大（丸鋸取替え、アーク溶接、チェーンソー、高さ2m以上ロープ高所作業等）。',impact:'特別教育対象業務が拡大。個人事業主も安全装置のない機械使用禁止、定期自主検査が義務に。',action:'特別教育の対象業務一覧を確認し、該当者に受講を案内。混在作業時の元請による連絡調整会議の実施。',ref:'労働安全衛生法・安衛則改正'},
-    {law:'労働基準法',date:'2027/4/1',desc:'勤務間インターバル制度の義務化（終業から始業まで原則11時間以上の休息確保）。連続勤務14日超の禁止。法定休日の事前特定義務化。「つながらない権利」のガイドライン整備。有給休暇の賃金算定の通常賃金方式原則化、週44時間特例の廃止検討等。※2026年国会提出見送りの可能性あり。',impact:'建設現場の長時間労働・連続勤務が規制され、疲労によるヒヤリハット・災害防止に直結。シフト制・交替制の見直しが必須に。',action:'勤怠管理システムの改修、就業規則の整備、シフト・交替制の見直し。勤務間インターバル11時間の確保、連続勤務14日以内の徹底。',ref:'労働基準法（改正検討中）'},
-    {law:'労働施策総合推進法',date:'2026/10/1',desc:'カスタマーハラスメント（顧客等からの著しい迷惑行為）対策の義務化。暴言・脅迫・過度な要求等への対応。事業主の方針明確化・周知、相談窓口設置、発生時の迅速対応、抑止措置が義務に。',impact:'発注者・工事関係者からの過度な要求・威圧的態度への対応が法的義務に。建設現場でも発注者対応が課題となる場合に適用。',action:'カスハラ防止方針の策定・周知、相談窓口の設置、発注者等からの過度な要求への対応マニュアル整備。',ref:'労働施策総合推進法改正法（2025年公布）'},
-    {law:'下請法・取適法',date:'2026/1/1',desc:'下請法が中小受託取引適正化法（取適法）に改称・改正。適用対象の拡大（従業員基準の見直し）、価格転嫁への対応、取引の適正化が強化。',impact:'下請取引の透明性・適正化が進み、不当な値引き・工期短縮の抑制に。建設業の下請取引にも関連。',action:'取適法の適用範囲確認、価格転嫁条項の整備、取引記録の適正な保存。',ref:'下請代金支払遅延等防止法及び下請中小企業振興法の一部を改正する法律'},
-    {law:'建設業法',date:'2024/9/1',desc:'労務費の基準（標準労務費）の作成・勧告。著しく低い労務費での見積り禁止、原価割れ契約禁止。適正な労務単価の水準を示すことで、下請いじめの防止と現場の安全投資を確保。',impact:'適正な労務費の確保により、安全投資・教育訓練の余裕が生まれる。',action:'発注者・元請は標準労務費を参照し、適正な見積りを。下請は原価割れ契約の受諾を避ける。',ref:'建設業法第24条の2'},
-    {law:'建設業法',date:'2024/12/13',desc:'資材高騰のリスク情報（おそれ情報）の通知義務化。発注者が資材高騰の可能性を認識した場合、受注者へ通知。請負代金変更方法の契約書明記も義務化。',impact:'資材高騰時の価格変更協議が円滑に。現場の資材調達・品質確保に影響。',action:'契約書に代金変更条項を明記。資材高騰情報の共有ルートを整備。',ref:'建設業法・入契法改正'},
-    {law:'建設業法',date:'2025/12/12',desc:'建設業法・入契法改正の完全施行。労働者処遇確保の努力義務（賃金・教育・福利厚生の適正化）。著しく短い工期の契約禁止。ICT活用による監理技術者専任規制の合理化（複数現場の兼務が条件付きで可能に）。',impact:'工期の適正化により、安全に十分な時間を確保しやすく。監理技術者の配置が柔軟に。',action:'工期設定の見直し、労働者処遇の点検、ICT活用による監理体制の検討。',ref:'建設業法・建設業法施行令'},
-    {law:'建設業法',date:'2026/4/1',desc:'元方事業者・関係請負人の対象を「労働者」から「作業従事者」に改正。建設業等30条・30条の2で個人事業主を統括安全衛生管理の対象に明確化。元請の統括責任が一人親方・個人事業主にも及ぶ。',impact:'元請の統括安全衛生管理責任が個人事業主にも及ぶ。混在現場の安全管理が強化。',action:'元請は個人事業主を含む全作業者の把握、安全衛生教育の実施確認、統括安全衛生管理の強化。',ref:'建設業法第30条・30条の2'},
-    {law:'労働安全衛生法',date:'2024/4/1',desc:'ストレスチェックの実施・面接指導等の見直し。高ストレス者への面接指導の要件見直し、医師による面接指導の実施方法の柔軟化。',impact:'メンタルヘルス対策の継続的実施。面接指導の運用が実態に即して柔軟に。',action:'ストレスチェック実施、高ストレス者への面接指導の実施、就業上の措置の記録・保存。',ref:'労働安全衛生規則第52条の9等'}
+    {law:'労働安全衛生法',date:'2025/4/1',short:'作業従事者への拡大',desc:'労働安全衛生規則改正。災害時の退避・立入禁止・火気使用禁止の対象が「労働者」から「作業に従事する者」へ拡大。個人事業者・協力業者・一人親方・資材搬入業者も対象に。',impact:'元請・下請の混在現場で、全作業者への安全措置が義務化。危険箇所での退避指示は全員に適用。',action:'元請は現場の全作業者リストを把握し、退避訓練・立入禁止区域の周知を徹底。下請・一人親方への保護具使用の周知義務も。',ref:'労働安全衛生規則第528条の2等'},
+    {law:'労働安全衛生法',date:'2026/1/1',short:'改正第1段階',desc:'労働安全衛生法改正の第1段階施行。個人事業者等への安全衛生対策の枠組み整備、化学物質による健康障害防止の強化等。',impact:'建設現場の一人親方・協力業者への対策準備が本格化。',action:'一人親方・協力業者の把握、化学物質取扱いのSDS確認体制の整備。',ref:'労働安全衛生法改正法（2025年公布）'},
+    {law:'労働安全衛生法',date:'2026/4/1',short:'個人事業者・ストレスチェック等',desc:'個人事業者等への安全衛生対策拡大。フリーランス・一人親方も保護対象に明確化。ストレスチェックは50人未満事業場にも義務化（従来は努力義務）。化学物質のSDS交付厳格化、高齢者災害防止推進、ボイラー・クレーン等の製造許可・検査制度見直し。',impact:'建設現場の一人親方・協力業者にも安全衛生教育・健康管理が適用。小規模事業場でもストレスチェック必須に。',action:'一人親方への安全衛生教育受講の案内、ストレスチェック体制の整備（50人未満も）、化学物質取扱いのSDS確認徹底。',ref:'労働安全衛生法改正法（2025年公布）'},
+    {law:'労働安全衛生法',date:'2026/10/1',short:'機械災害防止・業務上災害報告',desc:'労働安全衛生法改正の第3段階施行。機械等による労働災害防止の促進、業務上災害報告制度の創設等。',impact:'労働災害の報告・分析体制の強化。機械の安全装置・定期検査の徹底。',action:'業務上災害報告のルール整備、機械の安全装置・点検記録の見直し。',ref:'労働安全衛生法改正法'},
+    {law:'労働安全衛生法',date:'2027/4/1',short:'混在作業連絡・特別教育拡大',desc:'作業場所管理事業者に混在作業時の連絡調整等を義務付け。個人事業者に機械の安全装置・定期自主検査・安全衛生教育受講を義務化。特別教育対象業務拡大（丸鋸取替え、アーク溶接、チェーンソー、高さ2m以上ロープ高所作業等）。',impact:'特別教育対象業務が拡大。個人事業主も安全装置のない機械使用禁止、定期自主検査が義務に。',action:'特別教育の対象業務一覧を確認し、該当者に受講を案内。混在作業時の元請による連絡調整会議の実施。',ref:'労働安全衛生法・安衛則改正'},
+    {law:'労働基準法',date:'2027/4/1',short:'勤務間インターバル等',desc:'勤務間インターバル制度の義務化（終業から始業まで原則11時間以上の休息確保）。連続勤務14日超の禁止。法定休日の事前特定義務化。「つながらない権利」のガイドライン整備。有給休暇の賃金算定の通常賃金方式原則化、週44時間特例の廃止検討等。※2026年国会提出見送りの可能性あり。',impact:'建設現場の長時間労働・連続勤務が規制され、疲労によるヒヤリハット・災害防止に直結。シフト制・交替制の見直しが必須に。',action:'勤怠管理システムの改修、就業規則の整備、シフト・交替制の見直し。勤務間インターバル11時間の確保、連続勤務14日以内の徹底。',ref:'労働基準法（改正検討中）'},
+    {law:'労働施策総合推進法',date:'2026/10/1',short:'カスハラ防止',desc:'カスタマーハラスメント（顧客等からの著しい迷惑行為）対策の義務化。暴言・脅迫・過度な要求等への対応。事業主の方針明確化・周知、相談窓口設置、発生時の迅速対応、抑止措置が義務に。',impact:'発注者・工事関係者からの過度な要求・威圧的態度への対応が法的義務に。建設現場でも発注者対応が課題となる場合に適用。',action:'カスハラ防止方針の策定・周知、相談窓口の設置、発注者等からの過度な要求への対応マニュアル整備。',ref:'労働施策総合推進法改正法（2025年公布）'},
+    {law:'下請法・取適法',date:'2026/1/1',short:'取適法改称・適用拡大',desc:'下請法が中小受託取引適正化法（取適法）に改称・改正。適用対象の拡大（従業員基準の見直し）、価格転嫁への対応、取引の適正化が強化。',impact:'下請取引の透明性・適正化が進み、不当な値引き・工期短縮の抑制に。建設業の下請取引にも関連。',action:'取適法の適用範囲確認、価格転嫁条項の整備、取引記録の適正な保存。',ref:'下請代金支払遅延等防止法及び下請中小企業振興法の一部を改正する法律'},
+    {law:'建設業法',date:'2024/9/1',short:'標準労務費',desc:'労務費の基準（標準労務費）の作成・勧告。著しく低い労務費での見積り禁止、原価割れ契約禁止。適正な労務単価の水準を示すことで、下請いじめの防止と現場の安全投資を確保。',impact:'適正な労務費の確保により、安全投資・教育訓練の余裕が生まれる。',action:'発注者・元請は標準労務費を参照し、適正な見積りを。下請は原価割れ契約の受諾を避ける。',ref:'建設業法第24条の2'},
+    {law:'建設業法',date:'2024/12/13',short:'資材高騰おそれ情報',desc:'資材高騰のリスク情報（おそれ情報）の通知義務化。発注者が資材高騰の可能性を認識した場合、受注者へ通知。請負代金変更方法の契約書明記も義務化。',impact:'資材高騰時の価格変更協議が円滑に。現場の資材調達・品質確保に影響。',action:'契約書に代金変更条項を明記。資材高騰情報の共有ルートを整備。',ref:'建設業法・入契法改正'},
+    {law:'建設業法',date:'2025/12/12',short:'処遇・工期・ICT監理',desc:'建設業法・入契法改正の完全施行。労働者処遇確保の努力義務（賃金・教育・福利厚生の適正化）。著しく短い工期の契約禁止。ICT活用による監理技術者専任規制の合理化（複数現場の兼務が条件付きで可能に）。',impact:'工期の適正化により、安全に十分な時間を確保しやすく。監理技術者の配置が柔軟に。',action:'工期設定の見直し、労働者処遇の点検、ICT活用による監理体制の検討。',ref:'建設業法・建設業法施行令'},
+    {law:'建設業法',date:'2026/4/1',short:'作業従事者・統括安衛',desc:'元方事業者・関係請負人の対象を「労働者」から「作業従事者」に改正。建設業等30条・30条の2で個人事業主を統括安全衛生管理の対象に明確化。元請の統括責任が一人親方・個人事業主にも及ぶ。',impact:'元請の統括安全衛生管理責任が個人事業主にも及ぶ。混在現場の安全管理が強化。',action:'元請は個人事業主を含む全作業者の把握、安全衛生教育の実施確認、統括安全衛生管理の強化。',ref:'建設業法第30条・30条の2'},
+    {law:'労働安全衛生法',date:'2024/4/1',short:'ストレスチェック見直し',desc:'ストレスチェックの実施・面接指導等の見直し。高ストレス者への面接指導の要件見直し、医師による面接指導の実施方法の柔軟化。',impact:'メンタルヘルス対策の継続的実施。面接指導の運用が実態に即して柔軟に。',action:'ストレスチェック実施、高ストレス者への面接指導の実施、就業上の措置の記録・保存。',ref:'労働安全衛生規則第52条の9等'}
   ];
   laws.forEach(function(l){var p=l.date.split('/');l.dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])||1)});
   var enacted=laws.filter(function(l){return l.dateObj<=today&&l.dateObj>=oneYearAgo}).sort(function(a,b){return b.dateObj-a.dateObj});
   var upcoming=laws.filter(function(l){return l.dateObj>today&&l.dateObj<=oneYearLater}).sort(function(a,b){return a.dateObj-b.dateObj});
   window.comLawEnacted=enacted;window.comLawUpcoming=upcoming;
-  var lawRow=function(l,type,i){return'<div class="law-row" onclick="showLawDetailByIdx(\''+type+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .2s"><div style="font-weight:700;font-size:12px;color:var(--ac)">'+l.law+'　'+l.date+'</div><div style="font-size:10px;color:var(--t3);margin-top:4px">タップで詳細を表示</div></div>'};
+  var lawRow=function(l,type,i){var lt=esc(l.law)+'　'+esc(l.short||'')+'　'+esc(l.date);return'<div class="law-row" onclick="showLawDetailByIdx(\''+type+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .2s"><div style="font-weight:700;font-size:12px;color:var(--ac)">'+lt+'</div><div style="font-size:10px;color:var(--t3);margin-top:4px">タップで詳細を表示</div></div>'};
   var enactedBox='<div class="law-box" style="background:rgba(0,137,123,.08);border:1px solid rgba(0,137,123,.3);border-radius:var(--rs);padding:12px;margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--gn);margin-bottom:10px">✅ 施行済み（過去1年間）</div>'+(enacted.length?enacted.map(function(l,i){return lawRow(l,'enacted',i)}).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
   var upcomingBox='<div class="law-box" style="background:rgba(2,119,189,.08);border:1px solid rgba(2,119,189,.3);border-radius:var(--rs);padding:12px"><div style="font-size:12px;font-weight:700;color:var(--bl);margin-bottom:10px">📅 施行予定（1年以内）</div>'+(upcoming.length?upcoming.map(function(l,i){return lawRow(l,'upcoming',i)}).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
   document.getElementById('cLaw').innerHTML='<div style="font-size:10px;color:var(--t3);margin-bottom:10px">※施行予定日・内容は変更される場合があります。</div>'+enactedBox+upcomingBox;
@@ -867,11 +867,12 @@ function showCauseReporters(cause){
 function showLawDetailByIdx(type,i){
   var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);
   var l=arr[i];if(!l)return;
-  var h='<div class="com-detail"><div class="com-section"><strong>'+l.law+'　'+l.date+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+l.desc+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+l.impact+'</p></div>';
-  if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+l.action+'</p></div>';
-  if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+l.ref+'</p></div>';
+  var title=esc(l.law)+'　'+esc(l.short||'')+'　'+esc(l.date);
+  var h='<div class="com-detail"><div class="com-section"><strong>'+title+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+esc(l.desc)+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+esc(l.impact)+'</p></div>';
+  if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+esc(l.action)+'</p></div>';
+  if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+esc(l.ref)+'</p></div>';
   h+='</div>';
-  showComDetail(l.law+'　'+l.date,h);
+  showComDetail(l.law+'　'+(l.short||'')+'　'+l.date,h);
 }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showByExpReportDetail(expIdx,rIdx){
