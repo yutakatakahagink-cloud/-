@@ -1769,7 +1769,7 @@ function rCom(){
     sub.forEach((r,ri)=>{
       var raw=(r.d||r.m||'').replace(/\s+/g,' ');var sum=(raw.length>50?raw.substring(0,50)+'…':raw)||'（内容なし）';
       var lv=r.l>=7?' <span style="color:var(--rd);font-size:9px">Lv'+r.l+'</span>':'';
-      byExpHtml+='<div class="byexp-item" onclick="showByExpReportDetail('+(byExpData.length-1)+','+ri+')" style="padding:8px 10px;margin-bottom:4px;border-radius:6px;border:1px solid var(--bd);cursor:pointer;transition:background .2s;background:var(--bg)"><span style="font-size:11px">'+esc(sum)+'</span>'+lv+'<div style="font-size:9px;color:var(--t3);margin-top:4px">タップで詳細・対策案を表示</div></div>';
+      byExpHtml+='<div class="byexp-item" onclick="event.stopPropagation();showByExpReportDetail('+(byExpData.length-1)+','+ri+')" style="padding:8px 10px;margin-bottom:4px;border-radius:6px;border:1px solid var(--bd);cursor:pointer;transition:background .2s;background:var(--bg)"><span style="font-size:11px">'+esc(sum)+'</span>'+lv+'<div style="font-size:9px;color:var(--t3);margin-top:4px">タップで詳細・対策案を表示</div></div>';
     });
     byExpHtml+='</div>';
   });
