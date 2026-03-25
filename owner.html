@@ -186,6 +186,10 @@ select,input,textarea,button{color:var(--t1)}
 .top-btn{display:inline-flex;align-items:center;justify-content:center;width:102px;height:31px;padding:0 16px;border-radius:10px;font-size:12px;background:#fff;border:1px solid #81C784;color:#2E7D32;cursor:pointer;font-weight:600;text-decoration:none;font-family:inherit;white-space:nowrap;box-sizing:border-box}
 .top-btn:hover,.top-btn:active{background:var(--acg);border-color:var(--ac)}
 .other-inp{display:none;margin-top:6px}.other-inp.show{display:block}
+.period-flt{display:flex;gap:6px;padding:8px 16px;align-items:center;flex-wrap:wrap}
+.period-flt select{padding:4px 8px;border-radius:8px;font-size:10px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23558B2F' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px}
+.period-flt select:focus{outline:none;border-color:var(--ac)}
+.period-flt .pf-label{font-size:10px;font-weight:600;color:var(--t3)}
 .dept-flt{display:flex;gap:5px;padding:8px 16px;overflow-x:auto}
 .dfp{padding:4px 10px;border-radius:10px;font-size:9px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;cursor:pointer;white-space:nowrap;font-family:inherit}
 .dfp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
@@ -253,6 +257,9 @@ select,input,textarea,button{color:var(--t1)}
   .cs{padding:18px 32px}
   .tps{padding:12px 32px}
   .tp{font-size:12px;padding:7px 16px}
+  .period-flt{padding:10px 32px}
+  .period-flt select{font-size:12px;padding:6px 12px;padding-right:24px}
+  .period-flt .pf-label{font-size:12px}
   .dept-flt{padding:10px 32px}
   .dfp{font-size:11px;padding:6px 14px}
   .guide-box{font-size:12px;padding:14px 16px}
@@ -289,6 +296,7 @@ select,input,textarea,button{color:var(--t1)}
   .fw{padding:0 48px 32px}
   .cs{padding:20px 48px}
   .tps{padding:14px 48px}
+  .period-flt{padding:12px 48px}
   .dept-flt{padding:12px 48px}
   .sr{padding:20px 48px}
   .ls{padding:0 48px 24px}
@@ -315,6 +323,7 @@ select,input,textarea,button{color:var(--t1)}
 
 <!-- DASHBOARD -->
 <div class="pg on" id="pD">
+  <div class="period-flt" id="pfDash"></div>
   <div class="dept-flt" id="dfDash"></div>
   <div class="sr">
     <div class="sc co"><div class="sv" id="sT">0</div><div class="sl">総報告件数</div></div>
@@ -327,6 +336,7 @@ select,input,textarea,button{color:var(--t1)}
 
 <!-- ANALYTICS -->
 <div class="pg" id="pA">
+  <div class="period-flt" id="pfAnl"></div>
   <div class="tps" id="aT"><button class="tp on" data-t="simple">単純集計</button><button class="tp" data-t="byexp">体験別分析</button><button class="tp" data-t="behind">背後要因</button><button class="tp" data-t="resil">レジリエンス</button><button class="tp" data-t="acts">活動分析</button></div>
   <div class="dept-flt" id="dfAnl"></div>
   <div class="cs" id="aC"></div>
@@ -334,6 +344,7 @@ select,input,textarea,button{color:var(--t1)}
 
 <!-- COMMITTEE -->
 <div class="pg" id="pC">
+  <div class="period-flt" id="pfCom"></div>
   <div class="dept-flt" id="dfCom"></div>
   <div class="cs">
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
@@ -561,6 +572,7 @@ document.getElementById('modal').onclick=e=>{if(e.target.id==='modal'){e.target.
 
 // ===== DATA (shared via localStorage) =====
 let DB=[],idc=0,cFi='all',deptFilt='all',REQ_LIST=[],DIS_LIST=[];
+var periodYear='all',periodMonth='all';
 const FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
 var DEMO_DATA=[
 {n:'志田和弘',dept:'土木本部/土木部',ku:'土木',ar:'50~59歳',e:['墜落しそうになった'],d:'足場手すりが外れ、寄りかかった際にぐらついた。転落危険。',c:['確認不足','作業環境'],l:8,w:'2/5 AM10 3階足場',wk:'外壁仕上げ',m:'足場点検チェックリスト導入',st:{workload:3,overtime:3,hardwork:3,fatigue:3,exhausted:3,sluggish:2,tense:3,anxiety:2,restless:2,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:2},we:{pace:2,autonomy:2,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:3,happiness:2},av:['注意不足','焦り'],ac:['KY活動','朝礼夕礼'],ss:'review'},
@@ -638,7 +650,8 @@ function buildDeptFilter(containerId){
   ];
   document.getElementById(containerId).innerHTML=depts.map(d=>`<button class="dfp${d.v===deptFilt?' on':''}" data-d="${d.v}" onclick="setDeptF('${d.v}')">${d.l}</button>`).join('');
 }
-function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom()}
+function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));refreshCurrentPage()}
+function refreshCurrentPage(){const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom();if(pg?.id==='pReq')rReqList();if(pg?.id==='pDis')rDisList()}
 
 // ===== 要望・災害 =====
 function rReqList(){
@@ -744,7 +757,26 @@ function showDisDetail(id){
   mbd.classList.add('dis-detail-wide');
   modal.classList.add('show');
 }
-function getF(){return deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt))}
+function getF(){
+  var d=deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt));
+  if(periodYear!=='all')d=d.filter(r=>{var dt=r.date||'';return dt.substring(0,4)===periodYear});
+  if(periodMonth!=='all')d=d.filter(r=>{var dt=r.date||'';return dt.substring(5,7)===periodMonth});
+  return d;
+}
+function buildPeriodFilter(containerId){
+  var years={};DB.forEach(r=>{var y=(r.date||'').substring(0,4);if(y&&y.length===4)years[y]=1});
+  var ys=Object.keys(years).sort().reverse();
+  var h='<span class="pf-label">期間:</span>';
+  h+='<select onchange="periodYear=this.value;refreshCurrentPage()">';
+  h+='<option value="all"'+(periodYear==='all'?' selected':'')+'>全年</option>';
+  ys.forEach(y=>{h+='<option value="'+y+'"'+(periodYear===y?' selected':'')+'>'+y+'年</option>'});
+  h+='</select>';
+  h+='<select onchange="periodMonth=this.value;refreshCurrentPage()">';
+  h+='<option value="all"'+(periodMonth==='all'?' selected':'')+'>全月</option>';
+  for(var m=1;m<=12;m++){var mv=String(m).padStart(2,'0');h+='<option value="'+mv+'"'+(periodMonth===mv?' selected':'')+'>'+m+'月</option>'}
+  h+='</select>';
+  var el=document.getElementById(containerId);if(el)el.innerHTML=h;
+}
 
 // ===== OWNER: ADMIN MANAGEMENT =====
 function renderAdminList(){
@@ -861,6 +893,7 @@ function generateAllQR(){
 
 // ===== DASHBOARD =====
 function rDash(){
+  buildPeriodFilter('pfDash');
   buildDeptFilter('dfDash');
   const fd=getF();
   document.getElementById('sT').textContent=fd.length;
@@ -874,37 +907,50 @@ function rList(){
   const fd=getF();
   const f=cFi==='all'?fd:fd.filter(r=>r.ss===cFi);
   document.getElementById('rL').innerHTML=f.map(r=>{
-    const bc=r.e[0]?.includes('墜落')?'bf':r.e[0]?.includes('転倒')?'bt2':r.e[0]?.includes('激突')||r.e[0]?.includes('機械')?'bm':r.e[0]?.includes('落下')?'bdr':r.e[0]?.includes('倒')?'bcl':'bo';
+    const e0=(r.e||[])[0]||'';
+    const bc=e0.includes('墜落')?'bf':e0.includes('転倒')?'bt2':e0.includes('激突')||e0.includes('機械')?'bm':e0.includes('落下')?'bdr':e0.includes('倒')?'bcl':'bo';
     const dc=r.ss==='new'?'dn':r.ss==='review'?'dr':'dd';
     const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
-    return`<div class="rc" onclick="sDt(${r.id})"><div class="rt"><span class="bd2 ${bc}">${(r.e[0]||'').substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l}</span></div><div class="rde">${r.d}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${r.n}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date}</span></div></div>`;
+    return`<div class="rc" onclick="sDt(${r.id})" style="padding:8px 12px;margin-bottom:4px"><div class="rt" style="margin-bottom:2px"><span class="bd2 ${bc}">${e0.substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div><div class="rde" style="margin-bottom:2px;-webkit-line-clamp:1">${r.d||''}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date||''}</span></div></div>`;
   }).join('')||'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
 }
-function cycF(){const i=FI.indexOf(cFi);cFi=FI[(i+1)%4];document.getElementById('fB').textContent=FL[cFi]+' ▾';rList()}
+function cycF(){
+  var dd=document.getElementById('filterDropdown');
+  if(dd){dd.style.display=dd.style.display==='block'?'none':'block';return}
+  dd=document.createElement('div');dd.id='filterDropdown';
+  dd.style.cssText='position:absolute;background:#fff;border:1px solid #A5D6A7;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:50;min-width:120px;overflow:hidden';
+  FI.forEach(function(k){
+    var opt=document.createElement('div');opt.textContent=FL[k];
+    opt.style.cssText='padding:10px 16px;font-size:12px;cursor:pointer;font-weight:'+(k===cFi?'700':'400')+';color:'+(k===cFi?'var(--ac)':'var(--t1)')+';background:'+(k===cFi?'var(--acg)':'#fff');
+    opt.onmouseenter=function(){this.style.background='var(--acg)'};opt.onmouseleave=function(){this.style.background=k===cFi?'var(--acg)':'#fff'};
+    opt.onclick=function(e){e.stopPropagation();cFi=k;document.getElementById('fB').textContent=FL[k]+' ▾';dd.style.display='none';rList()};
+    dd.appendChild(opt);
+  });
+  var btn=document.getElementById('fB');btn.parentElement.style.position='relative';
+  btn.parentElement.appendChild(dd);dd.style.top=btn.offsetHeight+4+'px';dd.style.right='0';dd.style.display='block';
+  setTimeout(function(){document.addEventListener('click',function closeDD(){dd.style.display='none';document.removeEventListener('click',closeDD)})},0);
+}
 
 // ===== DETAIL (owner sees all including stress) =====
 function sDt(id){
   const r=DB.find(x=>x.id===id);if(!r)return;
-  document.getElementById('mT').textContent=(r.e[0]||'報告')+' — 詳細';
+  document.getElementById('mT').textContent=((r.e||[])[0]||'報告')+' — 詳細';
   const dot=v=>'●'.repeat(v||0)+'○'.repeat(4-(v||0));
   const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
   let h=`
-    <div class="dl"><span class="dk">報告者</span><span class="dv">${r.n||'—'}</span></div>
     <div class="dl"><span class="dk">部署</span><span class="dv">${r.dept||'—'}</span></div>
-    <div class="dl"><span class="dk">区分/年齢</span><span class="dv">${r.ku||'—'}/${r.ar||'—'}</span></div>
-    <div class="dl"><span class="dk">日時・場所</span><span class="dv">${r.w||r.date}</span></div>
-    <div class="dl"><span class="dk">災害レベル</span><span class="dv" style="color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l}</span></div>
+    <div class="dl"><span class="dk">日時・場所</span><span class="dv">${r.w||r.date||'—'}</span></div>
+    <div class="dl"><span class="dk">災害レベル</span><span class="dv" style="color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div>
     <div class="dl"><span class="dk">ステータス</span><span class="dv">${sl}</span></div>
-    <div class="dbk"><div class="dbt">体験</div><div class="dbtx">${(r.e||[]).join('、')}</div></div>
+    <div class="dbk"><div class="dbt">体験</div><div class="dbtx">${(r.e||[]).join('、')||'—'}</div></div>
     <div class="dbk"><div class="dbt">詳細</div><div class="dbtx">${r.d||'—'}</div></div>
     <div class="dbk"><div class="dbt">原因</div><div class="dbtx">${(r.c||[]).join('、')||'—'}</div></div>
     <div class="dbk"><div class="dbt">対策</div><div class="dbtx">${r.m||'—'}</div></div>
-    ${r.photos&&r.photos.length?'<div class="dbk"><div class="dbt">📷 現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(p=>'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">').join('')+'</div></div>':''}
+    ${r.photos&&r.photos.length?'<div class="dbk"><div class="dbt">現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(p=>'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">').join('')+'</div></div>':''}
     <div class="dbk"><div class="dbt">回避できなかった理由</div><div class="dbtx">${(r.av||[]).join('、')||'—'}</div></div>
     <div class="dbk"><div class="dbt">回避に役立つ活動</div><div class="dbtx">${(r.ac||[]).join('、')||'—'}</div></div>`;
-  // Owner always sees stress data
-  h+=`<div class="dbk"><div class="dbt">🔒 背後要因（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.st||{})[k])}</span>`).join('')}</div></div>`;
-  h+=`<div class="dbk"><div class="dbt">🔒 職場環境（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.we||{})[k])}</span>`).join('')}</div></div>`;
+  h+=`<div class="dbk"><div class="dbt">背後要因</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.st||{})[k])}</span>`).join('')}</div></div>`;
+  h+=`<div class="dbk"><div class="dbt">職場環境</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.we||{})[k])}</span>`).join('')}</div></div>`;
   h+=`<div class="abs"><button class="ab abr" onclick="setSS(${r.id},'review')">確認中</button><button class="ab abd" onclick="setSS(${r.id},'done')">対策完了</button></div>`;
   document.getElementById('mI').innerHTML=h;
   document.getElementById('modal').classList.add('show');
@@ -915,6 +961,7 @@ function showFullPhotoSrc(src){var ov=document.createElement('div');ov.className
 // ===== ANALYTICS =====
 var curExpFilter='all';
 function rAnl(type){
+  buildPeriodFilter('pfAnl');
   buildDeptFilter('dfAnl');
   document.querySelectorAll('#aT .tp').forEach(t=>{t.style.display='inline-block'});
   const ct=document.getElementById('aC');
@@ -1033,6 +1080,7 @@ function anlActs(){
 
 // ===== COMMITTEE =====
 function rCom(){
+  buildPeriodFilter('pfCom');
   buildDeptFilter('dfCom');
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
