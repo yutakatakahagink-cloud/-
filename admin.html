@@ -807,7 +807,7 @@ function rCom(){
   var enacted=laws.filter(function(l){return l.dateObj<=today&&l.dateObj>=oneYearAgo}).sort(function(a,b){return b.dateObj-a.dateObj});
   var upcoming=laws.filter(function(l){return l.dateObj>today&&l.dateObj<=oneYearLater}).sort(function(a,b){return a.dateObj-b.dateObj});
   window.comLawEnacted=enacted;window.comLawUpcoming=upcoming;
-  var lawRow=function(l,type,i){var lt=esc(l.law)+'　'+esc(l.short||'')+'　'+esc(l.date);return'<div class="law-row" onclick="showLawDetailByIdx(\''+type+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .2s"><div style="font-weight:700;font-size:12px;color:var(--ac)">'+lt+'</div><div style="font-size:10px;color:var(--t3);margin-top:4px">タップで詳細を表示</div></div>'};
+  var lawRow=function(l,type,i){var st=esc(l.short||l.law),nm=esc(l.law),dt=esc(l.date);return'<div class="law-row" onclick="showLawDetailByIdx(\''+type+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .2s"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;letter-spacing:.02em">改正の要点</div><div style="font-weight:700;font-size:13px;color:var(--ac);line-height:1.35">'+st+'</div><div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px;margin-top:6px;font-size:11px;color:var(--t2)"><span>'+nm+'</span><span style="color:var(--t3);white-space:nowrap">施行日 '+dt+'</span></div><div style="font-size:10px;color:var(--t3);margin-top:6px">タップで詳細を表示</div></div>'};
   var enactedBox='<div class="law-box" style="background:rgba(0,137,123,.08);border:1px solid rgba(0,137,123,.3);border-radius:var(--rs);padding:12px;margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--gn);margin-bottom:10px">✅ 施行済み（過去1年間）</div>'+(enacted.length?enacted.map(function(l,i){return lawRow(l,'enacted',i)}).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
   var upcomingBox='<div class="law-box" style="background:rgba(2,119,189,.08);border:1px solid rgba(2,119,189,.3);border-radius:var(--rs);padding:12px"><div style="font-size:12px;font-weight:700;color:var(--bl);margin-bottom:10px">📅 施行予定（1年以内）</div>'+(upcoming.length?upcoming.map(function(l,i){return lawRow(l,'upcoming',i)}).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
   document.getElementById('cLaw').innerHTML='<div style="font-size:10px;color:var(--t3);margin-bottom:10px">※施行予定日・内容は変更される場合があります。</div>'+enactedBox+upcomingBox;
@@ -867,12 +867,12 @@ function showCauseReporters(cause){
 function showLawDetailByIdx(type,i){
   var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);
   var l=arr[i];if(!l)return;
-  var title=esc(l.law)+'　'+esc(l.short||'')+'　'+esc(l.date);
-  var h='<div class="com-detail"><div class="com-section"><strong>'+title+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+esc(l.desc)+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+esc(l.impact)+'</p></div>';
+  var headShort=esc(l.short||l.law);
+  var h='<div class="com-detail"><div class="com-section"><div style="font-size:11px;color:var(--t3);margin-bottom:4px">改正の要点</div><strong style="font-size:15px;display:block;line-height:1.4">'+headShort+'</strong><p style="font-size:12px;color:var(--t2);margin:10px 0 0;line-height:1.5">'+esc(l.law)+'<br><span style="color:var(--t3)">施行日 '+esc(l.date)+'</span></p></div><div class="com-section"><strong>改正内容</strong><p>'+esc(l.desc)+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+esc(l.impact)+'</p></div>';
   if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+esc(l.action)+'</p></div>';
   if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+esc(l.ref)+'</p></div>';
   h+='</div>';
-  showComDetail(l.law+'　'+(l.short||'')+'　'+l.date,h);
+  showComDetail((l.short||l.law)+' — '+l.law+'（'+l.date+'）',h);
 }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showByExpReportDetail(expIdx,rIdx){
