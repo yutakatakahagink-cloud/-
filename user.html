@@ -1782,7 +1782,7 @@ function rCom(){
   // 法改正（laws_data.json を定期取得。未読込時は applyLawsToDashboard が fetch）
   var cLaw=document.getElementById('cLaw');
   if(typeof applyLawsToDashboard==='function')applyLawsToDashboard(esc,cLaw);
-  else if(cLaw)cLaw.innerHTML='<p style="font-size:12px;color:var(--t3)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p>';
+  else if(cLaw)cLaw.innerHTML='<p style="font-size:12px;line-height:1.55;color:var(--rd)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p><p style="font-size:11px;line-height:1.55;color:var(--t3);margin-top:8px">F12→コンソールでエラーを確認してください。GitHub Pages では laws_refresh.js が未アップロードまたは構文エラーのときに出ます。GitHubにアップロード.ps1 で laws_refresh.js・laws_data.json を含めて再デプロイしてください。</p>';
 
   // Critical: high stress x high risk
   if(IS_ADMIN){

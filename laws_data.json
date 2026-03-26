@@ -1,7 +1,7 @@
 {
   "meta": {
     "updated": "2026-03-25",
-    "note": "法改正一覧の正本。HTMLは laws_refresh.js が取得し、file:// 時は laws_refresh.js 内の FALLBACK_LAWS を使用。JSON更新後は python _sync_fallback_laws.py で FALLBACK を同期。"
+    "note": "法改正一覧の正本は本ファイル。HTML は laws_refresh.js が laws_data.json を優先取得する（取得できない環境では内蔵 FALLBACK）。JSON を編集したら必ず同フォルダで python _sync_fallback_laws.py を実行し FALLBACK を同期すること（未同期だと file 表示などで追記分が出ない）。"
   },
   "laws": [
     {

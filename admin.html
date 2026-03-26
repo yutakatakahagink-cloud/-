@@ -789,7 +789,7 @@ function rCom(){
 
   // 法改正（laws_data.json を定期取得）
   if(typeof applyLawsToDashboard==='function')applyLawsToDashboard(esc,document.getElementById('cLaw'));
-  else document.getElementById('cLaw').innerHTML='<p style="font-size:12px;color:var(--t3)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p>';
+  else document.getElementById('cLaw').innerHTML='<p style="font-size:12px;line-height:1.55;color:var(--rd)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p><p style="font-size:11px;line-height:1.55;color:var(--t3);margin-top:8px">F12→コンソールでエラーを確認してください。GitHub Pages では laws_refresh.js が未アップロードまたは構文エラーのときに出ます。GitHubにアップロード.ps1 で laws_refresh.js・laws_data.json を含めて再デプロイしてください。</p>';
 
   // Critical: high stress x high risk
   const crit=fd.filter(r=>{const v=Object.values(r.st||{});return v.length&&r.l>=7&&(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
