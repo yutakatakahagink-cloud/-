@@ -527,6 +527,13 @@ input[type="file"].photo-input{display:none}
   <!-- 使用者用：戻るリンク＋フォーム -->
   <a href="javascript:void(0)" class="back" id="disBack" onclick="goTo('pMenu')">← 戻る</a>
   <div id="disFormArea">
+  <div id="disWfUserWrap" class="dis-wf-user-block" style="margin:0 0 16px;padding:12px;background:rgba(106,27,154,.06);border:1px solid rgba(106,27,154,.28);border-radius:8px">
+    <div class="sd" style="margin-top:0">承認ワークフロー（任意）</div>
+    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者のメールを1件以上入れると、<b>最終承認まで「確定済み」一覧に表示されません</b>。承認者は管理者画面で、<b>ここに入力したメール</b>と一致するアカウント（または所有者）でログインし、<b>差戻し・追記・訂正・承認</b>ができます。<br><strong>提出時の通知:</strong> <code style="font-size:10px">config.js</code> に <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）があると承認者へ自動でメール送信されます。未設定の場合は提出直後にメール作成画面が開くので、<b>送信ボタンで送ってください</b>。メール本文には <b>ログイン不要で開く承認用URL</b>（<code style="font-size:10px">disaster-approver.html?id=…&t=…</code>）が含まれます。<code style="font-size:10px">HH_BASE_URL</code> を設定すると、そのURLが本番アドレスになります。</p>
+    <div id="disWfUserSteps"></div>
+    <button type="button" class="fp" style="margin-top:6px;font-size:11px;padding:8px 12px;border-radius:8px" onclick="disWfUserAddApproverRow()">＋ 承認段階を追加</button>
+    <div class="fg" style="margin-top:12px;margin-bottom:0"><label class="fl">差戻し通知メール（任意）</label><input class="fi" type="email" id="f_reporter_notify_email" placeholder="差戻し時に通知を受け取るメール"></div>
+  </div>
   <div class="dis-form-mobile">
   <div class="sd">事業場情報</div>
   <div class="fg"><label class="fl">事業の種類</label><input class="fi" id="f_gyoshu" placeholder="例: 土木工事業"></div>
@@ -622,6 +629,14 @@ input[type="file"].photo-input{display:none}
   </div>
   <div class="dis-report-block"><div class="dis-report-msg">上記のとおり相違なく報告いたします。</div><div class="dis-report-date" style="justify-content:flex-end"><input class="fi" type="date" id="f_report_date_pc" style="width:140px">　責任者：<input class="fi" id="f_sekininsha_pc" placeholder="責任者名" style="width:120px" readonly></div></div>
   <button class="sub" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
+  </div>
+  <div id="disWfMailPrompt" style="display:none;margin-top:14px;padding:14px;background:#E8F5E9;border:1px solid #66BB6A;border-radius:var(--rs);font-size:12px;line-height:1.55;color:var(--t1)">
+    <strong style="color:#2E7D32">承認依頼メール（再送）</strong>
+    <p style="margin:8px 0 0">メール画面が開かなかった場合は、<b>下のボタン</b>から再度開けます。確実な自動送信には <code style="font-size:10px">config.js</code> の <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）を設定してください。</p>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <button type="button" class="sub" style="margin:0;padding:10px 16px;font-size:13px;width:auto;flex:1;min-width:140px" onclick="disasterPendingMailOpen()">承認者にメールを作成</button>
+      <button type="button" class="fp" style="padding:10px 14px;font-size:12px" onclick="document.getElementById('disWfMailPrompt').style.display='none'">閉じる</button>
+    </div>
   </div>
   </div>
   <script>
@@ -933,6 +948,8 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js" onerror="console.warn('hh-data.js load failed')"></script>
+<script src="disaster-workflow.js" onerror="console.warn('disaster-workflow.js load failed')"></script>
+<script src="disaster-email-notify.js" onerror="console.warn('disaster-email-notify.js load failed')"></script>
 <script src="laws_refresh.js" onerror="console.warn('laws_refresh.js load failed')"></script>
 <script>
 // ===== 使用者専用スクリプト（user.html） =====
@@ -957,7 +974,7 @@ function initLoginDept(){
   dSel.innerHTML='<option value="">部署を選択してください</option>';
   [...deptSet].sort().forEach(d=>{var o=document.createElement('option');o.value=d;o.textContent=d;dSel.appendChild(o)});
 }
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){initLoginDept();initHhDropZone();initDisDropZones()})}else{initLoginDept();initHhDropZone();initDisDropZones()}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){initLoginDept();initHhDropZone();initDisDropZones();if(typeof ensureDisWfUserRows==='function')ensureDisWfUserRows()})}else{initLoginDept();initHhDropZone();initDisDropZones();if(typeof ensureDisWfUserRows==='function')ensureDisWfUserRows()}
 
 function onDeptSel(){
   var el=dSel||document.getElementById('loginDept');var dept=el?el.value:'';var nS=document.getElementById('loginName');
@@ -1162,13 +1179,16 @@ function doDataInit(){
   if(HHDB.useFirebase()&&HHDB.onRequestsChange)HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderReqList()});
   if(HHDB.loadDisasterReports)HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];});
   if(HHDB.useFirebase()&&HHDB.onDisasterChange)HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
+  if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()});
+  if(typeof HHDB.useFirebase==='function'&&HHDB.useFirebase()&&HHDB.onDisasterWorkflowChange)HHDB.onDisasterWorkflowChange(function(){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()})});
 }
 
 // ===== REQUEST (要望) =====
 function loadReqDis(cb){
-  if(typeof HHDB==='undefined'){try{var s=localStorage.getItem('hh_requests');REQ_LIST=s?JSON.parse(s):[]}catch(e){REQ_LIST=[]};try{var d=localStorage.getItem('hh_disaster_reports');DIS_LIST=d?JSON.parse(d):[]}catch(e){DIS_LIST=[]};if(cb)cb();return}
+  function wfThen(fn){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){fn()});else fn()}
+  if(typeof HHDB==='undefined'){try{var s=localStorage.getItem('hh_requests');REQ_LIST=s?JSON.parse(s):[]}catch(e){REQ_LIST=[]};try{var d=localStorage.getItem('hh_disaster_reports');DIS_LIST=d?JSON.parse(d):[]}catch(e){DIS_LIST=[]};wfThen(function(){if(cb)cb()});return}
   var todo=2;
-  function done(){todo--;if(todo<=0&&cb)cb()}
+  function done(){todo--;if(todo<=0)wfThen(function(){if(cb)cb()})}
   HHDB.loadRequests(function(arr){REQ_LIST=arr||[];done()});
   HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];done()});
 }
@@ -1242,8 +1262,59 @@ function updateDisExp(){
   var m=h.match(/(\d{4})[年\/\-](\d{1,2})/);if(m){var hire=new Date(parseInt(m[1],10),parseInt(m[2],10)-1,1);if(!isNaN(hire.getTime())){var today=new Date();var months=(today.getFullYear()-hire.getFullYear())*12+(today.getMonth()-hire.getMonth());ey.value=Math.floor(months/12);em.value=months%12}else{ey.value='';em.value=''}}
   else{ey.value='';em.value=''}
 }
+function disWfUserAddApproverRow(){
+  var box=document.getElementById('disWfUserSteps');if(!box)return;
+  var n=box.querySelectorAll('.dis-wf-u-row').length+1;
+  var div=document.createElement('div');
+  div.className='dis-wf-u-row';
+  div.style.cssText='display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px';
+  div.innerHTML='<input class="fi dis-wf-u-lab" type="text" placeholder="段階名（例:現場長）" value="第'+n+'承認" style="flex:1;min-width:90px;margin:0"><input class="fi dis-wf-u-em" type="email" placeholder="承認者メール" style="flex:2;min-width:160px;margin:0"><button type="button" class="fp" style="padding:6px 10px;font-size:11px;border-radius:8px" onclick="this.parentElement.remove()">削除</button>';
+  box.appendChild(div);
+}
+function collectDisUserApproverSteps(){
+  var box=document.getElementById('disWfUserSteps');if(!box)return[];
+  var out=[];
+  box.querySelectorAll('.dis-wf-u-row').forEach(function(row){
+    var lab=(row.querySelector('.dis-wf-u-lab')||{}).value||'';
+    var em=(row.querySelector('.dis-wf-u-em')||{}).value||'';
+    out.push({label:String(lab).trim(),email:String(em).trim()});
+  });
+  return out;
+}
+function ensureDisWfUserRows(){
+  var box=document.getElementById('disWfUserSteps');if(!box||box.querySelector('.dis-wf-u-row'))return;
+  disWfUserAddApproverRow();
+}
+function disasterPendingMailOpen(){
+  var r=window._disPendingMailRec;if(!r||!r.wf)return;
+  if(typeof disasterOpenMailtoForStep==='function')disasterOpenMailtoForStep(r,0);
+}
+function resetDisasterFormPC(){
+  var ids=['f_keigen_pc','f_basho_pc','f_basho_jusho_pc','f_jusho_pc','f_victim_pc','f_birth_y_pc','f_birth_m_pc','f_birth_d_pc','f_victim_dept_pc','f_hire_date_pc','f_shobyomei_pc','f_byoin_pc','f_kyugyo_days_pc','f_kyugyo_yen_pc','f_shokumei_pc','f_gennin_pc','f_kyukun_person_pc','f_kyukun_equip_pc','f_kyukun_mgmt_pc','f_basho_detail_pc','f_sagyo_pc','f_genin_busshi_pc','f_genin_jin_pc','f_kekka_pc','f_kaizen_honin_pc','f_kaizen_kantoku_pc','f_taisaku_pc'];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  ['f_kiinbutsu_pc','f_fuanzen_pc','f_fuanzen_kodo_pc','f_jiko_pc','f_kanri_pc'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  var koui=document.querySelector('input[name="koui_pc"][value="無"]');if(koui)koui.checked=true;
+  var ky=document.querySelector('input[name="kyugyo_type_pc"][value="休業"]');if(ky)ky.checked=true;
+  var gn=document.querySelector('input[name="gennin_aru_pc"][value="無"]');if(gn)gn.checked=true;
+  if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
+  if(window._disPhotosPC_render)window._disPhotosPC_render();
+  var box=document.getElementById('disWfUserSteps');if(box)box.innerHTML='';
+  var rne=document.getElementById('f_reporter_notify_email');if(rne)rne.value='';
+  fillDisFormDefaults();
+  updateDisDtWeek();updateDisAge();updateDisExp();
+}
+function resetDisasterFormMobile(){
+  ['f_gyoshu','f_jigyosho','f_address','f_workers','f_machine','f_place','f_victim','f_human_damage','f_material_damage','f_situation','f_cause','f_measure'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  var ft=document.getElementById('f_type');if(ft)ft.value='';
+  if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
+  if(window._disPhotos_render)window._disPhotos_render();
+  var box=document.getElementById('disWfUserSteps');if(box)box.innerHTML='';
+  var rne=document.getElementById('f_reporter_notify_email');if(rne)rne.value='';
+  fillDisFormDefaults();
+}
 function fillDisFormDefaults(){
   if(!CUR)return;
+  ensureDisWfUserRows();
   document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
   var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
   var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
@@ -1268,42 +1339,96 @@ function doDisSubmit(){
   if(!CUR){alert('ログインしてください');return}
   var imgs=(window._disPhotos||[]).slice();
   var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),status:'draft',gyoshu:document.getElementById('f_gyoshu').value,jigyosho:document.getElementById('f_jigyosho').value,address:document.getElementById('f_address').value,workers:document.getElementById('f_workers').value,datetime:dt,place:place,machine:document.getElementById('f_machine').value,type:document.getElementById('f_type').value,victim:victim,victim_dept:document.getElementById('f_victim_dept').value,human_damage:document.getElementById('f_human_damage').value,material_damage:document.getElementById('f_material_damage').value,situation:situation,cause:document.getElementById('f_cause').value,measure:document.getElementById('f_measure').value,reporter:CUR.name,situation_img:imgs[0]||null,situation_imgs:imgs};
+  var rn=document.getElementById('f_reporter_notify_email');if(rn&&rn.value.trim())rec.reporter_notify_email=rn.value.trim();
   if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
+  var stPreM=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var wfMailtoPopM=null;
+  if(stPreM.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())wfMailtoPopM=disasterPrepareMailtoPopup();
   function saveNew(){
+    var st=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+    if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,st);
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
     if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
     else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
-    document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
-    document.getElementById('f_place').value='';document.getElementById('f_victim').value='';document.getElementById('f_situation').value='';document.getElementById('f_cause').value='';document.getElementById('f_measure').value='';
-    if(window._disPhotos_render)window._disPhotos_render();
-    var t=document.getElementById('toastDis');if(t){t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+    if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPopM);
+    window._disPendingMailRec=rec.wf?rec:null;
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()?'block':'none';
+    resetDisasterFormMobile();
+    if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
+    var t=document.getElementById('toastDis');if(t){
+      var msgM='送信しました';
+      if(rec.wf)msgM=typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます';
+      t.textContent=msgM;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},rec.wf?5000:3200)
+    }
   }
   if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];saveNew()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};saveNew();}
 }
 function doDisSubmitPC(){
   try{
+  if(!CUR){alert('ログインしてください');return}
   var kt=document.querySelector('input[name="kyugyo_type_pc"]:checked')?.value,kd=document.getElementById('f_kyugyo_days_pc')?.value,ky=document.getElementById('f_kyugyo_yen_pc')?.value;
   var kyugyoStr=(kt==='不休'?'不休':(kd||ky)?((kd?kd+'日間 ':'')+(ky?ky+'円':'')).trim():'');
   var dy=document.getElementById('f_dt_y_pc')?.value,dm=document.getElementById('f_dt_m_pc')?.value,dd=document.getElementById('f_dt_d_pc')?.value,dh=document.getElementById('f_dt_h_pc')?.value,dmin=document.getElementById('f_dt_min_pc')?.value,dw=document.getElementById('f_dt_week_pc')?.value;
   var datetimeStr=(dy&&dm&&dd)?(dy+'年'+dm+'月'+dd+'日'+(dw?'('+dw+')':'')+' '+(dh||'')+':'+(dmin||'')+'頃'):'';
   var imgsPC=(window._disPhotosPC||[]).slice();
   var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),datetime:datetimeStr,status:'draft',form:'pc',keigen:document.getElementById('f_keigen_pc')?.value,basho:document.getElementById('f_basho_pc')?.value,basho_jusho:document.getElementById('f_basho_jusho_pc')?.value,jusho:document.getElementById('f_jusho_pc')?.value,victim:document.getElementById('f_victim_pc')?.value,age:document.getElementById('f_age_pc')?.value,birth:document.getElementById('f_birth_y_pc')?.value+'-'+document.getElementById('f_birth_m_pc')?.value+'-'+document.getElementById('f_birth_d_pc')?.value,victim_dept:document.getElementById('f_victim_dept_pc')?.value,hire_date:document.getElementById('f_hire_date_pc')?.value,exp:document.getElementById('f_exp_y_pc')?.value+'-'+document.getElementById('f_exp_m_pc')?.value,shobyomei:document.getElementById('f_shobyomei_pc')?.value,byoin:document.getElementById('f_byoin_pc')?.value,koui:document.querySelector('input[name="koui_pc"]:checked')?.value,kyugyo:kyugyoStr,kyugyo_type:kt,kyugyo_days:kd,kyugyo_yen:ky,gennin:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,gennin_aru:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,shokumei:document.getElementById('f_shokumei_pc')?.value,gennin_name:document.getElementById('f_gennin_pc')?.value,kyukun_person:document.getElementById('f_kyukun_person_pc')?.value,kyukun_equip:document.getElementById('f_kyukun_equip_pc')?.value,kyukun_mgmt:document.getElementById('f_kyukun_mgmt_pc')?.value,basho_detail:document.getElementById('f_basho_detail_pc')?.value,sagyo:document.getElementById('f_sagyo_pc')?.value,genin_busshi:document.getElementById('f_genin_busshi_pc')?.value,genin_jin:document.getElementById('f_genin_jin_pc')?.value,kekka:document.getElementById('f_kekka_pc')?.value,kaizen_honin:document.getElementById('f_kaizen_honin_pc')?.value,kaizen_kantoku:document.getElementById('f_kaizen_kantoku_pc')?.value,situation_img:imgsPC[0]||null,situation_imgs:imgsPC,taisaku:document.getElementById('f_taisaku_pc')?.value,kiinbutsu:document.getElementById('f_kiinbutsu_pc')?.value,fuanzen:document.getElementById('f_fuanzen_pc')?.value,fuanzen_kodo:document.getElementById('f_fuanzen_kodo_pc')?.value,jiko:document.getElementById('f_jiko_pc')?.value,kanri:document.getElementById('f_kanri_pc')?.value,reporter:CUR?CUR.name:'',report_date:document.getElementById('f_report_date_pc')?.value,sekininsha:document.getElementById('f_sekininsha_pc')?.value};
+  var rnPc=document.getElementById('f_reporter_notify_email');if(rnPc&&rnPc.value.trim())rec.reporter_notify_email=rnPc.value.trim();
   if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
-  DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
-  if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
-  try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(le){console.warn('localStorage save error',le)}
-  if(window._disPhotosPC_render)window._disPhotosPC_render();
-  alert('報告書を送信しました。');
+  var stPre=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var wfMailtoPop=null;
+  if(stPre.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())wfMailtoPop=disasterPrepareMailtoPopup();
+  function savePc(){
+    var stPc=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+    if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,stPc);
+    DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
+    if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
+    try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(le){console.warn('localStorage save error',le)}
+    if(window._disPhotosPC_render)window._disPhotosPC_render();
+    if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPop);
+    window._disPendingMailRec=rec.wf?rec:null;
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()?'block':'none';
+    resetDisasterFormPC();
+    if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
+    if(rec.wf){
+      var t=document.getElementById('toastDis');if(t){
+        var msgPc=typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます';
+        t.textContent=msgPc;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},5000)
+      }
+    }else{
+      alert('報告書を送信しました。');
+    }
+  }
+  if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];savePc()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};savePc();}
   }catch(err){alert('送信エラー: '+err.message);console.error('doDisSubmitPC error',err)}
+}
+function disListRowUser(r){
+  var dt=r.datetime||r.date||'—';var plc=r.place||r.basho||'—';var v=r.victim||'—';var typ=r.type||r.jiko||r.keigen||'—';
+  var badge='';
+  if(typeof recordHasActiveWorkflow==='function'&&recordHasActiveWorkflow(r)){
+    if(r.wf.state==='pending')badge=' <span class="bd2" style="background:#FFF8E1;color:#E65100;font-size:9px">承認中</span>';
+    else if(r.wf.state==='returned')badge=' <span class="bd2" style="background:#FFEBEE;color:#C62828;font-size:9px">差戻</span>';
+    else if(r.wf.state==='final')badge=' <span class="bd2" style="background:#E8F5E9;color:#2E7D32;font-size:9px">確定</span>';
+  }
+  return'<div class="rc" onclick="showDisDetail(\''+String(r.id||'').replace(/'/g,"\\'")+'\')" style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 bf">'+typ+'</span>'+badge+'</div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+r.reporter+'</div></div>';
 }
 function rDisList(){
   loadReqDis(function(){
-    var list=DIS_LIST.slice().sort(function(a,b){return(b.datetime||b.date||'').localeCompare(a.datetime||a.date||'')});
+    var sorted=DIS_LIST.slice().sort(function(a,b){return(b.datetime||b.date||'').localeCompare(a.datetime||a.date||'')});
     var el=document.getElementById('disL');if(!el)return;
-    el.innerHTML=list.length?list.map(function(r){
-      var dt=r.datetime||r.date||'—';var plc=r.place||r.basho||'—';var v=r.victim||'—';var typ=r.type||r.jiko||r.keigen||'—';
-      return'<div class="rc" onclick="showDisDetail(\''+String(r.id||'').replace(/'/g,"\\'")+'\')" style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 bf">'+typ+'</span></div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+r.reporter+'</div></div>';
-    }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
+    var wfOn=sorted.some(function(r){return typeof recordHasActiveWorkflow==='function'&&recordHasActiveWorkflow(r)});
+    var myName=CUR?CUR.name:'';
+    var parts=[];
+    if(myName&&typeof disasterIsPending==='function'){
+      var mine=sorted.filter(function(r){return r.reporter===myName&&(disasterIsPending(r)||disasterIsReturned(r))});
+      if(mine.length){
+        parts.push('<div style="font-size:12px;font-weight:700;color:var(--t2);margin:4px 0 8px">あなたの申請（承認待ち・差戻）</div>');
+        parts.push(mine.map(disListRowUser).join(''));
+      }
+    }
+    var pub=sorted.filter(function(r){return typeof disasterListVisible==='function'?disasterListVisible(r):true});
+    parts.push('<div style="font-size:12px;font-weight:700;color:var(--t2);margin:12px 0 8px">'+(wfOn?'確定済み（全社共有・承認フロー分）':'一覧')+'</div>');
+    parts.push(pub.length?pub.map(disListRowUser).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>');
+    el.innerHTML=parts.join('');
   });
 }
 function buildDisDetailHtml(r){
@@ -1375,12 +1500,31 @@ function buildDisDetailHtml(r){
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
   var h=buildDisDetailHtml(r);
+  if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
+  var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfUserPanelHtml==='function'?disasterWfUserPanelHtml(r,id,CUR?CUR.name:''):'');
   document.getElementById('mT').textContent='災害発生報告 詳細';
-  document.getElementById('mI').innerHTML=h;
+  document.getElementById('mI').innerHTML=h+ex;
   var modal=document.getElementById('modal');
   var mbd=modal.querySelector('.mbd');
   mbd.classList.add('dis-detail-wide');
   modal.classList.add('show');
+}
+function disasterDoUserResubmit(id){
+  if(!CUR){alert('ログインしてください');return}
+  var ta=document.getElementById('disWfUserNote');
+  var note=ta?String(ta.value||'').trim():'';
+  if(!note){alert('追記・訂正内容を入力してください');return}
+  if(typeof disasterUserAppendAndResubmit!=='function')return;
+  var res=disasterUserAppendAndResubmit(DIS_LIST,id,CUR.name,note);
+  if(!res.ok){alert(res.msg);return}
+  var r2=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+  if(r2&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('submitted',r2);
+  if(r2&&r2.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()){
+    var stU=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r2):[];
+    if(stU[0]&&String(stU[0].email||'').trim()&&typeof disasterOpenMailtoForStep==='function'&&confirm('承認者にメール作成画面を開きますか？'))disasterOpenMailtoForStep(r2,0);
+  }
+  var modal=document.getElementById('modal');if(modal)modal.classList.remove('show');
+  rDisList();
 }
 function showFullPhotoSrc(src){var ov=document.createElement('div');ov.className='photo-full-overlay';ov.innerHTML='<img src="'+src+'">';ov.onclick=function(){document.body.removeChild(ov)};document.body.appendChild(ov)}
 
