@@ -14,6 +14,7 @@
   function getOwnerPassRef(){return db?db.ref(DB_PATH+'/hh_owner_pass'):null}
   function getRequestsRef(){return db?db.ref(DB_PATH+'/hh_requests'):null}
   function getDisasterRef(){return db?db.ref(DB_PATH+'/hh_disaster_reports'):null}
+  function getDisasterWfRef(){return db?db.ref(DB_PATH+'/hh_disaster_workflow'):null}
 
   window.HHDB={
     useFirebase:function(){return useFirebase},
@@ -202,6 +203,33 @@
         var v=snap.val();
         var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
         if(typeof cb==='function')cb(arr);
+      });
+    },
+    loadDisasterWorkflow:function(onLoaded){
+      if(!useFirebase||!db){
+        try{var s=localStorage.getItem('hh_disaster_workflow');onLoaded(s?JSON.parse(s):{steps:[]})}catch(e){onLoaded({steps:[]})}
+        return
+      }
+      getDisasterWfRef().once('value',function(snap){
+        var v=snap.val();
+        if(!v||typeof v!=='object'){onLoaded({steps:[]});return}
+        onLoaded({steps:Array.isArray(v.steps)?v.steps:[]});
+      },function(){onLoaded({steps:[]});});
+    },
+    saveDisasterWorkflow:function(obj){
+      var data={steps:Array.isArray(obj&&obj.steps)?obj.steps:[]};
+      if(!useFirebase||!db){
+        try{localStorage.setItem('hh_disaster_workflow',JSON.stringify(data))}catch(e){}
+        return
+      }
+      getDisasterWfRef().set(data);
+    },
+    onDisasterWorkflowChange:function(cb){
+      if(!useFirebase||!db){return}
+      getDisasterWfRef().on('value',function(snap){
+        var v=snap.val();
+        if(!v||typeof v!=='object'){if(typeof cb==='function')cb({steps:[]});return}
+        if(typeof cb==='function')cb({steps:Array.isArray(v.steps)?v.steps:[]});
       });
     }
   };
