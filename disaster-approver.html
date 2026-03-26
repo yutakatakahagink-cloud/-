@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>災害発生報告（承認・ログイン不要）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;margin:0;padding:16px;min-height:100vh}
+#content{max-width:1200px;margin:0 auto}
+.hdr{font-size:18px;font-weight:700;margin-bottom:8px}
+.note{font-size:12px;color:#558B2F;margin-bottom:16px;line-height:1.65}
+.err{background:#FFEBEE;color:#C62828;padding:16px;border-radius:8px;font-size:14px;line-height:1.6}
+.photo-full-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.photo-full-overlay img{max-width:95vw;max-height:90vh;border-radius:8px}
+.ft{width:100%;background:#fff;border:1px solid #81C784;border-radius:8px;padding:10px 12px;color:#1B5E20;font-family:inherit;font-size:14px;box-sizing:border-box}
+</style>
+</head>
+<body>
+<div id="content">
+  <div class="hdr">災害発生報告（承認）</div>
+  <p class="note" id="topNote">メールのリンクから開いています。<strong>ログインは不要</strong>です。このページのURL（とくに <code>t=</code> 以降）は他人に共有しないでください。</p>
+  <div id="root"></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="hh-data.js"></script>
+<script src="disaster-workflow.js"></script>
+<script src="disaster-email-notify.js"></script>
+<script src="disaster-detail-html.js"></script>
+<script>
+var DIS_LIST=[];
+var REPORT_ID=null;
+var REPORT_TOKEN='';
+
+function qs(name){
+  var m=new RegExp('[?&]'+name+'=([^&]*)').exec(location.search);
+  return m?decodeURIComponent(m[1].replace(/\+/g,' ')):'';
+}
+
+function showFullPhotoSrc(src){
+  var ov=document.createElement('div');
+  ov.className='photo-full-overlay';
+  ov.innerHTML='<img src="'+String(src).replace(/"/g,'&quot;')+'" alt="">';
+  ov.onclick=function(){document.body.removeChild(ov)};
+  document.body.appendChild(ov);
+}
+
+function bindPubActions(){
+  window.disasterPubDoApprove=function(){
+    if(typeof disasterApprove!=='function')return;
+    var res=disasterApprove(DIS_LIST,REPORT_ID,'（メールリンク）','',false,REPORT_TOKEN);
+    if(!res.ok){alert(res.msg);return}
+    var r2=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
+    if(r2&&r2.wf&&r2.wf.state==='pending'&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('approved_next',r2);
+    if(r2&&r2.wf&&r2.wf.state==='pending'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()){
+      var stA=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r2):[];
+      var emA=stA[r2.wf.step]&&String(stA[r2.wf.step].email||'').trim();
+      if(emA&&typeof disasterOpenMailtoForStep==='function'&&confirm('次の承認者にメール作成画面を開きますか？'))disasterOpenMailtoForStep(r2,r2.wf.step);
+    }
+    render();
+  };
+  window.disasterPubDoReturn=function(){
+    if(typeof disasterReturn!=='function')return;
+    var note=prompt('差戻しの理由・コメントを入力してください');
+    if(note===null)return;
+    note=String(note).trim();
+    if(!note){alert('理由を入力してください');return}
+    var res=disasterReturn(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN);
+    if(!res.ok){alert(res.msg);return}
+    var r2=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
+    if(r2&&r2.wf&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('returned',r2);
+    if(r2&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()&&String(r2.reporter_notify_email||'').trim()){
+      if(typeof disasterOpenMailtoReturned==='function'&&confirm('報告者に差戻しメールの作成画面を開きますか？'))disasterOpenMailtoReturned(r2);
+    }
+    render();
+  };
+  window.disasterPubDoApproverNote=function(){
+    if(typeof disasterReviewerAppendNote!=='function')return;
+    var ta=document.getElementById('disApproverNote');
+    var note=ta?String(ta.value||'').trim():'';
+    if(!note){alert('追記・訂正内容を入力してください');return}
+    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN);
+    if(!res.ok){alert(res.msg);return}
+    if(ta)ta.value='';
+    render();
+  };
+}
+
+function render(){
+  var root=document.getElementById('root');
+  var r=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
+  if(!REPORT_ID||!REPORT_TOKEN){
+    root.innerHTML='<div class="err">URL に id と t（トークン）が必要です。</div>';
+    return;
+  }
+  if(!r){
+    root.innerHTML='<div class="err">報告が見つかりません。データの同期を待ってから再読み込みするか、URLをご確認ください。</div>';
+    return;
+  }
+  if(typeof disasterPublicTokenValid!=='function'||!disasterPublicTokenValid(r,REPORT_TOKEN)){
+    root.innerHTML='<div class="err">リンクが無効です（トークンが一致しません）。メールに記載のURLをそのままご利用ください。</div>';
+    return;
+  }
+  if(!r.wf||!r.wf.approve_token){
+    root.innerHTML='<div class="err">この報告には承認用リンクがありません（古い形式で提出された可能性があります）。管理者ログインで開いてください。</div>';
+    return;
+  }
+  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r):'';
+  if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
+  var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+
+    (typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+
+    (typeof disasterWfPublicPanelHtml==='function'?disasterWfPublicPanelHtml(r,REPORT_ID):'');
+  root.innerHTML=h+ex;
+}
+
+function boot(){
+  REPORT_ID=qs('id');
+  REPORT_TOKEN=qs('t');
+  bindPubActions();
+  function afterLoad(){
+    render();
+    if(typeof HHDB!=='undefined'&&HHDB.onDisasterChange){
+      HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];render()});
+    }
+  }
+  function loadList(fn){
+    if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){
+      HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];fn()});
+    }else{
+      try{DIS_LIST=JSON.parse(localStorage.getItem('hh_disaster_reports')||'[]')}catch(e){DIS_LIST=[]}
+      fn();
+    }
+  }
+  if(typeof HHDB!=='undefined'){
+    HHDB.init(function(){loadList(afterLoad)});
+  }else{
+    loadList(afterLoad);
+  }
+}
+boot();
+</script>
+</body>
+</html>
