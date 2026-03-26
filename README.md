@@ -1,4 +1,4 @@
-# 新ヒヤリハット報告HTML（Claude作成）
+# 安全衛生管理システム HTML（Claude作成）
 
 建災防方式に準拠したヒヤリハット報告Webアプリの専用フォルダです。Claudeとのチャットで段階的に開発しています。
 
@@ -67,6 +67,15 @@ window.HH_BASE_URL = "https://あなたのユーザー名.github.io/リポジト
 | `hh-data.js` | 共有データ層（Firebase/localStorage） |
 | `start.bat` | ローカルサーバー起動用（Windows） |
 | `開発履歴・要件整理.md` | Claudeチャット履歴の整理・要件一覧 |
+| `システム全体像.md` | システム構成・データフロー・画面役割の全体像 |
+
+## ヒヤリハット報告書 Excel（紙・ローカル用）
+
+| ファイル | 説明 |
+|----------|------|
+| `create_hh_excel.py` | ヒヤリハット報告書.xlsx を新規作成（Cursor_作業box ルートに出力） |
+| `add_likert_excel.py` | 既存のヒヤリハット報告書にリッカート尺度を追加 |
+| `read_excel.py` | ヒヤリハット報告書の内容を読み取り表示 |
 
 ---
 
