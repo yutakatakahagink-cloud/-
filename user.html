@@ -933,6 +933,7 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js" onerror="console.warn('hh-data.js load failed')"></script>
+<script src="laws_refresh.js" onerror="console.warn('laws_refresh.js load failed')"></script>
 <script>
 // ===== 使用者専用スクリプト（user.html） =====
 // QRコード・所有者機能は不要のため省略
@@ -1778,17 +1779,10 @@ function rCom(){
   var cByExp=document.getElementById('cByExp');if(cByExp)cByExp.innerHTML=byExpFull;
   var cByExpFull=document.getElementById('cByExp_full');if(cByExpFull)cByExpFull.innerHTML='<div class="com-detail">'+byExpFull+'</div>';
 
-  // 法改正
-  var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var oneYearAgo=new Date(today);oneYearAgo.setFullYear(oneYearAgo.getFullYear()-1);var oneYearLater=new Date(today);oneYearLater.setFullYear(oneYearLater.getFullYear()+1);
-  var laws=[{law:'労働安全衛生法',date:'2025/4/1',short:'作業従事者への拡大',desc:'労働安全衛生規則の改正により、災害発生時の退避・危険区域の立入禁止・火気使用禁止の指示対象が「労働者」から「当該場所で作業に従事する者」へ拡大。一人親方・協力会社員・資材搬入ドライバー等、雇用形態を問わず現場で作業する者が原則すべて対象となり、混在現場での安全指示の抜けを防ぐ。',impact:'元請・下請の混在現場で、全作業者への安全措置が義務化。',action:'元請は現場の全作業者リストを把握し、退避訓練・立入禁止区域の周知を徹底。',ref:'労働安全衛生規則第528条の2等'},{law:'労働安全衛生法',date:'2026/4/1',short:'個人事業者・ストレスチェック等',desc:'個人事業者等への安全衛生措置の明確化に加え、常時50人未満事業場でもストレスチェックが原則義務化（従来は努力義務）。化学物質のSDS交付・周知の厳格化、高齢者災害防止、ボイラー・クレーン等の検査制度見直しも含まれる。',impact:'建設現場の一人親方・協力業者にも安全衛生教育・健康管理が適用。',action:'一人親方への安全衛生教育受講の案内、ストレスチェック体制の整備（50人未満も）、SDS確認徹底。',ref:'労働安全衛生法改正法'},{law:'労働基準法',date:'2027/4/1',short:'勤務間インターバル等',desc:'勤務間インターバル（終業から始業まで原則11時間以上の休息）の義務化、連続勤務日数の上限、法定休日の事前特定、「つながらない権利」に関するガイドライン等が検討されている。有給の賃金算定や建設業の週44時間特例の見直しも議論。※法案内容は審議により変更の可能性あり。',impact:'建設現場の長時間労働・連続勤務が規制され、疲労によるヒヤリハット・災害防止に直結。',action:'勤怠管理システムの改修、就業規則の整備、シフト・交替制の見直し。',ref:'労働基準法（改正検討中）'},{law:'貨物自動車運送事業法',date:'2026/4/1',short:'白トラ規制・荷主罰則等',desc:'通称「運送業法」。2025年6月公布の改正。無許可の貨物軽自動車運送（白トラ等）への委託を禁止し、違反荷主等に罰則。運送事業者には実運送体制管理簿の拡大、契約書面の交付、多重下請け是正の努力義務等。建設資材・産廃の荷主は委託先の許認可確認が必須。',impact:'無許可委託は荷主も処罰対象になり得る。',action:'委託・再委託先の許可確認、契約書面の保管。国交省等のガイドライン参照。',ref:'貨物自動車運送事業法等の一部を改正する法律（2025年公布）'}];
-  laws.forEach(l=>{var p=l.date.split('/');l.dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])||1)});
-  var enacted=laws.filter(l=>l.dateObj<=today&&l.dateObj>=oneYearAgo).sort((a,b)=>b.dateObj-a.dateObj);
-  var upcoming=laws.filter(l=>l.dateObj>today&&l.dateObj<=oneYearLater).sort((a,b)=>a.dateObj-b.dateObj);
-  window.comLawEnacted=enacted;window.comLawUpcoming=upcoming;
-  var lawRow=(l,type,i)=>{var st=esc(l.short||l.law),nm=esc(l.law),dt=esc(l.date),tip=esc('改正の要点：'+(l.short||l.law)+'　'+l.law+'　施行日 '+l.date);return'<div class="law-row" onclick="showLawDetailByIdx(\''+type+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .2s" title="'+tip+'"><div style="font-size:12px;line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:var(--t3);font-size:10px">改正の要点：</span><strong style="font-weight:700;color:var(--ac)">'+st+'</strong><span style="color:var(--t2)">　'+nm+'　</span><span style="color:var(--t3)">施行日 '+dt+'</span><span style="color:var(--t3);font-size:10px">　・タップで詳細</span></div></div>'};
-  var enactedBox='<div class="law-box" style="background:rgba(0,137,123,.08);border:1px solid rgba(0,137,123,.3);border-radius:var(--rs);padding:12px;margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--gn);margin-bottom:10px">✅ 施行済み（過去1年間）</div>'+(enacted.length?enacted.map((l,i)=>lawRow(l,'enacted',i)).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
-  var upcomingBox='<div class="law-box" style="background:rgba(2,119,189,.08);border:1px solid rgba(2,119,189,.3);border-radius:var(--rs);padding:12px"><div style="font-size:12px;font-weight:700;color:var(--bl);margin-bottom:10px">📅 施行予定（1年以内）</div>'+(upcoming.length?upcoming.map((l,i)=>lawRow(l,'upcoming',i)).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
-  var cLaw=document.getElementById('cLaw');if(cLaw)cLaw.innerHTML='<div style="font-size:10px;color:var(--t3);margin-bottom:10px">※施行予定日・内容は変更される場合があります。</div>'+enactedBox+upcomingBox;
+  // 法改正（laws_data.json を定期取得。未読込時は applyLawsToDashboard が fetch）
+  var cLaw=document.getElementById('cLaw');
+  if(typeof applyLawsToDashboard==='function')applyLawsToDashboard(esc,cLaw);
+  else if(cLaw)cLaw.innerHTML='<p style="font-size:12px;color:var(--t3)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p>';
 
   // Critical: high stress x high risk
   if(IS_ADMIN){
