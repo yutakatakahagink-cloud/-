@@ -107,8 +107,12 @@ function render(){
     root.innerHTML='<div class="err">この報告には承認用リンクがありません（古い形式で提出された可能性があります）。管理者ログインで開いてください。</div>';
     return;
   }
-  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r):'';
-  if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
+  var h='';
+  if(typeof disasterBuildDetailHtml==='function'){h=disasterBuildDetailHtml(r)}
+  else{
+    h='<div class="err" style="margin-bottom:12px">報告書の表示に必要な <code>disaster-detail-html.js</code> が読み込めていません（未配置または通信エラー）。管理者が GitHub に同ファイルをアップロードしたうえで、ページを再読み込みしてください。</div>';
+  }
+  if(h&&typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+
     (typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+
     (typeof disasterWfPublicPanelHtml==='function'?disasterWfPublicPanelHtml(r,REPORT_ID):'');
