@@ -10,6 +10,7 @@
  * 所有者が設定した送信元は {{reply_to}} {{sender_email}}（差戻し時のみ副本 {{bcc_email}}）として渡します。EmailJS 側で Reply-To / BCC に割り当ててください。
  *
  * ※ メールアドレスをフォームに入れただけでは送信されません。EmailJS 設定時は API 送信、未設定時は使用者画面の「承認者にメールを作成」や承認後の確認ダイアログから mailto を開きます。
+ * ※ Slack/Teams は disaster-webhook-notify.js と config.js の HH_WEBHOOK_NOTIFY で任意利用（メールと併用可）。
  */
 (function (global) {
   'use strict';
@@ -215,6 +216,13 @@
       global.disasterTryNotifyWorkflow('submitted', rec);
       return;
     }
+    if (typeof global.disasterTryWebhookNotify === 'function') {
+      try {
+        global.disasterTryWebhookNotify('submitted', rec);
+      } catch (e) {
+        console.warn('[disaster-email] webhook', e);
+      }
+    }
     var to = safeMailtoAddr(steps[0] && steps[0].email);
     if (!to) {
       closePopupSafe(mailtoPopup);
@@ -240,6 +248,14 @@
     if (!rec || !rec.wf) return;
     var steps = getSteps(rec);
     if (!steps.length) return;
+
+    if (typeof global.disasterTryWebhookNotify === 'function') {
+      try {
+        global.disasterTryWebhookNotify(kind, rec);
+      } catch (e) {
+        console.warn('[disaster-email] webhook', e);
+      }
+    }
 
     var cfg = global.HH_EMAILJS;
     if (!(cfg && cfg.publicKey && cfg.serviceId && cfg.templateId)) return;
