@@ -85,11 +85,13 @@
   }
 
   function postSlack(url, text) {
-    var body = JSON.stringify({ text: text });
+    var json = JSON.stringify({ text: text });
+    var formBody = 'payload=' + encodeURIComponent(json);
     return global
       .fetch(url, {
         method: 'POST',
-        body: body,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formBody,
         mode: 'cors',
       })
       .then(function (res) {
@@ -99,7 +101,8 @@
         return global
           .fetch(url, {
             method: 'POST',
-            body: body,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formBody,
             mode: 'no-cors',
           })
           .then(function () {});
