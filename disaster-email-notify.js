@@ -172,6 +172,17 @@
     return !!(cfg && cfg.publicKey && cfg.serviceId && cfg.templateId);
   };
 
+  /** 災害WF付き提出後のトースト文言（EmailJS / Webhook / mailto のいずれかに合わせる） */
+  global.disasterWfAfterSubmitHint = function () {
+    if (global.disasterHasEmailJsConfigured()) {
+      return '送信しました。承認者にメールで通知しました';
+    }
+    if (typeof global.disasterHasWebhookNotifyConfigured === 'function' && global.disasterHasWebhookNotifyConfigured()) {
+      return '送信しました。Slack/Teams に通知しました。';
+    }
+    return '送信しました。メール作成画面で送信すると承認者に届きます';
+  };
+
   /**
    * 提出ボタンと同じクリックで先に空タブを開き、非同期保存後に mailto へ遷移（ポップアップブロック回避）
    */
@@ -222,6 +233,10 @@
       } catch (e) {
         console.warn('[disaster-email] webhook', e);
       }
+    }
+    if (typeof global.disasterShouldOpenMailtoForWf === 'function' && !global.disasterShouldOpenMailtoForWf()) {
+      closePopupSafe(mailtoPopup);
+      return;
     }
     var to = safeMailtoAddr(steps[0] && steps[0].email);
     if (!to) {

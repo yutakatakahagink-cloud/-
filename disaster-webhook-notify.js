@@ -187,4 +187,22 @@
       global.Promise.all(promises).catch(function () {});
     }
   };
+
+  global.disasterHasWebhookNotifyConfigured = function () {
+    var c = cfg();
+    if (c.enabled === false) return false;
+    return !!(
+      String(c.slackIncomingUrl || c.slackUrl || '').trim() ||
+      String(c.teamsIncomingUrl || c.teamsUrl || '').trim()
+    );
+  };
+
+  /** EmailJS も Webhook も無いときだけ mailto を使う */
+  global.disasterShouldOpenMailtoForWf = function () {
+    if (typeof global.disasterHasEmailJsConfigured === 'function' && global.disasterHasEmailJsConfigured()) {
+      return false;
+    }
+    if (global.disasterHasWebhookNotifyConfigured()) return false;
+    return true;
+  };
 })(window);

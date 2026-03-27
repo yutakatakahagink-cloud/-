@@ -1344,7 +1344,7 @@ function doDisSubmit(){
   if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
   var stPreM=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
   var wfMailtoPopM=null;
-  if(stPreM.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())wfMailtoPopM=disasterPrepareMailtoPopup();
+  if(stPreM.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())))wfMailtoPopM=disasterPrepareMailtoPopup();
   function saveNew(){
     var st=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
     if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,st);
@@ -1354,12 +1354,12 @@ function doDisSubmit(){
     else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
     if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPopM);
     window._disPendingMailRec=rec.wf?rec:null;
-    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()?'block':'none';
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))?'block':'none';
     resetDisasterFormMobile();
     if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
     var t=document.getElementById('toastDis');if(t){
       var msgM='送信しました';
-      if(rec.wf)msgM=typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます';
+      if(rec.wf)msgM=typeof disasterWfAfterSubmitHint==='function'?disasterWfAfterSubmitHint():(typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます');
       t.textContent=msgM;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},rec.wf?5000:3200)
     }
   }
@@ -1378,7 +1378,7 @@ function doDisSubmitPC(){
   if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
   var stPre=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
   var wfMailtoPop=null;
-  if(stPre.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())wfMailtoPop=disasterPrepareMailtoPopup();
+  if(stPre.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())))wfMailtoPop=disasterPrepareMailtoPopup();
   function savePc(){
     var stPc=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
     if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,stPc);
@@ -1389,12 +1389,12 @@ function doDisSubmitPC(){
     if(window._disPhotosPC_render)window._disPhotosPC_render();
     if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPop);
     window._disPendingMailRec=rec.wf?rec:null;
-    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()?'block':'none';
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))?'block':'none';
     resetDisasterFormPC();
     if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
     if(rec.wf){
       var t=document.getElementById('toastDis');if(t){
-        var msgPc=typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます';
+        var msgPc=typeof disasterWfAfterSubmitHint==='function'?disasterWfAfterSubmitHint():(typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます');
         t.textContent=msgPc;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},5000)
       }
     }else{
@@ -1522,7 +1522,7 @@ function disasterDoUserResubmit(id){
   if(!res.ok){alert(res.msg);return}
   var r2=DIS_LIST.find(function(x){return String(x.id)===String(id)});
   if(r2&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('submitted',r2);
-  if(r2&&r2.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()){
+  if(r2&&r2.wf&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))){
     var stU=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r2):[];
     if(stU[0]&&String(stU[0].email||'').trim()&&typeof disasterOpenMailtoForStep==='function'&&confirm('承認者にメール作成画面を開きますか？'))disasterOpenMailtoForStep(r2,0);
   }

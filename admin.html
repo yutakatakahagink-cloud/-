@@ -570,7 +570,7 @@ function disasterDoApprove(id){
   if(!res.ok){alert(res.msg);return}
   var r2=DIS_LIST.find(function(x){return String(x.id)===String(id)});
   if(r2&&r2.wf&&r2.wf.state==='pending'&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('approved_next',r2);
-  if(r2&&r2.wf&&r2.wf.state==='pending'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()){
+  if(r2&&r2.wf&&r2.wf.state==='pending'&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))){
     var stA=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r2):[];
     var emA=stA[r2.wf.step]&&String(stA[r2.wf.step].email||'').trim();
     if(emA&&typeof disasterOpenMailtoForStep==='function'&&confirm('次の承認者にメール作成画面を開きますか？'))disasterOpenMailtoForStep(r2,r2.wf.step);
@@ -588,7 +588,7 @@ function disasterDoReturn(id){
   if(!res.ok){alert(res.msg);return}
   var r2=DIS_LIST.find(function(x){return String(x.id)===String(id)});
   if(r2&&r2.wf&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('returned',r2);
-  if(r2&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()&&typeof disasterWorkflowReturnNotifyTo==='function'&&String(disasterWorkflowReturnNotifyTo(r2)||'').trim()){
+  if(r2&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))&&typeof disasterWorkflowReturnNotifyTo==='function'&&String(disasterWorkflowReturnNotifyTo(r2)||'').trim()){
     if(typeof disasterOpenMailtoReturned==='function'&&confirm('報告者に差戻しメールの作成画面を開きますか？'))disasterOpenMailtoReturned(r2);
   }
   showDisDetail(id);
