@@ -29,8 +29,12 @@
         return Promise.resolve();
       }
       try{
-        firebase.initializeApp(cfg);
-        db=firebase.database();
+        if(firebase.apps&&firebase.apps.length>0){
+          db=firebase.app().database();
+        }else{
+          firebase.initializeApp(cfg);
+          db=firebase.database();
+        }
         if(typeof done==='function')done();
         return Promise.resolve();
       }catch(e){
@@ -187,8 +191,11 @@
       getDisasterRef().once('value',function(snap){
         var v=snap.val();
         var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
-        onLoaded(arr);
-      },function(){onLoaded([]);});
+        onLoaded(arr||[]);
+      },function(err){
+        console.warn('[HHDB] loadDisasterReports failed',err);
+        if(typeof onLoaded==='function')onLoaded([],err);
+      });
     },
     saveDisasterReports:function(arr){
       if(!useFirebase||!db){
@@ -206,18 +213,26 @@
       });
     },
     loadDisasterWorkflow:function(onLoaded){
+      function normWf(v){
+        if(!v||typeof v!=='object')return{steps:[],notify_from_email:''};
+        return{
+          steps:Array.isArray(v.steps)?v.steps:[],
+          notify_from_email:String(v.notify_from_email!=null?v.notify_from_email:'').trim().toLowerCase()
+        };
+      }
       if(!useFirebase||!db){
-        try{var s=localStorage.getItem('hh_disaster_workflow');onLoaded(s?JSON.parse(s):{steps:[]})}catch(e){onLoaded({steps:[]})}
+        try{var s=localStorage.getItem('hh_disaster_workflow');onLoaded(s?normWf(JSON.parse(s)):{steps:[],notify_from_email:''})}catch(e){onLoaded({steps:[],notify_from_email:''})}
         return
       }
       getDisasterWfRef().once('value',function(snap){
-        var v=snap.val();
-        if(!v||typeof v!=='object'){onLoaded({steps:[]});return}
-        onLoaded({steps:Array.isArray(v.steps)?v.steps:[]});
-      },function(){onLoaded({steps:[]});});
+        onLoaded(normWf(snap.val()));
+      },function(){onLoaded({steps:[],notify_from_email:''});});
     },
     saveDisasterWorkflow:function(obj){
-      var data={steps:Array.isArray(obj&&obj.steps)?obj.steps:[]};
+      var data={
+        steps:Array.isArray(obj&&obj.steps)?obj.steps:[],
+        notify_from_email:String(obj&&obj.notify_from_email!=null?obj.notify_from_email:'').trim().toLowerCase()
+      };
       if(!useFirebase||!db){
         try{localStorage.setItem('hh_disaster_workflow',JSON.stringify(data))}catch(e){}
         return
@@ -228,8 +243,11 @@
       if(!useFirebase||!db){return}
       getDisasterWfRef().on('value',function(snap){
         var v=snap.val();
-        if(!v||typeof v!=='object'){if(typeof cb==='function')cb({steps:[]});return}
-        if(typeof cb==='function')cb({steps:Array.isArray(v.steps)?v.steps:[]});
+        if(!v||typeof v!=='object'){if(typeof cb==='function')cb({steps:[],notify_from_email:''});return}
+        if(typeof cb==='function')cb({
+          steps:Array.isArray(v.steps)?v.steps:[],
+          notify_from_email:String(v.notify_from_email!=null?v.notify_from_email:'').trim().toLowerCase()
+        });
       });
     }
   };
