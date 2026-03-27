@@ -18,6 +18,15 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
+// 災害承認ワークフロー: Slack / Teams 通知（Incoming Webhook）
+// いずれかの URL を入れると、提出・承認・差戻し時にチャンネルへ投稿し、Outlook（mailto）は開きません。
+// 未設定のままだと従来どおりメール作成画面が開きます。URL は Slack/Teams で発行して貼り付けてください。
+window.HH_WEBHOOK_NOTIFY = {
+  slackIncomingUrl: '',
+  teamsIncomingUrl: '',
+  enabled: true
+};
+
 // config.firebase.json があれば読み込んで上書き（編集不要で設定可能）
 (function(){
   try{
