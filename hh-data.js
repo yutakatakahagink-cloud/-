@@ -65,6 +65,59 @@
     return o;
   }
 
+  function normApproveTokenStr(t){
+    return String(t||'').trim().replace(/\s+/g,'').toLowerCase();
+  }
+  /** wf 内またはレガシー直下の承認トークン文字列 */
+  function rawItemApproveToken(item){
+    if(!item||typeof item!=='object')return null;
+    var wf=item.wf;
+    if(wf&&typeof wf==='object'){
+      if(wf.approve_token!=null)return String(wf.approve_token);
+      if(wf.approveToken!=null)return String(wf.approveToken);
+    }
+    if(item.approve_token!=null)return String(item.approve_token);
+    return null;
+  }
+  /**
+   * 一覧配列の find と食い違うケース向け: 生のスナップショットを走査して t= と一致する報告を1件返す。
+   * メール改行・空白・大小文字差、URL の t が短く切れた場合（先頭一致が1件だけのとき）も試す。
+   */
+  function findReportByPublicTokenInVal(v,wantRaw){
+    var want=normApproveTokenStr(wantRaw);
+    if(!want)return null;
+    var exact=null;
+    var prefixHits=[];
+    function consider(item,keyHint){
+      if(!item||typeof item!=='object')return;
+      var rawTok=rawItemApproveToken(item);
+      if(rawTok==null)return;
+      var nt=normApproveTokenStr(rawTok);
+      if(nt===want){exact=normalizeDisasterRecord(item,keyHint);return}
+      if(want.length>=20&&nt.length>want.length&&nt.indexOf(want)===0)prefixHits.push(normalizeDisasterRecord(item,keyHint));
+      if(nt.length>=20&&want.length>nt.length&&want.indexOf(nt)===0)prefixHits.push(normalizeDisasterRecord(item,keyHint));
+    }
+    if(v==null)return null;
+    if(Array.isArray(v)){
+      for(var i=0;i<v.length;i++)consider(v[i],i);
+    }else if(typeof v==='object'){
+      Object.keys(v).forEach(function(k){consider(v[k],k);});
+    }
+    if(exact)return exact;
+    if(prefixHits.length===0)return null;
+    var seen={},uniq=[];
+    for(var h=0;h<prefixHits.length;h++){
+      var pr=prefixHits[h];
+      if(!pr||pr.id==null)continue;
+      var ids=String(pr.id);
+      if(seen[ids])continue;
+      seen[ids]=1;
+      uniq.push(pr);
+    }
+    if(uniq.length===1)return uniq[0];
+    return null;
+  }
+
   window.HHDB={
     useFirebase:function(){return useFirebase},
     init:function(done){
@@ -289,6 +342,57 @@
         var v=snap.val();
         if(!v||typeof v!=='object'){if(typeof onLoaded==='function')onLoaded(null,null);return}
         if(typeof onLoaded==='function')onLoaded(normalizeDisasterRecord(v,String(id)),null);
+      },function(err){
+        if(typeof onLoaded==='function')onLoaded(null,err);
+      });
+    },
+    /** メールの t= で DB から直接解決（一覧 find より寛容） */
+    findDisasterReportByPublicToken:function(token,onLoaded){
+      if(!token||String(token).trim()===''){if(typeof onLoaded==='function')onLoaded(null,null);return}
+      if(!useFirebase||!db){
+        try{
+          var s=localStorage.getItem('hh_disaster_reports');
+          var raw=s?JSON.parse(s):null;
+          var rec=null;
+          if(Array.isArray(raw)||(raw&&typeof raw==='object'))rec=findReportByPublicTokenInVal(raw,token);
+          if(typeof onLoaded==='function')onLoaded(rec||null,null);
+        }catch(e){if(typeof onLoaded==='function')onLoaded(null,e)}
+        return;
+      }
+      getDisasterRef().once('value',function(snap){
+        var rec=findReportByPublicTokenInVal(snap.val(),token);
+        if(typeof onLoaded==='function')onLoaded(rec||null,null);
+      },function(err){
+        if(typeof onLoaded==='function')onLoaded(null,err);
+      });
+    },
+    /** id フィールドが子キーと違うレガシー配列向け: 生データから id 一致を探す */
+    findDisasterReportByIdInTree:function(id,onLoaded){
+      if(id==null||id===''){if(typeof onLoaded==='function')onLoaded(null,null);return}
+      var sid=String(id);
+      if(!useFirebase||!db){
+        try{
+          var s=localStorage.getItem('hh_disaster_reports');
+          var arr=s?JSON.parse(s):[];
+          for(var i=0;i<arr.length;i++){
+            if(arr[i]&&String(arr[i].id)===sid){if(typeof onLoaded==='function')onLoaded(normalizeDisasterRecord(arr[i],null),null);return}
+          }
+          if(typeof onLoaded==='function')onLoaded(null,null);
+        }catch(e){if(typeof onLoaded==='function')onLoaded(null,e)}
+        return;
+      }
+      getDisasterRef().once('value',function(snap){
+        var v=snap.val();
+        var found=null;
+        function check(item,keyHint){
+          if(!item||typeof item!=='object')return;
+          if(String(item.id)===sid){found=normalizeDisasterRecord(item,keyHint);}
+        }
+        if(Array.isArray(v)){for(var j=0;j<v.length;j++){check(v[j],j);if(found)break}}
+        else if(v&&typeof v==='object'){
+          Object.keys(v).forEach(function(k){if(found)return;check(v[k],k);});
+        }
+        if(typeof onLoaded==='function')onLoaded(found,null);
       },function(err){
         if(typeof onLoaded==='function')onLoaded(null,err);
       });

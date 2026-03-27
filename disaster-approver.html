@@ -39,8 +39,13 @@ var REPORT_STEP='';
 var DIS_LIST_LOAD_ERROR=null;
 
 function qs(name){
-  var m=new RegExp('[?&]'+name+'=([^&]*)').exec(location.search);
-  return m?decodeURIComponent(m[1].replace(/\+/g,' ')):'';
+  try{
+    var p=new URLSearchParams(location.search||'');
+    if(p.has(name)){var g=p.get(name);return g!=null?String(g):'';}
+  }catch(eQs){}
+  var esc=String(name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  var m=new RegExp('[?&]'+esc+'=([^&]*)').exec(location.search);
+  return m?decodeURIComponent(String(m[1]).replace(/\+/g,' ')):'';
 }
 
 function showFullPhotoSrc(src){
@@ -185,18 +190,49 @@ function boot(){
           }
           return false;
         }
-        if(!haveReport()&&typeof HHDB.loadDisasterReportById==='function'){
-          HHDB.loadDisasterReportById(REPORT_ID,function(rec,e2){
-            if(rec){
-              var dup=DIS_LIST.some(function(x){return String(x.id)===String(rec.id)});
-              if(!dup)DIS_LIST=DIS_LIST.concat([rec]);
-            }
-            if(e2&&!DIS_LIST_LOAD_ERROR)DIS_LIST_LOAD_ERROR=e2;
-            fn();
-          });
-          return;
+        function mergeRec(rec){
+          if(!rec)return;
+          var dup=DIS_LIST.some(function(x){return String(x.id)===String(rec.id)});
+          if(!dup)DIS_LIST=DIS_LIST.concat([rec]);
         }
-        fn();
+        function stepIdByPath(){
+          if(haveReport()){fn();return;}
+          if(REPORT_ID&&typeof HHDB.loadDisasterReportById==='function'){
+            HHDB.loadDisasterReportById(REPORT_ID,function(rec,e2){
+              mergeRec(rec);
+              if(e2&&!DIS_LIST_LOAD_ERROR)DIS_LIST_LOAD_ERROR=e2;
+              stepTokenDeep();
+            });
+            return;
+          }
+          stepTokenDeep();
+        }
+        function stepTokenDeep(){
+          if(haveReport()){fn();return;}
+          if(REPORT_TOKEN&&typeof HHDB.findDisasterReportByPublicToken==='function'){
+            HHDB.findDisasterReportByPublicToken(REPORT_TOKEN,function(rec,e3){
+              mergeRec(rec);
+              if(e3&&!DIS_LIST_LOAD_ERROR)DIS_LIST_LOAD_ERROR=e3;
+              stepIdDeep();
+            });
+            return;
+          }
+          stepIdDeep();
+        }
+        function stepIdDeep(){
+          if(haveReport()){fn();return;}
+          if(REPORT_ID&&typeof HHDB.findDisasterReportByIdInTree==='function'){
+            HHDB.findDisasterReportByIdInTree(REPORT_ID,function(rec,e4){
+              mergeRec(rec);
+              if(e4&&!DIS_LIST_LOAD_ERROR)DIS_LIST_LOAD_ERROR=e4;
+              fn();
+            });
+            return;
+          }
+          fn();
+        }
+        if(haveReport()){fn();return;}
+        stepIdByPath();
       });
     }else{
       try{DIS_LIST=JSON.parse(localStorage.getItem('hh_disaster_reports')||'[]')}catch(e){DIS_LIST=[]}
