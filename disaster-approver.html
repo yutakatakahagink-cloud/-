@@ -19,7 +19,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <body>
 <div id="content">
   <div class="hdr">災害発生報告（承認）</div>
-  <p class="note" id="topNote">メールのリンクから開いています。<strong>ログインは不要</strong>です。このページのURL（とくに <code>t=</code> 以降）は他人に共有しないでください。</p>
+  <p class="note" id="topNote">メールのリンクから開いています。<strong>ログインは不要</strong>です。URL の <code>t=</code>（トークン）と <code>s=</code>（承認段階）は他人に共有しないでください。第2承認以降は、届いた<b>最新のメール</b>のリンクを開いてください。</p>
   <div id="root"></div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -33,6 +33,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 var DIS_LIST=[];
 var REPORT_ID=null;
 var REPORT_TOKEN='';
+/** URL の s= 承認段階（0 始まり）。メールのリンクに含まれます */
+var REPORT_STEP='';
+/** Firebase 読み込み失敗時にセット（メッセージ用） */
+var DIS_LIST_LOAD_ERROR=null;
 
 function qs(name){
   var m=new RegExp('[?&]'+name+'=([^&]*)').exec(location.search);
@@ -50,7 +54,7 @@ function showFullPhotoSrc(src){
 function bindPubActions(){
   window.disasterPubDoApprove=function(){
     if(typeof disasterApprove!=='function')return;
-    var res=disasterApprove(DIS_LIST,REPORT_ID,'（メールリンク）','',false,REPORT_TOKEN);
+    var res=disasterApprove(DIS_LIST,REPORT_ID,'（メールリンク）','',false,REPORT_TOKEN,REPORT_STEP);
     if(!res.ok){alert(res.msg);return}
     var r2=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
     if(r2&&r2.wf&&r2.wf.state==='pending'&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('approved_next',r2);
@@ -67,11 +71,11 @@ function bindPubActions(){
     if(note===null)return;
     note=String(note).trim();
     if(!note){alert('理由を入力してください');return}
-    var res=disasterReturn(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN);
+    var res=disasterReturn(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN,REPORT_STEP);
     if(!res.ok){alert(res.msg);return}
     var r2=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
     if(r2&&r2.wf&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('returned',r2);
-    if(r2&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()&&String(r2.reporter_notify_email||'').trim()){
+    if(r2&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()&&typeof disasterWorkflowReturnNotifyTo==='function'&&String(disasterWorkflowReturnNotifyTo(r2)||'').trim()){
       if(typeof disasterOpenMailtoReturned==='function'&&confirm('報告者に差戻しメールの作成画面を開きますか？'))disasterOpenMailtoReturned(r2);
     }
     render();
@@ -81,7 +85,7 @@ function bindPubActions(){
     var ta=document.getElementById('disApproverNote');
     var note=ta?String(ta.value||'').trim():'';
     if(!note){alert('追記・訂正内容を入力してください');return}
-    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN);
+    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN,REPORT_STEP);
     if(!res.ok){alert(res.msg);return}
     if(ta)ta.value='';
     render();
@@ -96,7 +100,29 @@ function render(){
     return;
   }
   if(!r){
-    root.innerHTML='<div class="err">報告が見つかりません。データの同期を待ってから再読み込みするか、URLをご確認ください。</div>';
+    var hint='';
+    if(DIS_LIST_LOAD_ERROR){
+      hint='<p style="margin-top:10px;font-size:12px;line-height:1.6"><strong>データの取得に失敗した可能性があります。</strong> Firebase Realtime Database の<b>読み取りルール</b>で、未ログインでも <code style="font-size:11px">hh_data/hh_disaster_reports</code>（または実際のパス）が読めるか確認してください。F12 → コンソールにエラーが出ていないかもご確認ください。</p>';
+    }else if(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&DIS_LIST.length===0){
+      hint='<p style="margin-top:10px;font-size:12px;line-height:1.6">クラウド上の災害報告が<strong>0件</strong>です。提出した端末と<b>同じFirebase</b>を参照できているか、<code style="font-size:11px">config.js</code> がこのサイトにデプロイされているか確認してください。承認用リンクはログインしないため、Database を匿名読取りできるルールが必要です。</p>';
+    }else if(DIS_LIST.length>0){
+      hint='<p style="margin-top:10px;font-size:12px;line-height:1.6">一覧には <strong>'+DIS_LIST.length+' 件</strong>ありますが、この報告IDは含まれていません。メールのURLを<b>途中までしかコピーしていない</b>、別の報告のリンクを開いている、などを確認してください。</p>';
+    }else{
+      hint='<p style="margin-top:10px;font-size:12px;line-height:1.6">データが空です。<strong>ブラウザのアドレスバーのURL</strong>が、報告提出時・メール生成時と<b>完全に同じサイト</b>（github.io のユーザー名やリポジトリ名の<b>1文字の違い</b>も別サイトになります）か確認してください。</p>';
+    }
+    var ufx=typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase();
+    var emsg='';
+    if(DIS_LIST_LOAD_ERROR){
+      emsg=DIS_LIST_LOAD_ERROR.message||DIS_LIST_LOAD_ERROR.code||String(DIS_LIST_LOAD_ERROR);
+    }
+    var idsPreview='';
+    if(DIS_LIST.length>0&&DIS_LIST.length<=15){
+      idsPreview=DIS_LIST.map(function(x){return x&&x.id!=null?String(x.id):'?'}).join(', ');
+    }else if(DIS_LIST.length>15){
+      idsPreview=String(DIS_LIST.length)+'件（先頭ID例: '+String(DIS_LIST[0]&&DIS_LIST[0].id)+'）';
+    }
+    var diag='<details style="margin-top:14px;font-size:11px;line-height:1.5"><summary style="cursor:pointer;font-weight:600">接続診断（管理者・サポート用）</summary><pre style="margin:8px 0 0;padding:10px;background:#f5f5f5;border-radius:6px;overflow:auto;white-space:pre-wrap;word-break:break-all">このページのホスト: '+String(location.host)+'\nHH_BASE_URL: '+(window.HH_BASE_URL||'（未設定）')+'\nFirebaseを使用: '+(ufx?'はい':'いいえ')+'\n災害一覧の件数: '+DIS_LIST.length+(idsPreview?'\n一覧の報告ID: '+idsPreview:'')+'\nURLの報告ID: '+String(REPORT_ID)+(emsg?'\n読込エラー: '+emsg:'')+'</pre><p style="margin:6px 0 0;color:#555">Firebase使用＝「はい」で件数0のときは、別サイトのconfigを見ているか、Databaseに未保存です。「いいえ」のときは config.js の databaseURL か SDK の読み込みを確認してください。<b>PERMISSION_DENIED</b> のときは Realtime Database のルールで <code>hh_data</code> の読み取りを匿名に許可する必要があります（下記ドキュメント参照）。</p></details>';
+    root.innerHTML='<div class="err">報告が見つかりません。しばらく待ってから再読み込みするか、URLをご確認ください。'+hint+diag+'<p style="margin-top:12px"><button type="button" onclick="location.reload()" style="padding:10px 16px;cursor:pointer;border-radius:8px;border:1px solid #C62828;background:#fff;color:#C62828;font-weight:600">再読み込み</button></p></div>';
     return;
   }
   if(typeof disasterPublicTokenValid!=='function'||!disasterPublicTokenValid(r,REPORT_TOKEN)){
@@ -115,23 +141,29 @@ function render(){
   if(h&&typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+
     (typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+
-    (typeof disasterWfPublicPanelHtml==='function'?disasterWfPublicPanelHtml(r,REPORT_ID):'');
+    (typeof disasterWfPublicPanelHtml==='function'?disasterWfPublicPanelHtml(r,REPORT_ID,{token:REPORT_TOKEN,step:REPORT_STEP}):'');
   root.innerHTML=h+ex;
 }
 
 function boot(){
   REPORT_ID=qs('id');
   REPORT_TOKEN=qs('t');
+  REPORT_STEP=qs('s');
   bindPubActions();
   function afterLoad(){
     render();
     if(typeof HHDB!=='undefined'&&HHDB.onDisasterChange){
-      HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];render()});
+      HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];DIS_LIST_LOAD_ERROR=null;render()});
     }
   }
   function loadList(fn){
+    DIS_LIST_LOAD_ERROR=null;
     if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){
-      HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];fn()});
+      HHDB.loadDisasterReports(function(arr,err){
+        DIS_LIST=arr||[];
+        DIS_LIST_LOAD_ERROR=err||null;
+        fn();
+      });
     }else{
       try{DIS_LIST=JSON.parse(localStorage.getItem('hh_disaster_reports')||'[]')}catch(e){DIS_LIST=[]}
       fn();
