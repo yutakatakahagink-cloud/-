@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全衛生に関する要望（労働者）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E8F5E9;--bg2:#C8E6C9;--ac:#2E7D32;--acg:rgba(46,125,50,0.15);--t1:#1B5E20;--t2:#33691E;--t3:#558B2F;--bd:#A5D6A7;--r:12px;--rs:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+.hdr{background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--bd);padding:14px 16px;max-width:540px;margin:0 auto}
+.hdr-t{font-size:15px;font-weight:700}.hdr-s{font-size:10px;color:var(--t3);margin-top:1px}
+.fw{padding:16px;max-width:540px;margin:0 auto}
+.sd{font-size:10px;font-weight:700;color:var(--ac);margin:16px 0 8px}
+.fi,.ft{width:100%;background:#fff;border:1px solid #81C784;border-radius:var(--rs);padding:10px 12px;font-family:inherit;font-size:14px}
+.ft{resize:vertical;min-height:120px;line-height:1.6}
+.sub{width:100%;padding:14px;background:linear-gradient(135deg,#2E7D32,#43A047);border:none;border-radius:var(--r);color:white;font-size:14px;font-weight:700;cursor:pointer;margin-top:20px}
+.sub:active{transform:scale(.98)}
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border:1px solid #81C784;border-radius:16px;padding:28px 24px;width:90%;max-width:380px}
+.login-lbl{font-size:12px;font-weight:600;margin-bottom:6px;display:block}
+.login-sel{width:100%;padding:12px;border:1px solid #81C784;border-radius:var(--rs);margin-bottom:16px;font-size:14px}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#2E7D32,#43A047);border:none;border-radius:var(--r);color:white;font-size:14px;font-weight:700;cursor:pointer}
+.tst{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);background:#2E7D32;color:white;padding:10px 20px;border-radius:var(--r);font-size:12px;font-weight:600;z-index:300;transition:transform .4s}
+.tst.show{transform:translateX(-50%) translateY(0)}
+.ls{padding:16px;max-width:540px;margin:0 auto}
+.lt{font-size:13px;font-weight:700;margin-bottom:12px}
+.rc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:8px}
+.rc .rde{font-size:12px;line-height:1.5;margin-bottom:6px}
+.rc .rm{font-size:10px;color:var(--t3)}
+.bd2{font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:4px}
+.bd2.pending{background:rgba(229,56,59,.12);color:#E53935}
+.bd2.in_progress{background:rgba(240,180,41,.12);color:#F9A825}
+.bd2.resolved{background:rgba(45,198,166,.12);color:#00897B}
+.back{display:inline-block;margin-bottom:16px;color:var(--ac);font-size:12px;text-decoration:none}
+.back:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="login-overlay" id="loginScreen">
+<div class="login-card">
+  <p style="text-align:center;font-size:14px;font-weight:700;margin-bottom:16px">安全衛生に関する要望</p>
+  <label class="login-lbl">部署を選択</label>
+  <select class="login-sel" id="loginDept"><option value="">選択してください</option></select>
+  <label class="login-lbl">氏名を選択</label>
+  <select class="login-sel" id="loginName" disabled><option value="">先に部署を選択</option></select>
+  <button class="login-btn" id="loginBtn" disabled onclick="doLogin()">ログイン</button>
+</div>
+</div>
+
+<div class="tst" id="toast">✓ 要望を送信しました</div>
+<div class="hdr"><div class="hdr-t">安全衛生に関する要望</div><div class="hdr-s">労働者からの要望を送信</div></div>
+
+<div class="fw" id="formArea">
+  <a href="index.html" class="back">← トップへ戻る</a>
+  <div class="sd">要望内容</div>
+  <textarea class="ft" id="f_content" placeholder="安全衛生に関する要望・改善提案を入力してください"></textarea>
+  <button class="sub" onclick="doSubmit()">要望を送信する</button>
+</div>
+
+<div class="ls" id="listArea">
+  <div class="lt">自分の送信一覧</div>
+  <div id="rL"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="hh-data.js"></script>
+<script>
+var EMP=typeof window.EMP!=='undefined'?window.EMP:[];
+if(!EMP.length){EMP=[{name:'川名哲也',honbu:'総務部',bu:'',ka:'',dept:'総務部'},{name:'髙萩泰',honbu:'総務部',bu:'安全管理',ka:'',dept:'総務部/安全管理'},{name:'志田和弘',honbu:'土木本部',bu:'土木部',ka:'',dept:'土木本部/土木部'},{name:'町田建也',honbu:'建材本部',bu:'',ka:'',dept:'建材本部'}];}
+const deptSet=new Set();EMP.forEach(e=>{var d=e.dept||(e.honbu+(e.bu?'/'+e.bu:'')+(e.ka?'/'+e.ka:''));deptSet.add(d)});
+document.getElementById('loginDept').innerHTML='<option value="">選択してください</option>'+[...deptSet].sort().map(d=>'<option value="'+d+'">'+d+'</option>').join('');
+document.getElementById('loginDept').onchange=function(){
+  const dept=this.value,nS=document.getElementById('loginName');
+  nS.innerHTML='<option value="">氏名を選択</option>';
+  if(!dept){nS.disabled=true;return}
+  nS.disabled=false;
+  EMP.filter(e=>{var d=e.dept||(e.honbu+(e.bu?'/'+e.bu:'')+(e.ka?'/'+e.ka:''));return d===dept}).forEach(e=>{const o=document.createElement('option');o.value=e.name;o.textContent=e.name;nS.appendChild(o)});
+};
+document.getElementById('loginName').onchange=function(){document.getElementById('loginBtn').disabled=!this.value};
+
+let CUR=null;
+let REQ_LIST=[];
+
+function getDept(e){return e.dept||(e.honbu+(e.bu?'/'+e.bu:'')+(e.ka?'/'+e.ka:''));}
+function doLogin(){
+  const name=document.getElementById('loginName').value;
+  CUR=EMP.find(x=>x.name===name);
+  if(CUR)CUR.dept=getDept(CUR);
+  if(!CUR)return;
+  document.getElementById('loginScreen').style.display='none';
+  loadRequests();
+}
+
+function loadRequests(){
+  if(typeof HHDB!=='undefined'){
+    HHDB.init(function(){
+      HHDB.loadRequests(function(arr){
+        REQ_LIST=arr||[];
+        renderMyList();
+      });
+      if(HHDB.useFirebase())HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderMyList()});
+    });
+  }else{REQ_LIST=[];renderMyList()}
+}
+
+function renderMyList(){
+  const mine=CUR?REQ_LIST.filter(r=>r.name===CUR.name):[];
+  const el=document.getElementById('rL');
+  const stMap={pending:'未対応',in_progress:'取り掛かり中',resolved:'解決済み'};
+  el.innerHTML=mine.map(r=>{
+    const st=r.status||'pending';
+    return'<div class="rc"><span class="bd2 '+st+'">'+stMap[st]+'</span><div class="rde">'+(r.content||'').substring(0,100)+(r.content&&r.content.length>100?'…':'')+'</div><div class="rm">'+r.date+' '+r.name+'</div></div>';
+  }).join('')||'<p style="color:var(--t3);font-size:12px;padding:20px">送信した要望はありません</p>';
+}
+
+function doSubmit(){
+  const content=document.getElementById('f_content').value.trim();
+  if(!content){alert('要望内容を入力してください');return}
+  if(!CUR){alert('ログインしてください');return}
+  const newReq={id:Date.now(),date:new Date().toISOString().slice(0,10),name:CUR.name,dept:CUR.dept,content:content,status:'pending'};
+  REQ_LIST=REQ_LIST||[];
+  REQ_LIST.push(newReq);
+  if(typeof HHDB!=='undefined')HHDB.saveRequests(REQ_LIST);
+  else try{localStorage.setItem('hh_requests',JSON.stringify(REQ_LIST))}catch(e){}
+  document.getElementById('f_content').value='';
+  document.getElementById('toast').classList.add('show');
+  setTimeout(function(){document.getElementById('toast').classList.remove('show')},2500);
+  renderMyList();
+}
+</script>
+</body>
+</html>

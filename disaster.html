@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>災害事故発生報告書</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF8E1;--bg2:#FFECB3;--ac:#E65100;--acg:rgba(230,81,0,0.12);--t1:#BF360C;--t2:#795548;--t3:#8D6E63;--bd:#FFE0B2;--r:12px;--rs:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+.hdr{background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--bd);padding:14px 16px;max-width:640px;margin:0 auto}
+.hdr-t{font-size:15px;font-weight:700}.hdr-s{font-size:10px;color:var(--t3);margin-top:1px}
+.fw{padding:16px;max-width:640px;margin:0 auto}
+.sd{font-size:10px;font-weight:700;color:var(--ac);margin:16px 0 8px}
+.fi,.ft,.fs{width:100%;background:#fff;border:1px solid #FFCC80;border-radius:var(--rs);padding:10px 12px;font-family:inherit;font-size:14px}
+.ft{resize:vertical;min-height:80px;line-height:1.6}
+.fs{-webkit-appearance:none;padding-right:30px}
+.fg{margin-bottom:12px}
+.fl{font-size:12px;font-weight:600;margin-bottom:4px}.rq{color:#D32F2F;font-size:10px}
+.sub{width:100%;padding:14px;background:linear-gradient(135deg,#E65100,#FF6F00);border:none;border-radius:var(--r);color:white;font-size:14px;font-weight:700;cursor:pointer;margin-top:20px}
+.sub:active{transform:scale(.98)}
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border:1px solid #FFCC80;border-radius:16px;padding:28px 24px;width:90%;max-width:380px}
+.login-lbl{font-size:12px;font-weight:600;margin-bottom:6px;display:block}
+.login-sel{width:100%;padding:12px;border:1px solid #FFCC80;border-radius:var(--rs);margin-bottom:16px;font-size:14px}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#E65100,#FF6F00);border:none;border-radius:var(--r);color:white;font-size:14px;font-weight:700;cursor:pointer}
+.tst{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);background:#E65100;color:white;padding:10px 20px;border-radius:var(--r);font-size:12px;font-weight:600;z-index:300;transition:transform .4s}
+.tst.show{transform:translateX(-50%) translateY(0)}
+.back{display:inline-block;margin-bottom:16px;color:var(--ac);font-size:12px;text-decoration:none}
+.back:hover{text-decoration:underline}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+</style>
+</head>
+<body>
+<div class="login-overlay" id="loginScreen">
+<div class="login-card">
+  <p style="text-align:center;font-size:14px;font-weight:700;margin-bottom:16px">災害事故発生報告書</p>
+  <label class="login-lbl">部署を選択</label>
+  <select class="login-sel" id="loginDept"><option value="">選択してください</option></select>
+  <label class="login-lbl">氏名を選択</label>
+  <select class="login-sel" id="loginName" disabled><option value="">先に部署を選択</option></select>
+  <button class="login-btn" id="loginBtn" disabled onclick="doLogin()">ログイン</button>
+</div>
+</div>
+
+<div class="tst" id="toast">✓ 報告書を送信しました</div>
+<div class="hdr"><div class="hdr-t">災害事故発生報告書</div><div class="hdr-s">労災事故報告（様式第22号相当）</div></div>
+
+<div class="fw" id="formArea">
+  <a href="index.html" class="back">← トップへ戻る</a>
+
+  <div class="sd">事業場情報</div>
+  <div class="fg"><label class="fl">事業の種類</label><input class="fi" id="f_gyoshu" placeholder="例: 土木工事業"></div>
+  <div class="fg"><label class="fl">事業場名</label><input class="fi" id="f_jigyosho" placeholder="事業場の名称"></div>
+  <div class="fg"><label class="fl">所在地</label><input class="fi" id="f_address" placeholder="住所"></div>
+  <div class="fg"><label class="fl">労働者数</label><input class="fi" type="number" id="f_workers" placeholder="人"></div>
+
+  <div class="sd">事故情報</div>
+  <div class="grid2">
+    <div class="fg"><label class="fl">事故発生日時<span class="rq">*</span></label><input class="fi" type="datetime-local" id="f_datetime"></div>
+    <div class="fg"><label class="fl">発生場所<span class="rq">*</span></label><input class="fi" id="f_place" placeholder="事故発生場所"></div>
+  </div>
+  <div class="fg"><label class="fl">事故を発生した機器等の種類</label><input class="fi" id="f_machine" placeholder="例: クレーン、フォークリフト"></div>
+  <div class="fg"><label class="fl">事故の種類</label>
+    <select class="fs" id="f_type">
+      <option value="">選択</option>
+      <option value="墜落">墜落</option>
+      <option value="転倒">転倒</option>
+      <option value="激突">激突</option>
+      <option value="落下">落下</option>
+      <option value="挟まれ">挟まれ</option>
+      <option value="切れ・こすれ">切れ・こすれ</option>
+      <option value="火傷">火傷</option>
+      <option value="感電">感電</option>
+      <option value="交通事故">交通事故</option>
+      <option value="その他">その他</option>
+    </select>
+  </div>
+
+  <div class="sd">人的被害・物的被害</div>
+  <div class="fg"><label class="fl">被害者氏名<span class="rq">*</span></label><input class="fi" id="f_victim" placeholder="被害者名"></div>
+  <div class="fg"><label class="fl">被害者所属</label><input class="fi" id="f_victim_dept" readonly></div>
+  <div class="fg"><label class="fl">人的被害</label><input class="fi" id="f_human_damage" placeholder="例: 死亡、休業4日以上、休業4日未満"></div>
+  <div class="fg"><label class="fl">物的被害</label><input class="fi" id="f_material_damage" placeholder="例: 機械損傷、建物損傷"></div>
+
+  <div class="sd">事故の発生状況</div>
+  <div class="fg"><label class="fl">発生状況<span class="rq">*</span></label><textarea class="ft" id="f_situation" placeholder="事故がどのように発生したか具体的に記入"></textarea></div>
+
+  <div class="sd">事故の原因</div>
+  <div class="fg"><label class="fl">発生原因</label><textarea class="ft" id="f_cause" placeholder="事故の原因を記入"></textarea></div>
+
+  <div class="sd">事故の防止対策</div>
+  <div class="fg"><label class="fl">再発防止措置</label><textarea class="ft" id="f_measure" placeholder="再発防止のための対策"></textarea></div>
+
+  <div class="sd">報告者</div>
+  <div class="fg"><label class="fl">報告書作成者</label><input class="fi" id="f_reporter" readonly></div>
+
+  <button class="sub" onclick="doSubmit()">報告書を送信する</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="hh-data.js"></script>
+<script>
+var EMP=typeof window.EMP!=='undefined'?window.EMP:[{name:'川名哲也',dept:'総務部'},{name:'髙萩泰',dept:'総務部/安全管理'},{name:'志田和弘',dept:'土木本部/土木部'},{name:'町田建也',dept:'建材本部'}];
+const deptSet=new Set();EMP.forEach(e=>deptSet.add(e.dept||(e.honbu+(e.bu?'/'+e.bu:'')+(e.ka?'/'+e.ka:''))));
+document.getElementById('loginDept').innerHTML='<option value="">選択してください</option>'+[...deptSet].sort().map(d=>'<option value="'+d+'">'+d+'</option>').join('');
+document.getElementById('loginDept').onchange=function(){
+  const dept=this.value,nS=document.getElementById('loginName');
+  nS.innerHTML='<option value="">氏名を選択</option>';
+  if(!dept){nS.disabled=true;return}
+  nS.disabled=false;
+  EMP.filter(e=>(e.dept||(e.honbu+(e.bu?'/'+e.bu:'')+(e.ka?'/'+e.ka:'')))===dept).forEach(e=>{const o=document.createElement('option');o.value=e.name;o.textContent=e.name;nS.appendChild(o)});
+};
+document.getElementById('loginName').onchange=function(){document.getElementById('loginBtn').disabled=!this.value};
+
+let CUR=null;
+let DIS_LIST=[];
+
+function doLogin(){
+  const name=document.getElementById('loginName').value;
+  CUR=EMP.find(x=>x.name===name);
+  if(!CUR)return;
+  CUR.dept=CUR.dept||(CUR.honbu+(CUR.bu?'/'+CUR.bu:'')+(CUR.ka?'/'+CUR.ka:''));
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('f_reporter').value=CUR.name;
+  document.getElementById('f_victim_dept').value=CUR.dept;
+  if(typeof HHDB!=='undefined')HHDB.init(function(){});
+}
+
+function doSubmit(){
+  const dt=document.getElementById('f_datetime').value,place=document.getElementById('f_place').value.trim(),victim=document.getElementById('f_victim').value.trim(),situation=document.getElementById('f_situation').value.trim();
+  if(!dt||!place||!victim||!situation){alert('事故発生日時・発生場所・被害者氏名・発生状況は必須です');return}
+  if(!CUR){alert('ログインしてください');return}
+  function saveNew(rec){
+  DIS_LIST=DIS_LIST||[];
+  DIS_LIST.push(rec);
+  if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase())HHDB.mergeDisasterReport(rec);
+  else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
+  else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
+  document.getElementById('f_datetime').value='';
+  document.getElementById('f_place').value='';
+  document.getElementById('f_victim').value='';
+  document.getElementById('f_situation').value='';
+  document.getElementById('f_cause').value='';
+  document.getElementById('f_measure').value='';
+  document.getElementById('toast').classList.add('show');
+  setTimeout(function(){document.getElementById('toast').classList.remove('show')},2500);
+  }
+  const rec={
+    id:Date.now(),
+    date:new Date().toISOString().slice(0,10),
+    status:'draft',
+    gyoshu:document.getElementById('f_gyoshu').value,
+    jigyosho:document.getElementById('f_jigyosho').value,
+    address:document.getElementById('f_address').value,
+    workers:document.getElementById('f_workers').value,
+    datetime:dt,
+    place:place,
+    machine:document.getElementById('f_machine').value,
+    type:document.getElementById('f_type').value,
+    victim:victim,
+    victim_dept:document.getElementById('f_victim_dept').value,
+    human_damage:document.getElementById('f_human_damage').value,
+    material_damage:document.getElementById('f_material_damage').value,
+    situation:situation,
+    cause:document.getElementById('f_cause').value,
+    measure:document.getElementById('f_measure').value,
+    reporter:CUR.name
+  };
+  if(typeof HHDB!=='undefined'){
+    HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];saveNew(rec)});
+  }else{
+    try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};
+    saveNew(rec);
+  }
+}
+document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
+</script>
+</body>
+</html>

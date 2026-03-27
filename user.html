@@ -10,16 +10,16 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;padding-top:60px}
 select,input,textarea,button{color:var(--t1)}
-.nav{position:fixed;top:0;left:0;right:0;background:#fff;border-bottom:1px solid #A5D6A7;display:flex;z-index:100;max-width:540px;margin:0 auto;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.nav{position:fixed;top:0;left:0;right:0;background:#fff;border-bottom:1px solid #A5D6A7;display:flex;z-index:100;max-width:540px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 @media(min-width:541px){.nav{left:50%;transform:translateX(-50%);border-radius:0 0 16px 16px}}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;color:var(--t3);cursor:pointer;border:none;background:none;font-family:inherit;font-size:9px;font-weight:600;position:relative;-webkit-tap-highlight-color:transparent}
 .ni.on{color:var(--ac)}.ni.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2.5px;background:var(--ac);border-radius:0 0 3px 3px}
 .ni svg{width:20px;height:20px}
-.hdr{background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--bd);padding:14px 16px 16px;max-width:540px;margin:0 auto;position:sticky;top:0;z-index:50}
+.hdr{background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--bd);padding:8px 16px;max-width:540px;margin:0 auto;position:sticky;top:0;z-index:50}
 .hdr-r{display:flex;align-items:center;justify-content:space-between}
-.hdr-l{display:flex;align-items:center;gap:10px}
-.logo{width:32px;height:32px;background:linear-gradient(135deg,#2E7D32,#66BB6A);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 10px rgba(46,125,50,.25)}
-.hdr-t{font-size:15px;font-weight:700}.hdr-s{font-size:10px;color:var(--t3);font-weight:500;margin-top:1px}
+.hdr-l{display:flex;align-items:center;gap:8px}
+.logo{width:28px;height:28px;background:linear-gradient(135deg,#2E7D32,#66BB6A);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(46,125,50,.25)}
+.hdr-t{font-size:14px;font-weight:700}.hdr-s{font-size:9px;color:var(--t3);font-weight:500;margin-top:0}
 .pg{display:none;padding-bottom:72px;max-width:540px;margin:0 auto}.pg.on{display:block;animation:fi .25s ease}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .fw{padding:0 16px 20px}
@@ -51,26 +51,27 @@ select,input,textarea,button{color:var(--t1)}
 .lkdt.on{border-color:var(--ac);background:var(--ac);color:#fff}
 .sub{width:100%;padding:14px;background:linear-gradient(135deg,#2E7D32,#43A047);border:none;border-radius:var(--r);color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(46,125,50,.25);margin-top:24px}
 .sub:active{transform:scale(.98)}
-.sr{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px 16px}
-.sc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px}
-.sv{font-size:24px;font-weight:900;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-.03em}
-.sl{font-size:10px;color:var(--t3);margin-top:2px;font-weight:500}
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 16px}
+.sc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--rs);padding:8px 10px}
+.sv{font-size:20px;font-weight:900;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-.03em}
+.sl{font-size:9px;color:var(--t3);margin-top:1px;font-weight:500}
 .sc.co .sv{color:var(--ac)}.sc.cr .sv{color:var(--rd)}.sc.cg2 .sv{color:var(--gn)}.sc.cy .sv{color:var(--yl)}
-.ls{padding:0 16px 16px}.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ls{padding:0 16px 12px}.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .lt{font-size:13px;font-weight:700}
-.fp{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;font-family:inherit}
-.rc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:7px;cursor:pointer;transition:background .2s}
-.rc:active{background:var(--bg5)}
-.rt{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.bd2{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
+.fp{padding:4px 12px;border-radius:14px;font-size:10px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;font-family:inherit}
+.rc{background:#fff;border:1px solid #e8e8e8;border-left:3px solid var(--ac);border-radius:var(--rs);padding:8px 10px;margin-bottom:4px;cursor:pointer;transition:all .15s}
+.rc:hover{border-left-color:var(--ac2);box-shadow:0 2px 8px rgba(46,125,50,.1)}
+.rc:active{background:var(--acg)}
+.rt{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.bd2{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px}
 .bf{background:rgba(229,56,59,.12);color:var(--rd)}.bt2{background:rgba(240,180,41,.12);color:var(--yl)}.bm{background:rgba(167,139,250,.12);color:var(--pr)}.bdr{background:rgba(56,189,248,.12);color:var(--bl)}.bcl{background:rgba(45,198,166,.12);color:var(--gn)}.bo{background:rgba(83,98,116,.12);color:var(--t2)}
-.rde{font-size:12px;font-weight:500;line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rm{display:flex;gap:10px;font-size:10px;color:var(--t3)}
+.rde{font-size:11px;font-weight:500;line-height:1.4;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;color:var(--t2)}
+.rm{display:flex;gap:8px;font-size:9px;color:var(--t3)}
 .ds{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle}
 .dn{background:var(--ac)}.dr{background:var(--yl)}.dd{background:var(--gn)}
-.cs{padding:14px 16px}
-.cb{background:#fff;border:1px solid #A5D6A7;border-radius:14px;padding:16px;margin-bottom:12px}
-.cht{font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.cs{padding:10px 16px}
+.cb{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:8px}
+.cht{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .chd{width:6px;height:6px;border-radius:50%}
 .hb{display:flex;flex-direction:column;gap:7px}
 .hr{display:flex;align-items:center;gap:7px}
@@ -124,8 +125,8 @@ select,input,textarea,button{color:var(--t1)}
 .ict{font-size:12px;font-weight:700;color:#2E7D32;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .icb{font-size:11px;color:var(--t2);line-height:1.8}
 .icb strong{color:#2E7D32}
-.tps{display:flex;gap:5px;padding:10px 16px;overflow-x:auto}
-.tp{padding:5px 12px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap;cursor:pointer;background:#fff;border:1px solid #81C784;color:#558B2F;font-family:inherit}
+.tps{display:flex;gap:4px;padding:6px 16px;overflow-x:auto}
+.tp{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap;cursor:pointer;background:#fff;border:1px solid #81C784;color:#558B2F;font-family:inherit;transition:all .15s}
 .tp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
 
 .login-overlay{position:fixed;inset:0;background:#E8F5E9;z-index:1000;display:flex;align-items:center;justify-content:center}
@@ -147,8 +148,12 @@ select,input,textarea,button{color:var(--t1)}
 .top-btn{display:inline-flex;align-items:center;justify-content:center;width:102px;height:31px;padding:0 16px;border-radius:10px;font-size:12px;background:#fff;border:1px solid #81C784;color:#2E7D32;cursor:pointer;font-weight:600;text-decoration:none;font-family:inherit;white-space:nowrap;box-sizing:border-box}
 .top-btn:hover,.top-btn:active{background:var(--acg);border-color:var(--ac)}
 .other-inp{display:none;margin-top:6px}.other-inp.show{display:block}
-.dept-flt{display:flex;gap:5px;padding:8px 16px;overflow-x:auto}
-.dfp{padding:4px 10px;border-radius:10px;font-size:9px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;cursor:pointer;white-space:nowrap;font-family:inherit}
+.period-flt{display:flex;gap:6px;padding:4px 16px;align-items:center;flex-wrap:wrap}
+.period-flt select{padding:3px 6px;border-radius:6px;font-size:10px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23558B2F' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:18px}
+.period-flt select:focus{outline:none;border-color:var(--ac)}
+.period-flt .pf-label{font-size:9px;font-weight:600;color:var(--t3)}
+.dept-flt{display:flex;gap:4px;padding:4px 16px;overflow-x:auto}
+.dfp{padding:3px 8px;border-radius:10px;font-size:8px;font-weight:600;background:#fff;border:1px solid #81C784;color:#558B2F;cursor:pointer;white-space:nowrap;font-family:inherit}
 .dfp.on{background:var(--acg);border-color:var(--ac);color:var(--ac)}
 .guide-box{background:rgba(46,125,50,.06);border:1px solid rgba(46,125,50,.15);border-radius:var(--rs);padding:10px 12px;margin-top:8px;font-size:10px;color:#2E7D32;line-height:1.6}
 .guide-box b{color:#1B5E20}
@@ -209,13 +214,70 @@ input[type="file"].photo-input{display:none}
 .dis-form-pc{display:none}
 /* PC: 画面いっぱい表示 */
 @media(min-width:768px){
-  .nav{max-width:none;left:0;right:0;transform:none;border-radius:0;border-bottom:1px solid #A5D6A7}
-  .hdr{max-width:none}
-  .pg{max-width:none}
+  body{padding-top:0}
+  .nav{max-width:none;width:100%;position:fixed;top:0;bottom:auto;border-top:none;border-bottom:1px solid #A5D6A7;border-radius:0;left:0;transform:none;padding-bottom:0}
+  .ni{flex-direction:row;font-size:11px;padding:12px 16px;gap:6px}
+  .ni svg{width:18px;height:18px}
+  .ni.on::before{top:auto;bottom:0;width:100%;height:2.5px;left:0;transform:none;border-radius:3px 3px 0 0}
+  .hdr{max-width:none;margin-top:48px;padding:10px 32px}
+  .hdr-t{font-size:16px}
+  .hdr-s{font-size:11px}
+  .logo{width:34px;height:34px;font-size:16px}
+  .pg{max-width:none;padding-bottom:24px;margin-top:0}
   .mbd{max-width:none}
   .fw{padding:0 32px 24px}
+  .sd{font-size:12px;margin:28px 0 14px}
+  .fg{margin-bottom:20px}
+  .fl{font-size:14px}
+  .fi,.fs,.ft{font-size:15px;padding:12px 16px}
+  .ch{padding:8px 16px;font-size:13px}
+  .ck{padding:8px 14px;font-size:12px}
+  .lb{width:48px;height:42px;font-size:14px}
+  .lki{padding:12px 14px}
+  .lkl{font-size:13px}
+  .lkdt{width:34px;height:34px;font-size:11px}
+  .sub{padding:16px;font-size:16px}
+  .login-card{max-width:460px;padding:36px 32px}
+  .login-logo .ttl{font-size:22px}
+  .login-logo .ico{width:48px;height:48px;font-size:24px}
+  .login-sel{font-size:15px;padding:14px}
+  .login-btn{font-size:16px;padding:16px}
+  .login-lbl{font-size:14px}
+  .login-inf{font-size:14px}
+  .user-pill{font-size:12px;padding:6px 16px}
+  .cb{padding:20px}
   .cs{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:stretch}
+  .cs>.cb{margin-bottom:0;display:flex;flex-direction:column}
+  .cs>.cb>.hb,.cs>.cb>.trw{flex:1}
   .cs>.cb-wide,.cs>.ic{grid-column:span 2}
+  .cht{font-size:14px}
+  .hl{font-size:12px;min-width:90px;width:90px;flex-shrink:0}
+  .hv{font-size:10px}
+  .htk{height:24px}
+  .trw{height:180px;min-height:180px}
+  .tl2{font-size:10px}
+  .cs{padding:18px 32px}
+  .tps{padding:12px 32px}
+  .tp{font-size:12px;padding:7px 16px}
+  .period-flt{padding:10px 32px}
+  .period-flt select{font-size:12px;padding:6px 12px;padding-right:24px}
+  .period-flt .pf-label{font-size:12px}
+  .dept-flt{padding:10px 32px}
+  .dfp{font-size:11px;padding:6px 14px}
+  .guide-box{font-size:12px;padding:14px 16px}
+  .tst{font-size:14px;padding:12px 24px}
+  .sr{padding:10px 32px;grid-template-columns:repeat(4,1fr);gap:10px}
+  .sc{padding:12px 14px}
+  .sv{font-size:24px}
+  .sl{font-size:11px}
+  .ls{padding:0 32px 16px}
+  .lt{font-size:14px}
+  .rc{padding:10px 14px;margin-bottom:4px}
+  .rde{font-size:13px}
+  .rm{font-size:11px}
+  .bd2{font-size:11px}
+  .fp{font-size:11px}
+  .byexp-grid .byexp-item{min-width:min(100%,200px);font-size:10px;padding:8px 12px}
   .dis-form-mobile{display:none}
   .dis-form-pc{display:block;width:100%;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;border:1px solid #333}
   #pDis .fw{max-width:none;padding:0 10px 16px;width:100%;box-sizing:border-box}
@@ -265,19 +327,20 @@ input[type="file"].photo-input{display:none}
   .dis-report-msg{margin-bottom:8px}
   .dis-report-date{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 }
-/* ===== 一覧・分析・委員会用スタイル ===== */
-.sr{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px 16px}
-.sc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px}
-.sv{font-size:24px;font-weight:900;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-.03em}
-.sl{font-size:10px;color:var(--t3);margin-top:2px;font-weight:500}
-.sc.co .sv{color:var(--ac)}.sc.cr .sv{color:var(--rd)}.sc.cg2 .sv{color:var(--gn)}.sc.cy .sv{color:var(--yl)}
-.ls{padding:0 16px 16px}.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.lt{font-size:13px;font-weight:700}
-.fp{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:500;background:#fff;border:1px solid #81C784;color:#33691E;cursor:pointer;font-family:inherit}
-.rc{background:#fff;border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:7px;cursor:pointer;transition:background .2s}
-.rc:active{background:var(--bg5)}
-.rt{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.bd2{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
+/* ===== WIDE PC (1200px+) ===== */
+@media(min-width:1200px){
+  .nav{max-width:none}
+  .hdr{max-width:none}
+  .pg{max-width:none}
+  .fw{padding:0 48px 32px}
+  .cs{padding:20px 48px}
+  .tps{padding:14px 48px}
+  .period-flt{padding:12px 48px}
+  .dept-flt{padding:12px 48px}
+  .sr{padding:20px 48px}
+  .ls{padding:0 48px 24px}
+}
+/* ===== 一覧・分析・委員会用スタイル（補足） =====*/
 .bd2.pending{background:rgba(229,56,59,.12);color:var(--rd)}.bd2.in_progress{background:rgba(240,180,41,.12);color:var(--yl)}.bd2.resolved{background:rgba(45,198,166,.12);color:var(--gn)}
 .bf{background:rgba(229,56,59,.12);color:var(--rd)}.bt2{background:rgba(240,180,41,.12);color:var(--yl)}.bm{background:rgba(167,139,250,.12);color:var(--pr)}.bdr{background:rgba(56,189,248,.12);color:var(--bl)}.bcl{background:rgba(45,198,166,.12);color:var(--gn)}.bo{background:rgba(83,98,116,.12);color:var(--t2)}
 .rde{font-size:12px;font-weight:500;line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -431,7 +494,7 @@ input[type="file"].photo-input{display:none}
 <div class="tst" id="toast">✓ 報告が送信されました。管理者・所属長に通知済み</div>
 <div class="tst" id="toastReq" style="background:var(--ac)">✓ 要望を送信しました</div>
 <div class="tst" id="toastDis" style="background:#E65100">✓ 報告書を送信しました</div>
-<div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t" id="hdrT">安全衛生管理</div><div class="hdr-s" id="hdrS">建災防方式 安全管理システム</div></div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><a href="kensaibou_hiyarihatto_v3.html" class="top-btn">トップ画面に戻る</a><div class="user-pill" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div></div>
+<div class="hdr"><div class="hdr-r"><div class="hdr-l"><div class="logo">⚠</div><div><div class="hdr-t" id="hdrT">安全衛生管理</div><div class="hdr-s" id="hdrS">建災防方式 安全管理システム</div></div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><a href="kensaibou_hiyarihatto_v3.html" class="top-btn">トップ画面に戻る</a><div class="top-btn" id="userPill" onclick="location.reload()">ログイン画面へ</div></div></div></div>
 
 <!-- MENU (使用者用：要望・災害・ヒヤリハットの入口) -->
 <div class="pg on" id="pMenu"><div class="fw" style="padding:24px 16px">
@@ -464,6 +527,13 @@ input[type="file"].photo-input{display:none}
   <!-- 使用者用：戻るリンク＋フォーム -->
   <a href="javascript:void(0)" class="back" id="disBack" onclick="goTo('pMenu')">← 戻る</a>
   <div id="disFormArea">
+  <div id="disWfUserWrap" class="dis-wf-user-block" style="margin:0 0 16px;padding:12px;background:rgba(106,27,154,.06);border:1px solid rgba(106,27,154,.28);border-radius:8px">
+    <div class="sd" style="margin-top:0">承認ワークフロー（任意）</div>
+    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者のメールを1件以上入れると、<b>最終承認まで「確定済み」一覧に表示されません</b>。承認者は管理者画面で、<b>ここに入力したメール</b>と一致するアカウント（または所有者）でログインし、<b>差戻し・追記・訂正・承認</b>ができます。<br><strong>送信者メール</strong>は、この報告をワークフローに載せる際の<b>連絡先（差戻し通知の宛先）</b>です。入れておくと差戻し時にもこのアドレスへ通知されます（EmailJS／メール作成のいずれでも利用）。<br><strong>提出時の通知:</strong> <code style="font-size:10px">config.js</code> に <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）があると承認者へ自動でメール送信されます。未設定の場合は提出直後にメール作成画面が開くので、<b>送信ボタンで送ってください</b>。メール本文には <b>ログイン不要で開く承認用URL</b>（<code style="font-size:10px">disaster-approver.html?id=…&t=…</code>）が含まれます。<code style="font-size:10px">HH_BASE_URL</code> を設定すると、そのURLが本番アドレスになります。</p>
+    <div id="disWfUserSteps"></div>
+    <button type="button" class="fp" style="margin-top:6px;font-size:11px;padding:8px 12px;border-radius:8px" onclick="disWfUserAddApproverRow()">＋ 承認段階を追加</button>
+    <div class="fg" style="margin-top:12px;margin-bottom:0"><label class="fl">送信者メール（任意）</label><input class="fi" type="email" id="f_wf_sender_email" placeholder="ワークフロー連絡・差戻し通知の宛先"></div>
+  </div>
   <div class="dis-form-mobile">
   <div class="sd">事業場情報</div>
   <div class="fg"><label class="fl">事業の種類</label><input class="fi" id="f_gyoshu" placeholder="例: 土木工事業"></div>
@@ -559,6 +629,14 @@ input[type="file"].photo-input{display:none}
   </div>
   <div class="dis-report-block"><div class="dis-report-msg">上記のとおり相違なく報告いたします。</div><div class="dis-report-date" style="justify-content:flex-end"><input class="fi" type="date" id="f_report_date_pc" style="width:140px">　責任者：<input class="fi" id="f_sekininsha_pc" placeholder="責任者名" style="width:120px" readonly></div></div>
   <button class="sub" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
+  </div>
+  <div id="disWfMailPrompt" style="display:none;margin-top:14px;padding:14px;background:#E8F5E9;border:1px solid #66BB6A;border-radius:var(--rs);font-size:12px;line-height:1.55;color:var(--t1)">
+    <strong style="color:#2E7D32">承認依頼メール（再送）</strong>
+    <p style="margin:8px 0 0">メール画面が開かなかった場合は、<b>下のボタン</b>から再度開けます。確実な自動送信には <code style="font-size:10px">config.js</code> の <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）を設定してください。</p>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <button type="button" class="sub" style="margin:0;padding:10px 16px;font-size:13px;width:auto;flex:1;min-width:140px" onclick="disasterPendingMailOpen()">承認者にメールを作成</button>
+      <button type="button" class="fp" style="padding:10px 14px;font-size:12px" onclick="document.getElementById('disWfMailPrompt').style.display='none'">閉じる</button>
+    </div>
   </div>
   </div>
   <script>
@@ -819,6 +897,7 @@ input[type="file"].photo-input{display:none}
 
 <!-- DASHBOARD (一覧) -->
 <div class="pg" id="pD">
+  <div class="period-flt" id="pfDash"></div>
   <div class="dept-flt" id="dfDash"></div>
   <div class="sr">
     <div class="sc co"><div class="sv" id="sT">0</div><div class="sl">総報告件数</div></div>
@@ -831,6 +910,7 @@ input[type="file"].photo-input{display:none}
 
 <!-- ANALYTICS (分析) -->
 <div class="pg" id="pA">
+  <div class="period-flt" id="pfAnl"></div>
   <div class="tps" id="aT"><button class="tp on" data-t="simple">単純集計</button><button class="tp" data-t="byexp">体験別分析</button><button class="tp" data-t="resil">レジリエンス</button><button class="tp" data-t="acts">活動分析</button></div>
   <div class="dept-flt" id="dfAnl"></div>
   <div class="cs" id="aC"></div>
@@ -838,6 +918,7 @@ input[type="file"].photo-input{display:none}
 
 <!-- COMMITTEE (委員会) -->
 <div class="pg" id="pC">
+  <div class="period-flt" id="pfCom"></div>
   <div class="dept-flt" id="dfCom"></div>
   <div class="cs">
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
@@ -867,6 +948,9 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js" onerror="console.warn('hh-data.js load failed')"></script>
+<script src="disaster-workflow.js" onerror="console.warn('disaster-workflow.js load failed')"></script>
+<script src="disaster-email-notify.js" onerror="console.warn('disaster-email-notify.js load failed')"></script>
+<script src="laws_refresh.js" onerror="console.warn('laws_refresh.js load failed')"></script>
 <script>
 // ===== 使用者専用スクリプト（user.html） =====
 // QRコード・所有者機能は不要のため省略
@@ -890,7 +974,7 @@ function initLoginDept(){
   dSel.innerHTML='<option value="">部署を選択してください</option>';
   [...deptSet].sort().forEach(d=>{var o=document.createElement('option');o.value=d;o.textContent=d;dSel.appendChild(o)});
 }
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){initLoginDept();initHhDropZone();initDisDropZones()})}else{initLoginDept();initHhDropZone();initDisDropZones()}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){initLoginDept();initHhDropZone();initDisDropZones();if(typeof ensureDisWfUserRows==='function')ensureDisWfUserRows()})}else{initLoginDept();initHhDropZone();initDisDropZones();if(typeof ensureDisWfUserRows==='function')ensureDisWfUserRows()}
 
 function onDeptSel(){
   var el=dSel||document.getElementById('loginDept');var dept=el?el.value:'';var nS=document.getElementById('loginName');
@@ -924,6 +1008,8 @@ function doLogin(){
   var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
   document.getElementById('f_reporter').value=CUR.name;
   document.getElementById('f_victim_dept').value=CUR.dept;
+  var uDept=CUR.honbu||(CUR.dept?CUR.dept.split('/')[0]:'');
+  if(uDept)deptFilt=uDept;
   if(typeof HHDB!=='undefined')HHDB.init(function(){doDataInit()});
   loadRequests();
   applyRole();
@@ -1017,6 +1103,7 @@ document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
 
 // ===== DATA =====
 var DB=[],idc=0,cFi='all',deptFilt='all',curExpFilter='all';
+var periodYear='all',periodMonth='all';
 var REQ_LIST=[],DIS_LIST=[];
 var pendingPhotos=window._hhPhotos||[];var disPendingPhotos=[],disPendingPhotosPC=[];
 var FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
@@ -1052,8 +1139,28 @@ function buildDeptFilter(containerId){
   ];
   document.getElementById(containerId).innerHTML=depts.map(d=>`<button class="dfp${d.v===deptFilt?' on':''}" data-d="${d.v}" onclick="setDeptF('${d.v}')">${d.l}</button>`).join('');
 }
-function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom()}
-function getF(){return deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt))}
+function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));refreshCurrentPage()}
+function refreshCurrentPage(){const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom();if(pg?.id==='pDis')rDisList();if(pg?.id==='pReq')rReqList()}
+function getF(){
+  var d=deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt));
+  if(periodYear!=='all')d=d.filter(r=>{var dt=r.date||'';return dt.substring(0,4)===periodYear});
+  if(periodMonth!=='all')d=d.filter(r=>{var dt=r.date||'';return dt.substring(5,7)===periodMonth});
+  return d;
+}
+function buildPeriodFilter(containerId){
+  var years={};DB.forEach(r=>{var y=(r.date||'').substring(0,4);if(y&&y.length===4)years[y]=1});
+  var ys=Object.keys(years).sort().reverse();
+  var h='<span class="pf-label">期間:</span>';
+  h+='<select onchange="periodYear=this.value;refreshCurrentPage()">';
+  h+='<option value="all"'+(periodYear==='all'?' selected':'')+'>全年</option>';
+  ys.forEach(y=>{h+='<option value="'+y+'"'+(periodYear===y?' selected':'')+'>'+y+'年</option>'});
+  h+='</select>';
+  h+='<select onchange="periodMonth=this.value;refreshCurrentPage()">';
+  h+='<option value="all"'+(periodMonth==='all'?' selected':'')+'>全月</option>';
+  for(var m=1;m<=12;m++){var mv=String(m).padStart(2,'0');h+='<option value="'+mv+'"'+(periodMonth===mv?' selected':'')+'>'+m+'月</option>'}
+  h+='</select>';
+  var el=document.getElementById(containerId);if(el)el.innerHTML=h;
+}
 
 // ===== loadDB / loadPhotos (admin.html互換：管理者ナビクリック時のリフレッシュ用) =====
 function loadDB(){
@@ -1072,13 +1179,16 @@ function doDataInit(){
   if(HHDB.useFirebase()&&HHDB.onRequestsChange)HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderReqList()});
   if(HHDB.loadDisasterReports)HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];});
   if(HHDB.useFirebase()&&HHDB.onDisasterChange)HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
+  if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()});
+  if(typeof HHDB.useFirebase==='function'&&HHDB.useFirebase()&&HHDB.onDisasterWorkflowChange)HHDB.onDisasterWorkflowChange(function(){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()})});
 }
 
 // ===== REQUEST (要望) =====
 function loadReqDis(cb){
-  if(typeof HHDB==='undefined'){try{var s=localStorage.getItem('hh_requests');REQ_LIST=s?JSON.parse(s):[]}catch(e){REQ_LIST=[]};try{var d=localStorage.getItem('hh_disaster_reports');DIS_LIST=d?JSON.parse(d):[]}catch(e){DIS_LIST=[]};if(cb)cb();return}
+  function wfThen(fn){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){fn()});else fn()}
+  if(typeof HHDB==='undefined'){try{var s=localStorage.getItem('hh_requests');REQ_LIST=s?JSON.parse(s):[]}catch(e){REQ_LIST=[]};try{var d=localStorage.getItem('hh_disaster_reports');DIS_LIST=d?JSON.parse(d):[]}catch(e){DIS_LIST=[]};wfThen(function(){if(cb)cb()});return}
   var todo=2;
-  function done(){todo--;if(todo<=0&&cb)cb()}
+  function done(){todo--;if(todo<=0)wfThen(function(){if(cb)cb()})}
   HHDB.loadRequests(function(arr){REQ_LIST=arr||[];done()});
   HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];done()});
 }
@@ -1152,8 +1262,59 @@ function updateDisExp(){
   var m=h.match(/(\d{4})[年\/\-](\d{1,2})/);if(m){var hire=new Date(parseInt(m[1],10),parseInt(m[2],10)-1,1);if(!isNaN(hire.getTime())){var today=new Date();var months=(today.getFullYear()-hire.getFullYear())*12+(today.getMonth()-hire.getMonth());ey.value=Math.floor(months/12);em.value=months%12}else{ey.value='';em.value=''}}
   else{ey.value='';em.value=''}
 }
+function disWfUserAddApproverRow(){
+  var box=document.getElementById('disWfUserSteps');if(!box)return;
+  var n=box.querySelectorAll('.dis-wf-u-row').length+1;
+  var div=document.createElement('div');
+  div.className='dis-wf-u-row';
+  div.style.cssText='display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px';
+  div.innerHTML='<input class="fi dis-wf-u-lab" type="text" placeholder="段階名（例:現場長）" value="第'+n+'承認" style="flex:1;min-width:90px;margin:0"><input class="fi dis-wf-u-em" type="email" placeholder="承認者メール" style="flex:2;min-width:160px;margin:0"><button type="button" class="fp" style="padding:6px 10px;font-size:11px;border-radius:8px" onclick="this.parentElement.remove()">削除</button>';
+  box.appendChild(div);
+}
+function collectDisUserApproverSteps(){
+  var box=document.getElementById('disWfUserSteps');if(!box)return[];
+  var out=[];
+  box.querySelectorAll('.dis-wf-u-row').forEach(function(row){
+    var lab=(row.querySelector('.dis-wf-u-lab')||{}).value||'';
+    var em=(row.querySelector('.dis-wf-u-em')||{}).value||'';
+    out.push({label:String(lab).trim(),email:String(em).trim()});
+  });
+  return out;
+}
+function ensureDisWfUserRows(){
+  var box=document.getElementById('disWfUserSteps');if(!box||box.querySelector('.dis-wf-u-row'))return;
+  disWfUserAddApproverRow();
+}
+function disasterPendingMailOpen(){
+  var r=window._disPendingMailRec;if(!r||!r.wf)return;
+  if(typeof disasterOpenMailtoForStep==='function')disasterOpenMailtoForStep(r,0);
+}
+function resetDisasterFormPC(){
+  var ids=['f_keigen_pc','f_basho_pc','f_basho_jusho_pc','f_jusho_pc','f_victim_pc','f_birth_y_pc','f_birth_m_pc','f_birth_d_pc','f_victim_dept_pc','f_hire_date_pc','f_shobyomei_pc','f_byoin_pc','f_kyugyo_days_pc','f_kyugyo_yen_pc','f_shokumei_pc','f_gennin_pc','f_kyukun_person_pc','f_kyukun_equip_pc','f_kyukun_mgmt_pc','f_basho_detail_pc','f_sagyo_pc','f_genin_busshi_pc','f_genin_jin_pc','f_kekka_pc','f_kaizen_honin_pc','f_kaizen_kantoku_pc','f_taisaku_pc'];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  ['f_kiinbutsu_pc','f_fuanzen_pc','f_fuanzen_kodo_pc','f_jiko_pc','f_kanri_pc'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  var koui=document.querySelector('input[name="koui_pc"][value="無"]');if(koui)koui.checked=true;
+  var ky=document.querySelector('input[name="kyugyo_type_pc"][value="休業"]');if(ky)ky.checked=true;
+  var gn=document.querySelector('input[name="gennin_aru_pc"][value="無"]');if(gn)gn.checked=true;
+  if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
+  if(window._disPhotosPC_render)window._disPhotosPC_render();
+  var box=document.getElementById('disWfUserSteps');if(box)box.innerHTML='';
+  var wse=document.getElementById('f_wf_sender_email');if(wse)wse.value='';
+  fillDisFormDefaults();
+  updateDisDtWeek();updateDisAge();updateDisExp();
+}
+function resetDisasterFormMobile(){
+  ['f_gyoshu','f_jigyosho','f_address','f_workers','f_machine','f_place','f_victim','f_human_damage','f_material_damage','f_situation','f_cause','f_measure'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
+  var ft=document.getElementById('f_type');if(ft)ft.value='';
+  if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
+  if(window._disPhotos_render)window._disPhotos_render();
+  var box=document.getElementById('disWfUserSteps');if(box)box.innerHTML='';
+  var wse=document.getElementById('f_wf_sender_email');if(wse)wse.value='';
+  fillDisFormDefaults();
+}
 function fillDisFormDefaults(){
   if(!CUR)return;
+  ensureDisWfUserRows();
   document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
   var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
   var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
@@ -1178,42 +1339,98 @@ function doDisSubmit(){
   if(!CUR){alert('ログインしてください');return}
   var imgs=(window._disPhotos||[]).slice();
   var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),status:'draft',gyoshu:document.getElementById('f_gyoshu').value,jigyosho:document.getElementById('f_jigyosho').value,address:document.getElementById('f_address').value,workers:document.getElementById('f_workers').value,datetime:dt,place:place,machine:document.getElementById('f_machine').value,type:document.getElementById('f_type').value,victim:victim,victim_dept:document.getElementById('f_victim_dept').value,human_damage:document.getElementById('f_human_damage').value,material_damage:document.getElementById('f_material_damage').value,situation:situation,cause:document.getElementById('f_cause').value,measure:document.getElementById('f_measure').value,reporter:CUR.name,situation_img:imgs[0]||null,situation_imgs:imgs};
+  var wfs=document.getElementById('f_wf_sender_email');if(wfs&&wfs.value.trim())rec.wf_sender_email=wfs.value.trim();
   if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
+  var stPreM=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var wfMailtoPopM=null;
+  if(stPreM.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())wfMailtoPopM=disasterPrepareMailtoPopup();
   function saveNew(){
+    var st=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+    if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,st);
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
-    if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
+    if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase())HHDB.mergeDisasterReport(rec);
+    else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
     else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
-    document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
-    document.getElementById('f_place').value='';document.getElementById('f_victim').value='';document.getElementById('f_situation').value='';document.getElementById('f_cause').value='';document.getElementById('f_measure').value='';
-    if(window._disPhotos_render)window._disPhotos_render();
-    var t=document.getElementById('toastDis');if(t){t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+    if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPopM);
+    window._disPendingMailRec=rec.wf?rec:null;
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()?'block':'none';
+    resetDisasterFormMobile();
+    if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
+    var t=document.getElementById('toastDis');if(t){
+      var msgM='送信しました';
+      if(rec.wf)msgM=typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます';
+      t.textContent=msgM;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},rec.wf?5000:3200)
+    }
   }
   if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];saveNew()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};saveNew();}
 }
 function doDisSubmitPC(){
   try{
+  if(!CUR){alert('ログインしてください');return}
   var kt=document.querySelector('input[name="kyugyo_type_pc"]:checked')?.value,kd=document.getElementById('f_kyugyo_days_pc')?.value,ky=document.getElementById('f_kyugyo_yen_pc')?.value;
   var kyugyoStr=(kt==='不休'?'不休':(kd||ky)?((kd?kd+'日間 ':'')+(ky?ky+'円':'')).trim():'');
   var dy=document.getElementById('f_dt_y_pc')?.value,dm=document.getElementById('f_dt_m_pc')?.value,dd=document.getElementById('f_dt_d_pc')?.value,dh=document.getElementById('f_dt_h_pc')?.value,dmin=document.getElementById('f_dt_min_pc')?.value,dw=document.getElementById('f_dt_week_pc')?.value;
   var datetimeStr=(dy&&dm&&dd)?(dy+'年'+dm+'月'+dd+'日'+(dw?'('+dw+')':'')+' '+(dh||'')+':'+(dmin||'')+'頃'):'';
   var imgsPC=(window._disPhotosPC||[]).slice();
   var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),datetime:datetimeStr,status:'draft',form:'pc',keigen:document.getElementById('f_keigen_pc')?.value,basho:document.getElementById('f_basho_pc')?.value,basho_jusho:document.getElementById('f_basho_jusho_pc')?.value,jusho:document.getElementById('f_jusho_pc')?.value,victim:document.getElementById('f_victim_pc')?.value,age:document.getElementById('f_age_pc')?.value,birth:document.getElementById('f_birth_y_pc')?.value+'-'+document.getElementById('f_birth_m_pc')?.value+'-'+document.getElementById('f_birth_d_pc')?.value,victim_dept:document.getElementById('f_victim_dept_pc')?.value,hire_date:document.getElementById('f_hire_date_pc')?.value,exp:document.getElementById('f_exp_y_pc')?.value+'-'+document.getElementById('f_exp_m_pc')?.value,shobyomei:document.getElementById('f_shobyomei_pc')?.value,byoin:document.getElementById('f_byoin_pc')?.value,koui:document.querySelector('input[name="koui_pc"]:checked')?.value,kyugyo:kyugyoStr,kyugyo_type:kt,kyugyo_days:kd,kyugyo_yen:ky,gennin:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,gennin_aru:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,shokumei:document.getElementById('f_shokumei_pc')?.value,gennin_name:document.getElementById('f_gennin_pc')?.value,kyukun_person:document.getElementById('f_kyukun_person_pc')?.value,kyukun_equip:document.getElementById('f_kyukun_equip_pc')?.value,kyukun_mgmt:document.getElementById('f_kyukun_mgmt_pc')?.value,basho_detail:document.getElementById('f_basho_detail_pc')?.value,sagyo:document.getElementById('f_sagyo_pc')?.value,genin_busshi:document.getElementById('f_genin_busshi_pc')?.value,genin_jin:document.getElementById('f_genin_jin_pc')?.value,kekka:document.getElementById('f_kekka_pc')?.value,kaizen_honin:document.getElementById('f_kaizen_honin_pc')?.value,kaizen_kantoku:document.getElementById('f_kaizen_kantoku_pc')?.value,situation_img:imgsPC[0]||null,situation_imgs:imgsPC,taisaku:document.getElementById('f_taisaku_pc')?.value,kiinbutsu:document.getElementById('f_kiinbutsu_pc')?.value,fuanzen:document.getElementById('f_fuanzen_pc')?.value,fuanzen_kodo:document.getElementById('f_fuanzen_kodo_pc')?.value,jiko:document.getElementById('f_jiko_pc')?.value,kanri:document.getElementById('f_kanri_pc')?.value,reporter:CUR?CUR.name:'',report_date:document.getElementById('f_report_date_pc')?.value,sekininsha:document.getElementById('f_sekininsha_pc')?.value};
+  var wfsPc=document.getElementById('f_wf_sender_email');if(wfsPc&&wfsPc.value.trim())rec.wf_sender_email=wfsPc.value.trim();
   if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
-  DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
-  if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
-  try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(le){console.warn('localStorage save error',le)}
-  if(window._disPhotosPC_render)window._disPhotosPC_render();
-  alert('報告書を送信しました。');
+  var stPre=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var wfMailtoPop=null;
+  if(stPre.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())wfMailtoPop=disasterPrepareMailtoPopup();
+  function savePc(){
+    var stPc=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+    if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,stPc);
+    DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
+    if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase()){try{HHDB.mergeDisasterReport(rec)}catch(fe){console.warn('Firebase save error',fe)}}
+    else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
+    try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(le){console.warn('localStorage save error',le)}
+    if(window._disPhotosPC_render)window._disPhotosPC_render();
+    if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPop);
+    window._disPendingMailRec=rec.wf?rec:null;
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()?'block':'none';
+    resetDisasterFormPC();
+    if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
+    if(rec.wf){
+      var t=document.getElementById('toastDis');if(t){
+        var msgPc=typeof disasterHasEmailJsConfigured==='function'&&disasterHasEmailJsConfigured()?'送信しました。承認者にメールで通知しました':'送信しました。メール作成画面で送信すると承認者に届きます';
+        t.textContent=msgPc;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},5000)
+      }
+    }else{
+      alert('報告書を送信しました。');
+    }
+  }
+  if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];savePc()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};savePc();}
   }catch(err){alert('送信エラー: '+err.message);console.error('doDisSubmitPC error',err)}
+}
+function disListRowUser(r){
+  var dt=r.datetime||r.date||'—';var plc=r.place||r.basho||'—';var v=r.victim||'—';var typ=r.type||r.jiko||r.keigen||'—';
+  var badge='';
+  if(typeof recordHasActiveWorkflow==='function'&&recordHasActiveWorkflow(r)){
+    if(r.wf.state==='pending')badge=' <span class="bd2" style="background:#FFF8E1;color:#E65100;font-size:9px">承認中</span>';
+    else if(r.wf.state==='returned')badge=' <span class="bd2" style="background:#FFEBEE;color:#C62828;font-size:9px">差戻</span>';
+    else if(r.wf.state==='final')badge=' <span class="bd2" style="background:#E8F5E9;color:#2E7D32;font-size:9px">確定</span>';
+  }
+  return'<div class="rc" onclick="showDisDetail(\''+String(r.id||'').replace(/'/g,"\\'")+'\')" style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 bf">'+typ+'</span>'+badge+'</div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+r.reporter+'</div></div>';
 }
 function rDisList(){
   loadReqDis(function(){
-    var list=DIS_LIST.slice().sort(function(a,b){return(b.datetime||b.date||'').localeCompare(a.datetime||a.date||'')});
+    var sorted=DIS_LIST.slice().sort(function(a,b){return(b.datetime||b.date||'').localeCompare(a.datetime||a.date||'')});
     var el=document.getElementById('disL');if(!el)return;
-    el.innerHTML=list.length?list.map(function(r){
-      var dt=r.datetime||r.date||'—';var plc=r.place||r.basho||'—';var v=r.victim||'—';var typ=r.type||r.jiko||r.keigen||'—';
-      return'<div class="rc" onclick="showDisDetail(\''+String(r.id||'').replace(/'/g,"\\'")+'\')" style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 bf">'+typ+'</span></div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+r.reporter+'</div></div>';
-    }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
+    var wfOn=sorted.some(function(r){return typeof recordHasActiveWorkflow==='function'&&recordHasActiveWorkflow(r)});
+    var myName=CUR?CUR.name:'';
+    var parts=[];
+    if(myName&&typeof disasterIsPending==='function'){
+      var mine=sorted.filter(function(r){return r.reporter===myName&&(disasterIsPending(r)||disasterIsReturned(r))});
+      if(mine.length){
+        parts.push('<div style="font-size:12px;font-weight:700;color:var(--t2);margin:4px 0 8px">あなたの申請（承認待ち・差戻）</div>');
+        parts.push(mine.map(disListRowUser).join(''));
+      }
+    }
+    var pub=sorted.filter(function(r){return typeof disasterListVisible==='function'?disasterListVisible(r):true});
+    parts.push('<div style="font-size:12px;font-weight:700;color:var(--t2);margin:12px 0 8px">'+(wfOn?'確定済み（全社共有・承認フロー分）':'一覧')+'</div>');
+    parts.push(pub.length?pub.map(disListRowUser).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>');
+    el.innerHTML=parts.join('');
   });
 }
 function buildDisDetailHtml(r){
@@ -1285,12 +1502,31 @@ function buildDisDetailHtml(r){
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
   var h=buildDisDetailHtml(r);
+  if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
+  var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfUserPanelHtml==='function'?disasterWfUserPanelHtml(r,id,CUR?CUR.name:''):'');
   document.getElementById('mT').textContent='災害発生報告 詳細';
-  document.getElementById('mI').innerHTML=h;
+  document.getElementById('mI').innerHTML=h+ex;
   var modal=document.getElementById('modal');
   var mbd=modal.querySelector('.mbd');
   mbd.classList.add('dis-detail-wide');
   modal.classList.add('show');
+}
+function disasterDoUserResubmit(id){
+  if(!CUR){alert('ログインしてください');return}
+  var ta=document.getElementById('disWfUserNote');
+  var note=ta?String(ta.value||'').trim():'';
+  if(!note){alert('追記・訂正内容を入力してください');return}
+  if(typeof disasterUserAppendAndResubmit!=='function')return;
+  var res=disasterUserAppendAndResubmit(DIS_LIST,id,CUR.name,note);
+  if(!res.ok){alert(res.msg);return}
+  var r2=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+  if(r2&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('submitted',r2);
+  if(r2&&r2.wf&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()){
+    var stU=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r2):[];
+    if(stU[0]&&String(stU[0].email||'').trim()&&typeof disasterOpenMailtoForStep==='function'&&confirm('承認者にメール作成画面を開きますか？'))disasterOpenMailtoForStep(r2,0);
+  }
+  var modal=document.getElementById('modal');if(modal)modal.classList.remove('show');
+  rDisList();
 }
 function showFullPhotoSrc(src){var ov=document.createElement('div');ov.className='photo-full-overlay';ov.innerHTML='<img src="'+src+'">';ov.onclick=function(){document.body.removeChild(ov)};document.body.appendChild(ov)}
 
@@ -1444,6 +1680,7 @@ function generateAllQR(){
 // ===== DASHBOARD =====
 function rDash(){
   try{
+    buildPeriodFilter('pfDash');
     var df=document.getElementById('dfDash');if(df)buildDeptFilter('dfDash');
     const fd=getF();
     var sT=document.getElementById('sT');if(sT)sT.textContent=fd.length;
@@ -1464,22 +1701,38 @@ function rList(){
     const bc=e0.includes('墜落')?'bf':e0.includes('転倒')?'bt2':e0.includes('激突')||e0.includes('機械')?'bm':e0.includes('落下')?'bdr':e0.includes('倒')?'bcl':'bo';
     const dc=r.ss==='new'?'dn':r.ss==='review'?'dr':'dd';
     const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
-    return`<div class="rc" onclick="sDt(${r.id})"><div class="rt"><span class="bd2 ${bc}">${e0.substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div><div class="rde">${r.d||''}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${r.n||''}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date||''}</span></div></div>`;
+    return`<div class="rc" onclick="sDt(${r.id})"><div class="rt"><span class="bd2 ${bc}">${e0.substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div><div class="rde">${r.d||''}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date||''}</span></div></div>`;
   }).join('')||'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
   }catch(e){console.warn('rList error',e)}
 }
-function cycF(){const i=FI.indexOf(cFi);cFi=FI[(i+1)%4];document.getElementById('fB').textContent=FL[cFi]+' ▾';rList()}
+function cycF(){
+  var dd=document.getElementById('filterDropdown');
+  if(dd){dd.style.display=dd.style.display==='block'?'none':'block';return}
+  dd=document.createElement('div');dd.id='filterDropdown';
+  dd.style.cssText='position:absolute;background:#fff;border:1px solid #A5D6A7;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:50;min-width:120px;overflow:hidden';
+  FI.forEach(function(k){
+    var opt=document.createElement('div');
+    opt.textContent=FL[k];
+    opt.style.cssText='padding:10px 16px;font-size:12px;cursor:pointer;font-weight:'+(k===cFi?'700':'400')+';color:'+(k===cFi?'var(--ac)':'var(--t1)')+';background:'+(k===cFi?'var(--acg)':'#fff');
+    opt.onmouseenter=function(){this.style.background='var(--acg)'};
+    opt.onmouseleave=function(){this.style.background=k===cFi?'var(--acg)':'#fff'};
+    opt.onclick=function(e){e.stopPropagation();cFi=k;document.getElementById('fB').textContent=FL[k]+' ▾';dd.style.display='none';rList()};
+    dd.appendChild(opt);
+  });
+  var btn=document.getElementById('fB');
+  btn.parentElement.style.position='relative';
+  btn.parentElement.appendChild(dd);
+  dd.style.top=btn.offsetHeight+4+'px';dd.style.right='0';dd.style.display='block';
+  setTimeout(function(){document.addEventListener('click',function closeDD(){dd.style.display='none';document.removeEventListener('click',closeDD)})},0);
+}
 
-// ===== DETAIL (admin sees stress, non-admin doesn't) =====
+// ===== DETAIL =====
 function sDt(id){
   const r=DB.find(x=>x.id===id);if(!r)return;
   document.getElementById('mT').textContent=((r.e||[])[0]||'報告')+' — 詳細';
-  const dot=v=>'●'.repeat(v||0)+'○'.repeat(4-(v||0));
   const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
   let h=`
-    <div class="dl"><span class="dk">報告者</span><span class="dv">${r.n||'—'}</span></div>
     <div class="dl"><span class="dk">部署</span><span class="dv">${r.dept||'—'}</span></div>
-    <div class="dl"><span class="dk">区分/年齢</span><span class="dv">${r.ku||'—'}/${r.ar||'—'}</span></div>
     <div class="dl"><span class="dk">日時・場所</span><span class="dv">${r.w||r.date||'—'}</span></div>
     <div class="dl"><span class="dk">災害レベル</span><span class="dv" style="color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div>
     <div class="dl"><span class="dk">ステータス</span><span class="dv">${sl}</span></div>
@@ -1487,12 +1740,13 @@ function sDt(id){
     <div class="dbk"><div class="dbt">詳細</div><div class="dbtx">${r.d||'—'}</div></div>
     <div class="dbk"><div class="dbt">原因</div><div class="dbtx">${(r.c||[]).join('、')||'—'}</div></div>
     <div class="dbk"><div class="dbt">対策</div><div class="dbtx">${r.m||'—'}</div></div>
-    ${r.photos&&r.photos.length?'<div class="dbk"><div class="dbt">📷 現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(p=>'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">').join('')+'</div></div>':''}
+    ${r.photos&&r.photos.length?'<div class="dbk"><div class="dbt">現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(p=>'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">').join('')+'</div></div>':''}
     <div class="dbk"><div class="dbt">回避できなかった理由</div><div class="dbtx">${(r.av||[]).join('、')||'—'}</div></div>
     <div class="dbk"><div class="dbt">回避に役立つ活動</div><div class="dbtx">${(r.ac||[]).join('、')||'—'}</div></div>`;
   if(IS_ADMIN){
-    h+=`<div class="dbk"><div class="dbt">🔒 背後要因（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.st||{})[k])}</span>`).join('')}</div></div>`;
-    h+=`<div class="dbk"><div class="dbt">🔒 職場環境（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.we||{})[k])}</span>`).join('')}</div></div>`;
+    const dot=v=>'●'.repeat(v||0)+'○'.repeat(4-(v||0));
+    h+=`<div class="dbk"><div class="dbt">背後要因（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.st||{})[k])}</span>`).join('')}</div></div>`;
+    h+=`<div class="dbk"><div class="dbt">職場環境（管理者のみ）</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.we||{})[k])}</span>`).join('')}</div></div>`;
     h+=`<div class="abs"><button class="ab abr" onclick="setSS(${r.id},'review')">確認中</button><button class="ab abd" onclick="setSS(${r.id},'done')">対策完了</button></div>`;
   }
   document.getElementById('mI').innerHTML=h;
@@ -1502,10 +1756,7 @@ function setSS(id,s){const r=DB.find(x=>x.id===id);if(r){r.ss=s;if(typeof HHDB!=
 
 // ===== ANALYTICS =====
 function rAnl(type){
-  if(ROLE==='user'&&CUR){
-    const uDept=CUR.honbu||(CUR.dept?CUR.dept.split('/')[0]:'');
-    if(uDept&&deptFilt==='all'){deptFilt=uDept}
-  }
+  buildPeriodFilter('pfAnl');
   buildDeptFilter('dfAnl');
   document.querySelectorAll('#aT .tp').forEach(t=>{
     if(t.dataset.t==='behind')t.style.display='none';
@@ -1519,6 +1770,9 @@ function rAnl(type){
   else if(type==='resil')ct.innerHTML=anlResil();
   else ct.innerHTML=anlActs();
 }
+function setExpFilter(val){
+  try{curExpFilter=val;document.getElementById('aC').innerHTML=anlByExp()}catch(e){alert('フィルターエラー: '+e.message)}
+}
 function anlByExp(){
   var fd=getF();
   var expTypes=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
@@ -1528,8 +1782,8 @@ function anlByExp(){
   var cl=['#E5383B','#F0B429','#A78BFA','#38BDF8','#2DC6A6','#E8652B','#FF8B55','#6EE7B7','#FDA4AF','#C4B5FD','#7DD3FC','#94A3B8'];
   var h='<div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--ac)"></span>体験の内容を選択</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
-  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="curExpFilter=\'all\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px">すべて（'+fd.length+'件）</button>';
-  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="curExpFilter=\''+t+'\';document.getElementById(\'aC\').innerHTML=anlByExp()" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
+  h+='<button class="tp'+(curExpFilter==='all'?' on':'')+'" onclick="setExpFilter(\'all\')" style="font-size:11px">すべて（'+fd.length+'件）</button>';
+  se.forEach(function(t,i){h+='<button class="tp'+(curExpFilter===t?' on':'')+'" onclick="setExpFilter(\''+t.replace(/'/g,"\\'")+'\')" style="font-size:11px;border-color:'+cl[expTypes.indexOf(t)%12]+'">'+sh(t)+'（'+ec[t]+'件）</button>'});
   h+='</div></div>';
   var filtered=curExpFilter==='all'?fd:fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
   if(!filtered.length){h+='<div class="cb cb-wide" style="text-align:center;padding:32px;color:var(--t3)">該当データがありません</div>';return h}
@@ -1629,6 +1883,7 @@ function anlActs(){
 
 // ===== COMMITTEE =====
 function rCom(){
+  buildPeriodFilter('pfCom');
   buildDeptFilter('dfCom');
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
@@ -1661,7 +1916,7 @@ function rCom(){
     sub.forEach((r,ri)=>{
       var raw=(r.d||r.m||'').replace(/\s+/g,' ');var sum=(raw.length>50?raw.substring(0,50)+'…':raw)||'（内容なし）';
       var lv=r.l>=7?' <span style="color:var(--rd);font-size:9px">Lv'+r.l+'</span>':'';
-      byExpHtml+='<div class="byexp-item" onclick="showByExpReportDetail('+(byExpData.length-1)+','+ri+')" style="padding:8px 10px;margin-bottom:4px;border-radius:6px;border:1px solid var(--bd);cursor:pointer;transition:background .2s;background:var(--bg)"><span style="font-size:11px">'+esc(sum)+'</span>'+lv+'<div style="font-size:9px;color:var(--t3);margin-top:4px">タップで詳細・対策案を表示</div></div>';
+      byExpHtml+='<div class="byexp-item" onclick="event.stopPropagation();showByExpReportDetail('+(byExpData.length-1)+','+ri+')" style="padding:8px 10px;margin-bottom:4px;border-radius:6px;border:1px solid var(--bd);cursor:pointer;transition:background .2s;background:var(--bg)"><span style="font-size:11px">'+esc(sum)+'</span>'+lv+'<div style="font-size:9px;color:var(--t3);margin-top:4px">タップで詳細・対策案を表示</div></div>';
     });
     byExpHtml+='</div>';
   });
@@ -1670,17 +1925,10 @@ function rCom(){
   var cByExp=document.getElementById('cByExp');if(cByExp)cByExp.innerHTML=byExpFull;
   var cByExpFull=document.getElementById('cByExp_full');if(cByExpFull)cByExpFull.innerHTML='<div class="com-detail">'+byExpFull+'</div>';
 
-  // 法改正
-  var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var oneYearAgo=new Date(today);oneYearAgo.setFullYear(oneYearAgo.getFullYear()-1);var oneYearLater=new Date(today);oneYearLater.setFullYear(oneYearLater.getFullYear()+1);
-  var laws=[{law:'労働安全衛生法',date:'2025/4/1',desc:'労働安全衛生規則改正。災害時の退避・立入禁止・火気使用禁止の対象が「労働者」から「作業に従事する者」へ拡大。',impact:'元請・下請の混在現場で、全作業者への安全措置が義務化。',action:'元請は現場の全作業者リストを把握し、退避訓練・立入禁止区域の周知を徹底。',ref:'労働安全衛生規則第528条の2等'},{law:'労働安全衛生法',date:'2026/4/1',desc:'個人事業者等への安全衛生対策拡大。ストレスチェックは50人未満事業場にも義務化。',impact:'建設現場の一人親方・協力業者にも安全衛生教育・健康管理が適用。',action:'一人親方への安全衛生教育受講の案内、ストレスチェック体制の整備。',ref:'労働安全衛生法改正法'},{law:'労働基準法',date:'2027/4/1',desc:'勤務間インターバル制度の義務化（終業から始業まで原則11時間以上の休息確保）。連続勤務14日超の禁止。',impact:'建設現場の長時間労働・連続勤務が規制され、疲労によるヒヤリハット・災害防止に直結。',action:'勤怠管理システムの改修、就業規則の整備、シフト・交替制の見直し。',ref:'労働基準法（改正検討中）'}];
-  laws.forEach(l=>{var p=l.date.split('/');l.dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])||1)});
-  var enacted=laws.filter(l=>l.dateObj<=today&&l.dateObj>=oneYearAgo).sort((a,b)=>b.dateObj-a.dateObj);
-  var upcoming=laws.filter(l=>l.dateObj>today&&l.dateObj<=oneYearLater).sort((a,b)=>a.dateObj-b.dateObj);
-  window.comLawEnacted=enacted;window.comLawUpcoming=upcoming;
-  var lawRow=(l,type,i)=>'<div class="law-row" onclick="showLawDetailByIdx(\''+type+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .2s"><div style="font-weight:700;font-size:12px;color:var(--ac)">'+l.law+'　'+l.date+'</div><div style="font-size:10px;color:var(--t3);margin-top:4px">タップで詳細を表示</div></div>';
-  var enactedBox='<div class="law-box" style="background:rgba(0,137,123,.08);border:1px solid rgba(0,137,123,.3);border-radius:var(--rs);padding:12px;margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--gn);margin-bottom:10px">✅ 施行済み（過去1年間）</div>'+(enacted.length?enacted.map((l,i)=>lawRow(l,'enacted',i)).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
-  var upcomingBox='<div class="law-box" style="background:rgba(2,119,189,.08);border:1px solid rgba(2,119,189,.3);border-radius:var(--rs);padding:12px"><div style="font-size:12px;font-weight:700;color:var(--bl);margin-bottom:10px">📅 施行予定（1年以内）</div>'+(upcoming.length?upcoming.map((l,i)=>lawRow(l,'upcoming',i)).join(''):'<p style="font-size:12px;color:var(--t3);padding:8px 0">該当なし</p>')+'</div>';
-  var cLaw=document.getElementById('cLaw');if(cLaw)cLaw.innerHTML='<div style="font-size:10px;color:var(--t3);margin-bottom:10px">※施行予定日・内容は変更される場合があります。</div>'+enactedBox+upcomingBox;
+  // 法改正（laws_data.json を定期取得。未読込時は applyLawsToDashboard が fetch）
+  var cLaw=document.getElementById('cLaw');
+  if(typeof applyLawsToDashboard==='function')applyLawsToDashboard(esc,cLaw);
+  else if(cLaw)cLaw.innerHTML='<p style="font-size:12px;line-height:1.55;color:var(--rd)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p><p style="font-size:11px;line-height:1.55;color:var(--t3);margin-top:8px">F12→コンソールでエラーを確認してください。GitHub Pages では laws_refresh.js が未アップロードまたは構文エラーのときに出ます。GitHubにアップロード.ps1 で laws_refresh.js・laws_data.json を含めて再デプロイしてください。</p>';
 
   // Critical: high stress x high risk
   if(IS_ADMIN){
@@ -1727,7 +1975,7 @@ function rCom(){
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showComDetail(title,content){document.getElementById('mT').textContent=title;document.getElementById('mI').innerHTML=content;document.getElementById('modal').classList.add('show');}
 function showCauseReporters(cause){var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});var photos=[];fd.forEach(function(r){if(r.photos&&r.photos.length)r.photos.forEach(function(p){photos.push(p)})});var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';h+='</div>';showComDetail('発生原因：'+cause,h);}
-function showLawDetailByIdx(type,i){var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);var l=arr[i];if(!l)return;var h='<div class="com-detail"><div class="com-section"><strong>'+l.law+'　'+l.date+'</strong></div><div class="com-section"><strong>改正内容</strong><p>'+l.desc+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+l.impact+'</p></div>';if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+l.action+'</p></div>';if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+l.ref+'</p></div>';h+='</div>';showComDetail(l.law+'　'+l.date,h);}
+function showLawDetailByIdx(type,i){var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);var l=arr[i];if(!l)return;var headShort=esc(l.short||l.law);var h='<div class="com-detail"><div class="com-section"><p style="margin:0;font-size:13px;line-height:1.5;word-break:break-word"><span style="color:var(--t3);font-size:11px">改正の要点：</span><strong>'+headShort+'</strong><span style="color:var(--t2)">　'+esc(l.law)+'　</span><span style="color:var(--t3)">施行日 '+esc(l.date)+'</span></p></div><div class="com-section"><strong>改正内容</strong><p>'+esc(l.desc)+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+esc(l.impact)+'</p></div>';if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+esc(l.action)+'</p></div>';if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+esc(l.ref)+'</p></div>';h+='</div>';showComDetail((l.short||l.law)+' — '+l.law+'（'+l.date+'）',h);}
 function showByExpReportDetail(expIdx,rIdx){var data=window.comByExpData;var expM=window.comExpToMeasure;var causeM=window.comCauseToMeasure;if(!data||!data[expIdx])return;var item=data[expIdx];var r=item.sub[rIdx];if(!r)return;var exp=item.exp;var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');var h='<div class="com-detail">';h+='<div class="com-section"><strong>【自由記述】</strong></div>';if(r.w){h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(r.w)+'</p></div>';}if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}h+='<div class="com-section"><strong>対策提案（詳細）</strong>';var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');if(r.c&&r.c.length){var causeStr=r.c.map(c=>causeM[c]||'').filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';h+='</div></div>';showComDetail(expShort+' の対策案',h);}
 
 rDash();
