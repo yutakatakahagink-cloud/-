@@ -22,7 +22,7 @@ window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 // あとは publicKey と templateId を埋める（空のままでは自動送信は動かない）。
 // 所有者画面「災害報告メールの送信元」にも anzensystem@outlook.com を入力して保存すること。
 window.HH_EMAILJS = {
-  publicKey: '',
+  publicKey: 'dKdOCX_WE0eYN_A5X',
   serviceId: 'anzensystem@outlook.com',
   templateId: '',
   fromEmail: 'anzensystem@outlook.com',
