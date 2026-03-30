@@ -11,7 +11,10 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
 
   Reply-To や BCC は config.example.js の EmailJS 節を参照（{{reply_to}} {{bcc_email}} 等）
 
-EmailJS → Account → Security → Restricted Domains に、本番サイトのオリジンを追加
-例: https://yutakatakahagink-cloud.github.io
+■ 無料プラン: 「Domains / Restricted Domains」の保存は有料機能のためスキップしてよい（未設定のまま送信可能）。
+  セキュリティは Public Key 流出リスクがあるため、問題あれば EmailJS 有料化やサーバー経由送信を検討。
+
+■ 本番での確認: GitHub Pages の URL（HH_BASE_URL）を開き、災害報告の提出で承認者にメールが届くか確認。
+  月間送信上限（無料は 200 件目安）に注意。
 
 所有者画面（owner.html）→「災害報告メールの送信元」= anzensystem@outlook.com で保存

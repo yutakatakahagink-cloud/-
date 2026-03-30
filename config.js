@@ -18,9 +18,8 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認メール: EmailJS の「サービスIDのコピー」がメールアドレスになる場合あり（Outlook 連携）。
-// EmailJS（publicKey / serviceId / templateId 設定済み）。Restricted Domains と所有者画面の送信元も確認すること。
-// 所有者画面「災害報告メールの送信元」にも anzensystem@outlook.com を入力して保存すること。
+// 災害承認メール: EmailJS 無料プラン運用（月200通まで等）。Account→Security の Domains 制限は有料のため未設定で可。
+// publicKey / serviceId / templateId 設定済み。本番 URL から動作確認。所有者画面の送信元を anzensystem@outlook.com に。
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   serviceId: 'anzensystem@outlook.com',

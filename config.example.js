@@ -54,7 +54,8 @@ window.HH_FIREBASE_CONFIG = {
 //    Reply-To: {{reply_to}}（または {{sender_email}} を Reply-To に）
 //    差戻し時の BCC: {{bcc_email}}（任意・副本）
 // 4) Account → API Keys の Public Key を publicKey に
-// 5) EmailJS ダッシュボード「Restricted Domains」に、サイトのオリジンを登録
+// 5) 無料プラン: Account → Security の Domains 制限は有料のため省略可（未設定で送信可能）
+//    有料プランなら Restricted Domains に本番オリジン（例: https://ユーザー.github.io）を登録推奨
 //
 // ■ config で上書きする送信元（任意）
 //   fromEmail / replyToEmail / fromName を空にすると、所有者画面の「送信元メール」と同じ扱い。
