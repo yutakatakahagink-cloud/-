@@ -22,7 +22,8 @@ window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 // publicKey / serviceId / templateId 設定済み。本番 URL から動作確認。所有者画面の送信元を anzensystem@outlook.com に。
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
-  serviceId: 'anzensystem@outlook.com',
+  // EmailJS API はメールアドレスを service ID にできない。ダッシュボードで「デフォルト」のサービス1つのときは default_service
+  serviceId: 'default_service',
   templateId: 'template_cnyi3sx',
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',

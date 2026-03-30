@@ -1385,7 +1385,11 @@ function doDisSubmitPC(){
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
     if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase()){try{HHDB.mergeDisasterReport(rec)}catch(fe){console.warn('Firebase save error',fe)}}
     else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
-    try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(le){console.warn('localStorage save error',le)}
+    try{
+      if(!(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase())){
+        localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST));
+      }
+    }catch(le){console.warn('localStorage save error',le)}
     if(window._disPhotosPC_render)window._disPhotosPC_render();
     if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPop);
     window._disPendingMailRec=rec.wf?rec:null;

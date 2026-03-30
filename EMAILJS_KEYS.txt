@@ -1,7 +1,8 @@
 EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAILJS に貼り、再デプロイ
 
 1) publicKey … https://www.emailjs.com → Account → API Keys → Public Key
-2) serviceId … メールサービス行の ⋮ →「サービスIDのコピー」（Outlook 連携ではメールアドレスそのものになることがある）
+2) serviceId … ダッシュボードでそのサービスを「デフォルト」にしている場合は config では文字列 default_service を使う（API はメールアドレスを ID にできない。コピーがメールでも無効）。
+   複数サービスでデフォルト以外を使うときは、サービス「編集」画面に出る service_xxxxx を使う。
 3) templateId … Email Templates → 新規テンプレート作成後の Template ID
 
 テンプレート例（変数名は disaster-email-notify.js と一致）:
