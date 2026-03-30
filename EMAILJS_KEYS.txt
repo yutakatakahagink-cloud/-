@@ -14,7 +14,8 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
 ■ 無料プラン: 「Domains / Restricted Domains」の保存は有料機能のためスキップしてよい（未設定のまま送信可能）。
   セキュリティは Public Key 流出リスクがあるため、問題あれば EmailJS 有料化やサーバー経由送信を検討。
 
-■ 本番での確認: GitHub Pages の URL（HH_BASE_URL）を開き、災害報告の提出で承認者にメールが届くか確認。
-  月間送信上限（無料は 200 件目安）に注意。
+■ 本番テスト: 必ず https の GitHub Pages（HH_BASE_URL）から試す。file:// や古いキャッシュでは EmailJS が動かず Outlook（mailto）に落ちることが多い。
+■ Outlook が開くとき: F12 コンソールの [disaster-email] EmailJS を確認。EmailJS → アカウント → セキュリティ の「秘密鍵の使用」はブラウザ送信で失敗しうる → オフ推奨。
+■ コンソールで window.disasterHasEmailJsConfigured() が true か、Network で config.js に HH_EMAILJS 全文が載っているか確認。月間上限は無料で約200通。
 
 所有者画面（owner.html）→「災害報告メールの送信元」= anzensystem@outlook.com で保存

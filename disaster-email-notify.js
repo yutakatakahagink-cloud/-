@@ -374,7 +374,18 @@
       (replyLine ? '\n\n送信元（返信先）: ' + replyLine : '');
 
     ensureEmailJs(function (ok) {
-      if (!ok || !global.emailjs || !global.emailjs.send) return;
+      if (!ok || !global.emailjs || !global.emailjs.send) {
+        console.warn('[disaster-email] EmailJS SDK load/init に失敗しました（オフライン・ブロック・file:// 等）');
+        if (kind === 'submitted') {
+          var st0 = getSteps(rec)[0];
+          var to0 = st0 && safeMailtoAddr(st0.email);
+          if (to0) {
+            var m0 = mailtoBodyForApprover(rec, 0);
+            disasterOpenMailtoCompose(to0, m0.sub, m0.body, '');
+          }
+        }
+        return;
+      }
       var params = {
         to_email: to,
         subject: subj,
@@ -395,7 +406,9 @@
       if (kind === 'returned' && bccSrc && normAddr(bccSrc) !== normAddr(to)) {
         params.bcc_email = bccSrc;
       }
-      global.emailjs.send(cfg.serviceId, cfg.templateId, params).then(
+      global.emailjs
+        .send(cfg.serviceId, cfg.templateId, params, { publicKey: cfg.publicKey })
+        .then(
         function () {},
         function (err) {
           console.warn('[disaster-email] EmailJS', err);
