@@ -66,7 +66,8 @@ window.HH_FIREBASE_CONFIG = {
 //
 // window.HH_EMAILJS = {
 //   publicKey: "xxxxxxxxxxxxxxx",
-//   serviceId: "service_xxxx",
+//   serviceId: "default_service", // メールサービスを1つだけ「デフォルト」にしたとき（API にメールアドレスは使えない）
+//   // または編集画面の service_xxxxx
 //   templateId: "template_xxxx",
 //   fromEmail: "anzen@example.com",
 //   replyToEmail: "anzen@example.com",
