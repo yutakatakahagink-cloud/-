@@ -24,7 +24,7 @@ window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   serviceId: 'anzensystem@outlook.com',
-  templateId: '',
+  templateId: 'template_cnyi3sx',
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
   fromName: '安全衛生管理システム'
