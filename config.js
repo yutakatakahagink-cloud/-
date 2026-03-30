@@ -19,7 +19,7 @@ window.HH_FIREBASE_CONFIG = {
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
 // 災害承認メール: EmailJS の「サービスIDのコピー」がメールアドレスになる場合あり（Outlook 連携）。
-// あとは publicKey と templateId を埋める（空のままでは自動送信は動かない）。
+// EmailJS（publicKey / serviceId / templateId 設定済み）。Restricted Domains と所有者画面の送信元も確認すること。
 // 所有者画面「災害報告メールの送信元」にも anzensystem@outlook.com を入力して保存すること。
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
