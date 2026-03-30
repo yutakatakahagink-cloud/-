@@ -1,14 +1,18 @@
 /**
- * 災害ワークフロー → Slack / Microsoft Teams（Incoming Webhook）通知
+ * 災害ワークフロー → Slack / Teams（Incoming Webhook）/ Power Automate（HTTP トリガー）通知
  *
  * config.js に例:
  * window.HH_WEBHOOK_NOTIFY = {
  *   slackIncomingUrl: 'https://hooks.slack.com/services/.../.../...',
  *   teamsIncomingUrl: 'https://outlook.office.com/webhook/...',
+ *   powerAutomateUrl: 'https://...powerplatform.com/.../workflows/.../triggers/manual/paths/invoke?...',
  *   enabled: true
  * };
  *
- * ※ Webhook URL はフロントに載ると悪用されうるため、専用チャンネル・必要ならローテーションを推奨。
+ * Power Automate では「HTTP リクエストの受信時」トリガーで URL を発行し、
+ * 受信 JSON の notifyEmail / title / text などで「Teams に投稿」「メール送信」を組み立てる。
+ *
+ * ※ URL はフロントに載ると悪用されうるため、専用フロー・必要なら URL 再発行を推奨。
  * ※ ブラウザの CORS により環境によっては失敗することがあります（失敗時はコンソールに警告）。
  */
 (function (global) {
@@ -84,6 +88,74 @@
     return { title: title, slackText: lines.join('\n'), plainLines: lines };
   }
 
+  /** フロー側で個人チャット・メール宛先に使うメール（同一テナントの UPN 推奨） */
+  function notifyEmailForKind(kind, rec, steps) {
+    if (kind === 'submitted') {
+      var s0 = steps[0];
+      return s0 && s0.email ? String(s0.email).trim() : '';
+    }
+    if (kind === 'approved_next') {
+      if (!rec.wf || rec.wf.state !== 'pending') return '';
+      var st = steps[rec.wf.step];
+      return st && st.email ? String(st.email).trim() : '';
+    }
+    if (kind === 'returned') {
+      return typeof global.disasterWorkflowReturnNotifyTo === 'function'
+        ? String(global.disasterWorkflowReturnNotifyTo(rec) || '').trim()
+        : '';
+    }
+    return '';
+  }
+
+  function buildPowerAutomateBody(kind, rec, steps, built) {
+    var pub =
+      typeof global.disasterApproverPublicUrl === 'function' ? global.disasterApproverPublicUrl(rec) : '';
+    var from =
+      typeof global.disasterGetNotifyFromEmail === 'function'
+        ? String(global.disasterGetNotifyFromEmail() || '').trim()
+        : '';
+    var textPlain = built.plainLines.join('\n').replace(/\*/g, '');
+    return {
+      source: 'hh-disaster-workflow',
+      version: 1,
+      kind: kind,
+      notifyEmail: notifyEmailForKind(kind, rec, steps),
+      title: built.title,
+      text: textPlain,
+      reportId: rec.id != null ? rec.id : '',
+      reporter: rec.reporter || '',
+      approverPublicUrl: pub ? String(pub) : '',
+      adminUrl: adminLink(),
+      replyToEmail: from,
+      returnNote:
+        kind === 'returned' && rec.wf && rec.wf.returnNote ? String(rec.wf.returnNote) : '',
+    };
+  }
+
+  function postPowerAutomate(url, bodyObj) {
+    var body = JSON.stringify(bodyObj);
+    return global
+      .fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+        mode: 'cors',
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Power Automate HTTP ' + res.status);
+      })
+      .catch(function () {
+        return global
+          .fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+            mode: 'no-cors',
+          })
+          .then(function () {});
+      });
+  }
+
   function postSlack(url, text) {
     var json = JSON.stringify({ text: text });
     var formBody = 'payload=' + encodeURIComponent(json);
@@ -149,7 +221,8 @@
     if (c.enabled === false) return;
     var slackUrl = String(c.slackIncomingUrl || c.slackUrl || '').trim();
     var teamsUrl = String(c.teamsIncomingUrl || c.teamsUrl || '').trim();
-    if (!slackUrl && !teamsUrl) return;
+    var paUrl = String(c.powerAutomateUrl || c.flowHttpUrl || '').trim();
+    if (!slackUrl && !teamsUrl && !paUrl) return;
     if (!rec || !rec.wf) return;
     var steps = getSteps(rec);
     if (!steps.length) return;
@@ -183,6 +256,14 @@
         })
       );
     }
+    if (paUrl) {
+      var paBody = buildPowerAutomateBody(kind, rec, steps, built);
+      promises.push(
+        postPowerAutomate(paUrl, paBody).catch(function (e) {
+          console.warn('[disaster-webhook] Power Automate', e);
+        })
+      );
+    }
     if (promises.length) {
       global.Promise.all(promises).catch(function () {});
     }
@@ -193,7 +274,8 @@
     if (c.enabled === false) return false;
     return !!(
       String(c.slackIncomingUrl || c.slackUrl || '').trim() ||
-      String(c.teamsIncomingUrl || c.teamsUrl || '').trim()
+      String(c.teamsIncomingUrl || c.teamsUrl || '').trim() ||
+      String(c.powerAutomateUrl || c.flowHttpUrl || '').trim()
     );
   };
 

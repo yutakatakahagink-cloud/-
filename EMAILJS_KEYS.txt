@@ -1,0 +1,17 @@
+EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAILJS に貼り、再デプロイ
+
+1) publicKey … https://www.emailjs.com → Account → API Keys → Public Key
+2) serviceId … Email Services → Add New Service → Outlook 等で anzensystem@outlook.com 接続後の Service ID
+3) templateId … Email Templates → 新規テンプレート作成後の Template ID
+
+テンプレート例（変数名は disaster-email-notify.js と一致）:
+  To: {{to_email}}
+  Subject: {{subject}}
+  本文: {{message}}
+
+  Reply-To や BCC は config.example.js の EmailJS 節を参照（{{reply_to}} {{bcc_email}} 等）
+
+EmailJS → Account → Security → Restricted Domains に、本番サイトのオリジンを追加
+例: https://yutakatakahagink-cloud.github.io
+
+所有者画面（owner.html）→「災害報告メールの送信元」= anzensystem@outlook.com で保存

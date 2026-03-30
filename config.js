@@ -18,12 +18,25 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認ワークフロー: Slack / Teams 通知（Incoming Webhook）
-// いずれかの URL を入れると、提出・承認・差戻し時にチャンネルへ投稿し、Outlook（mailto）は開きません。
-// 未設定のままだと従来どおりメール作成画面が開きます。URL は Slack/Teams で発行して貼り付けてください。
+// 災害承認メール: anzensystem@outlook.com を EmailJS の Email Services に接続後、
+// publicKey / serviceId / templateId の3つを必ず埋める（空のままでは自動送信は動かない）。
+// 所有者画面「災害報告メールの送信元」にも anzensystem@outlook.com を入力して保存すること。
+window.HH_EMAILJS = {
+  publicKey: '',
+  serviceId: '',
+  templateId: '',
+  fromEmail: 'anzensystem@outlook.com',
+  replyToEmail: 'anzensystem@outlook.com',
+  fromName: '安全衛生管理システム'
+};
+
+// 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
+// いずれかを入れると提出・承認・差戻し時に通知し、Outlook（mailto）は開きません。
+// powerAutomateUrl: フロー「HTTP リクエストの受信時」で発行した POST 用 URL（config.example.js の JSON スキーマ参照）
 window.HH_WEBHOOK_NOTIFY = {
   slackIncomingUrl: '',
   teamsIncomingUrl: '',
+  powerAutomateUrl: '',
   enabled: true
 };
 

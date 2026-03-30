@@ -4,10 +4,17 @@
  * window.HH_EMAILJS = {
  *   publicKey: 'xxx',
  *   serviceId: 'service_xxx',
- *   templateId: 'template_xxx'
+ *   templateId: 'template_xxx',
+ *   fromEmail: '',      // 任意: 送信元メール（空なら所有者の「送信元メール」と同じ）
+ *   fromName: '',       // 任意: From 表示名 → {{from_name}}（テンプレ・サービスが許す場合）
+ *   replyToEmail: '',   // 任意: Reply-To 専用（空なら所有者の送信元メール）
+ *   composeMode: 'mailto', // EmailJS 未使用／失敗時の compose: 'mailto' | 'outlookWeb'
+ *   outlookWebComposeBase: 'https://outlook.office.com/mail/deeplink/compose',
+ *   mailtoFromEmail: ''   // mailto 時に &from= を付与（クライアントは無視することがある）
  * };
- * テンプレート例: To = {{to_email}}、本文に {{message}} {{admin_link}} {{approver_public_link}} {{report_id}} {{reporter_name}}
- * 所有者が設定した送信元は {{reply_to}} {{sender_email}}（差戻し時のみ副本 {{bcc_email}}）として渡します。EmailJS 側で Reply-To / BCC に割り当ててください。
+ * serviceId は EmailJS の「Email Services」で Gmail / Outlook 等どれを接続したかに対応（＝送信に使うメールアカウント経路）。
+ * テンプレート例: To = {{to_email}}、From に {{from_email}} {{from_name}}、Reply-To = {{reply_to}} 等
+ * 所有者が設定した送信元は、上記が空のとき {{reply_to}} {{sender_email}} に反映。差戻し時のみ副本 {{bcc_email}}
  *
  * ※ メールアドレスをフォームに入れただけでは送信されません。EmailJS 設定時は API 送信、未設定時は使用者画面の「承認者にメールを作成」や承認後の確認ダイアログから mailto を開きます。
  * ※ Slack/Teams は disaster-webhook-notify.js と config.js の HH_WEBHOOK_NOTIFY で任意利用（メールと併用可）。
@@ -101,13 +108,18 @@
     var to = safeMailtoAddr(st.email);
     if (!to) return;
     var m = mailtoBodyForApprover(rec, idx);
-    openMailtoLink(to, m.sub, m.body);
+    disasterOpenMailtoCompose(to, m.sub, m.body, '');
   };
 
   function openMailtoLink(to, sub, body, bcc) {
     var q = 'subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(body);
     var bc = safeMailtoAddr(bcc);
     if (bc) q += '&bcc=' + encodeURIComponent(bc);
+    var cfg = global.HH_EMAILJS || {};
+    var fromAddr = String(cfg.mailtoFromEmail || '').trim();
+    if (fromAddr && safeMailtoAddr(fromAddr)) {
+      q += '&from=' + encodeURIComponent(fromAddr);
+    }
     var href = 'mailto:' + to + '?' + q;
     var a = global.document.createElement('a');
     a.href = href;
@@ -115,6 +127,53 @@
     global.document.body.appendChild(a);
     a.click();
     global.document.body.removeChild(a);
+  }
+
+  function composeModeIsOutlookWeb() {
+    var cfg = global.HH_EMAILJS || {};
+    var m = String(cfg.composeMode || 'mailto').toLowerCase().replace(/[\s_-]/g, '');
+    return m === 'outlookweb';
+  }
+
+  /**
+   * mailto または Outlook on the web の新規メール（EmailJS 未使用時・フォールバック）
+   */
+  function disasterOpenMailtoCompose(to, sub, body, bcc) {
+    if (composeModeIsOutlookWeb()) {
+      var cfg = global.HH_EMAILJS || {};
+      var base = String(
+        cfg.outlookWebComposeBase || 'https://outlook.office.com/mail/deeplink/compose'
+      ).replace(/\/?$/, '');
+      var qs =
+        'to=' +
+        encodeURIComponent(to) +
+        '&subject=' +
+        encodeURIComponent(sub) +
+        '&body=' +
+        encodeURIComponent(body);
+      var bc = safeMailtoAddr(bcc);
+      if (bc) qs += '&bcc=' + encodeURIComponent(bc);
+      try {
+        global.open(base + '?' + qs, '_blank', 'noopener,noreferrer');
+      } catch (e) {
+        openMailtoLink(to, sub, body, bcc);
+      }
+      return;
+    }
+    openMailtoLink(to, sub, body, bcc);
+  }
+
+  /** EmailJS テンプレへ渡す送信元・返信先（config の fromEmail / replyToEmail が優先、空なら所有者設定） */
+  function emailJsFromReplyFields() {
+    var cfg = global.HH_EMAILJS || {};
+    var owner =
+      typeof global.disasterGetNotifyFromEmail === 'function'
+        ? String(global.disasterGetNotifyFromEmail() || '').trim()
+        : '';
+    var replyTo = String(cfg.replyToEmail || '').trim() || owner;
+    var fromEmail = String(cfg.fromEmail || '').trim() || owner;
+    var fromName = String(cfg.fromName || '').trim();
+    return { replyTo: replyTo, fromEmail: fromEmail, fromName: fromName };
   }
 
   global.disasterOpenMailtoReturned = function (rec) {
@@ -132,7 +191,7 @@
     var from =
       typeof global.disasterGetNotifyFromEmail === 'function' ? String(global.disasterGetNotifyFromEmail() || '').trim() : '';
     if (from && normAddr(from) !== normAddr(to)) bcc = from;
-    openMailtoLink(to, sub2, body2, bcc);
+    disasterOpenMailtoCompose(to, sub2, body2, bcc);
   };
 
   var _emailJsLoading = false;
@@ -178,7 +237,7 @@
       return '送信しました。承認者にメールで通知しました';
     }
     if (typeof global.disasterHasWebhookNotifyConfigured === 'function' && global.disasterHasWebhookNotifyConfigured()) {
-      return '送信しました。Slack/Teams に通知しました。';
+      return '送信しました。Slack/Teams/自動化フローに通知しました。';
     }
     return '送信しました。メール作成画面で送信すると承認者に届きます';
   };
@@ -244,7 +303,15 @@
       return;
     }
     var m = mailtoBodyForApprover(rec, 0);
+    if (composeModeIsOutlookWeb()) {
+      closePopupSafe(mailtoPopup);
+      disasterOpenMailtoCompose(to, m.sub, m.body, '');
+      return;
+    }
     var href = 'mailto:' + to + '?subject=' + encodeURIComponent(m.sub) + '&body=' + encodeURIComponent(m.body);
+    var cfgM = global.HH_EMAILJS || {};
+    var mf = String(cfgM.mailtoFromEmail || '').trim();
+    if (mf && safeMailtoAddr(mf)) href += '&from=' + encodeURIComponent(mf);
     if (mailtoPopup && !mailtoPopup.closed) {
       try {
         mailtoPopup.location.href = href;
@@ -252,7 +319,7 @@
       } catch (e) {}
       closePopupSafe(mailtoPopup);
     }
-    openMailtoLink(to, m.sub, m.body);
+    openMailtoLink(to, m.sub, m.body, '');
   };
 
   /**
@@ -294,8 +361,8 @@
         ? '【災害報告】差戻し（報告ID:' + rec.id + '）'
         : '【災害報告】承認依頼 (報告ID:' + rec.id + ')';
     var pubL = global.disasterApproverPublicUrl ? global.disasterApproverPublicUrl(rec) : '';
-    var from =
-      typeof global.disasterGetNotifyFromEmail === 'function' ? String(global.disasterGetNotifyFromEmail() || '').trim() : '';
+    var idFields = emailJsFromReplyFields();
+    var replyLine = idFields.replyTo || idFields.fromEmail;
     var msg =
       '報告ID: ' +
       rec.id +
@@ -304,7 +371,7 @@
       (pubL ? '\nログイン不要で承認: ' + pubL : '') +
       '\n管理者画面: ' +
       adminLink() +
-      (from ? '\n\n送信元（返信先）: ' + from : '');
+      (replyLine ? '\n\n送信元（返信先）: ' + replyLine : '');
 
     ensureEmailJs(function (ok) {
       if (!ok || !global.emailjs || !global.emailjs.send) return;
@@ -317,12 +384,16 @@
         report_id: String(rec.id),
         reporter_name: rec.reporter || '',
       };
-      if (from) {
-        params.reply_to = from;
-        params.sender_email = from;
+      var effReply = idFields.replyTo || idFields.fromEmail;
+      if (effReply) {
+        params.reply_to = idFields.replyTo || idFields.fromEmail;
+        params.sender_email = idFields.fromEmail || idFields.replyTo;
       }
-      if (kind === 'returned' && from && normAddr(from) !== normAddr(to)) {
-        params.bcc_email = from;
+      if (idFields.fromEmail) params.from_email = idFields.fromEmail;
+      if (idFields.fromName) params.from_name = idFields.fromName;
+      var bccSrc = effReply;
+      if (kind === 'returned' && bccSrc && normAddr(bccSrc) !== normAddr(to)) {
+        params.bcc_email = bccSrc;
       }
       global.emailjs.send(cfg.serviceId, cfg.templateId, params).then(
         function () {},
@@ -333,7 +404,7 @@
             var toF = st && safeMailtoAddr(st.email);
             if (toF) {
               var m = mailtoBodyForApprover(rec, 0);
-              openMailtoLink(toF, m.sub, m.body);
+              disasterOpenMailtoCompose(toF, m.sub, m.body, '');
             }
           }
         }

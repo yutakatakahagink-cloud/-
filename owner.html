@@ -406,7 +406,7 @@ select,input,textarea,button{color:var(--t1)}
 
   <div class="cb" style="margin-top:16px">
     <div class="cht"><span class="chd" style="background:#1565C0"></span>災害報告メールの送信元</div>
-    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:8px">提出・多段承認の通知に使う<b>返信先（Reply-To）</b>です。<b>差戻し</b>通知では、報告者宛メールに加え、このアドレスへ<b>副本（BCC）</b>も送ります（報告者メールと同じ場合は重複しないよう省略）。<br>EmailJS 利用時はテンプレートに <code style="font-size:10px">{{reply_to}}</code> や <code style="font-size:10px">{{sender_email}}</code>、差戻し用に <code style="font-size:10px">{{bcc_email}}</code> を設定してください。</p>
+    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:8px">提出・多段承認の通知に使う<b>返信先（Reply-To）</b>です。<b>差戻し</b>通知では、報告者宛メールに加え、このアドレスへ<b>副本（BCC）</b>も送ります（報告者メールと同じ場合は重複しないよう省略）。<br><b>専用メール1本＋EmailJS</b>で運用する場合は、EmailJS に接続した送信用アドレスと<b>同じ</b>をここにも入れ、<code style="font-size:10px">config.js</code> の <code style="font-size:10px">fromEmail</code> / <code style="font-size:10px">replyToEmail</code> と揃えると一貫します。<br>EmailJS 利用時はテンプレートに <code style="font-size:10px">{{reply_to}}</code> や <code style="font-size:10px">{{sender_email}}</code>、差戻し用に <code style="font-size:10px">{{bcc_email}}</code> を設定してください。</p>
     <input class="fi" type="email" id="disNotifyFromEmail" placeholder="例: anzen@example.com（空欄でクリア）" style="margin-bottom:8px">
     <button class="sub" type="button" style="margin-top:0;padding:10px;font-size:12px;background:#1565C0" onclick="saveDisasterNotifyFromEmailField()">保存</button>
   </div>
