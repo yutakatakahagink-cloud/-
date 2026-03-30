@@ -18,12 +18,12 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認メール: anzensystem@outlook.com を EmailJS の Email Services に接続後、
-// publicKey / serviceId / templateId の3つを必ず埋める（空のままでは自動送信は動かない）。
+// 災害承認メール: EmailJS の「サービスIDのコピー」がメールアドレスになる場合あり（Outlook 連携）。
+// あとは publicKey と templateId を埋める（空のままでは自動送信は動かない）。
 // 所有者画面「災害報告メールの送信元」にも anzensystem@outlook.com を入力して保存すること。
 window.HH_EMAILJS = {
   publicKey: '',
-  serviceId: '',
+  serviceId: 'anzensystem@outlook.com',
   templateId: '',
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',

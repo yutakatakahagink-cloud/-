@@ -1,7 +1,7 @@
 EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAILJS に貼り、再デプロイ
 
 1) publicKey … https://www.emailjs.com → Account → API Keys → Public Key
-2) serviceId … Email Services → Add New Service → Outlook 等で anzensystem@outlook.com 接続後の Service ID
+2) serviceId … メールサービス行の ⋮ →「サービスIDのコピー」（Outlook 連携ではメールアドレスそのものになることがある）
 3) templateId … Email Templates → 新規テンプレート作成後の Template ID
 
 テンプレート例（変数名は disaster-email-notify.js と一致）:
