@@ -102,7 +102,17 @@ function bindPubActions(){
 function render(){
   var root=document.getElementById('root');
   if(!REPORT_ID||!REPORT_TOKEN){
-    root.innerHTML='<div class="err">URL に id と t（トークン）が必要です。</div>';
+    root.innerHTML=
+      '<div class="err">'+
+      '<p style="margin:0 0 10px;font-weight:700">URL に <code style="font-size:11px">id</code> と <code style="font-size:11px">t</code>（トークン）がありません。</p>'+
+      '<p style="margin:0;font-size:13px;line-height:1.65">いまのアドレスは <code style="font-size:11px">disaster-approver.html</code> だけです。<strong>メールや通知に含まれるリンクを、そのまま全文コピーして</strong>開いてください（<code style="font-size:11px">?</code> 以降に <code style="font-size:11px">id=…&amp;t=…</code> が付きます）。</p>'+
+      '<ul style="margin:10px 0 0 18px;padding:0;font-size:12px;line-height:1.6">'+
+      '<li>ブックマークや手入力で <code style="font-size:10px">.html</code> までしか開いていないと、この画面になります。</li>'+
+      '<li>Outlook でメール作成（mailto）した場合は、<strong>送信後に届いたメール本文内のURL</strong>を開いてください。</li>'+
+      '<li>管理者は <code style="font-size:10px">admin.html</code> / <code style="font-size:10px">owner.html</code> の災害一覧から該当報告を開き、承認用URLを再確認できます。</li>'+
+      '</ul>'+
+      '<p style="margin:12px 0 0;font-size:11px;color:#555">正しいURLの例: <code style="word-break:break-all;font-size:10px">…/disaster-approver.html?id=報告ID&amp;t=トークン</code>（<code style="font-size:10px">&amp;s=</code> が付くこともあります）</p>'+
+      '</div>';
     return;
   }
   var r=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
