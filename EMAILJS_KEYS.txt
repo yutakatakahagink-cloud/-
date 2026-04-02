@@ -6,9 +6,13 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
 3) templateId … Email Templates → 新規テンプレート作成後の Template ID
 
 テンプレート例（変数名は disaster-email-notify.js と一致）:
-  To: {{to_email}}
+  To: {{to_email}}  ← EmailJS の「To Email」欄に必須。空のままや固定メールのみだと送信できない。
+     コード側は email / to / user_email / recipient_email にも同じ宛先を渡すので、テンプレで {{email}} 等でも可。
   Subject: {{subject}}
   本文: {{message}}
+
+■ 422「The recipients address is empty」: テンプレートの「To」が上記変数と繋がっていないことがほとんど。
+  EmailJS → Email Templates → 該当テンプレ → Settings / Content で To を {{to_email}} にする。
 
   Reply-To や BCC は config.example.js の EmailJS 節を参照（{{reply_to}} {{bcc_email}} 等）
 
@@ -16,6 +20,19 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
   セキュリティは Public Key 流出リスクがあるため、問題あれば EmailJS 有料化やサーバー経由送信を検討。
 
 ■ 本番テスト: 必ず https の GitHub Pages（HH_BASE_URL）から試す。file:// や古いキャッシュでは EmailJS が動かず Outlook（mailto）に落ちることが多い。
+■ Edge の「トラッキング防止」: コンソールに “Tracking Prevention blocked access to storage” が出る環境では、
+  jsDelivr 経由の SDK が不安定になることがある。リポジトリ同梱の email.min.js を GitHub Pages と同じ階層にデプロイし、
+  disaster-email-notify.js が同一オリジンから読み込む（既定）。デプロイ対象に email.min.js を含める（deploy-paths.txt 参照）。
+  加えて EmailJS SDK のレート制限用 localStorage を使わず、メモリ上の storageProvider で init するようコード側で対策済み。
+  user.html がサブパス（例: …//-/user.html）のみのときは config.js の HH_BASE_URL をサイトのルート（email.min.js がある階層の URL）に合わせると、SDK を正しい URL で読み込める。
+■ 提出後、コンソールに [disaster-email] EmailJS 送信リクエスト成功 と出れば API は受理済み。届かない場合は迷惑メール・別テンプレ・別 templateId を確認。
+■ 配信不能 550 5.7.520 / AS(4810)「content identified as spam」: 受信側 Microsoft 365 が本文・件名・URL をスパム扱い。対処: (1) テナント管理者が送信元 anzensystem@outlook.com を許可リストへ (2) EmailJS テンプレの本文を短くし、{{message}} 以外に長いURLや重複リンクを置かない (3) 会社ドメインのメールを EmailJS に接続し from を社用にする。コード側は件名・本文を簡素化済みのことがあるので再デプロイ後に再テスト。
+■ 送信元の「送信済み」には載るが、会社の Microsoft 365（@…onmicrosoft.com 等）の受信トレイにだけ届かない:
+  第三者経由（EmailJS）とデスクトップ Outlook 直送ではヘッダー・経路が異なり、テナント側の隔離・スパム・ATP に掛かることがあります（アプリのバグではなく受信側ポリシー）。
+  対処: config.js の HH_EMAILJS に workflowNotifyVia: 'mailto' を追加すると、災害WFの通知は EmailJS を使わず OS の既定メーラー（手元の Outlook）で開き、手動送信します（Outlook から直接テストしたときと同じ経路）。
+■ 412 / "Outlook: Account suspended" … Microsoft が接続中の Outlook アカウントを停止している（スパム疑い・長期未使用・ポリシー等）。ブラウザのコードでは直せません。
+  → outlook.com または Microsoft 365 で該当メールにサインインし、表示される復旧・本人確認を完了する。
+  または EmailJS で別のメールサービス（別 Outlook・会社ドメイン・Gmail 等）を新規接続し、serviceId と config の fromEmail / replyToEmail を揃え直す。
 ■ Outlook が開くとき: F12 コンソールの [disaster-email] EmailJS を確認。EmailJS → アカウント → セキュリティ の「秘密鍵の使用」はブラウザ送信で失敗しうる → オフ推奨。
 ■ コンソールで window.disasterHasEmailJsConfigured() が true か、Network で config.js に HH_EMAILJS 全文が載っているか確認。月間上限は無料で約200通。
 
