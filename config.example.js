@@ -23,6 +23,8 @@ window.HH_FIREBASE_CONFIG = {
 // オプション: 携帯・他PCからアクセスする公開URL（GitHub Pages等）
 // 設定するとQRコードがこのURLを指すようになります。
 // 災害承認メール内の「ログイン不要」リンク（disaster-approver.html）もここを基準にします。未設定だと file:// や現在のホストになります。
+// EmailJS SDK（email.min.js）の読み込みURLも、未設定時は「今開いているHTMLと同じフォルダ」になるため、
+// user.html がサブフォルダだけにある場合は HH_BASE_URL を「email.min.js が置いてある階層のURL」に設定してください。
 // window.HH_BASE_URL = "https://あなたのユーザー名.github.io/リポジトリ名/";
 
 // ============================================
@@ -41,13 +43,17 @@ window.HH_FIREBASE_CONFIG = {
 // ■ 設定したとき
 //   HH_EMAILJS を書いた config.js を GitHub Pages 等にデプロイすると、
 //   提出・次承認者への通知・差戻し通知が EmailJS 経由で API 送信され、メール画面は開きません。
+// ■ 承認者メールが届かないとき
+//   使用者画面で承認者を空にした場合、所有者画面で保存した「災害の多段承認」既定承認者が使われます（未保存ならワークフローなしでメールも出ません）。
+//   EmailJS 接続の Outlook が停止（412 Account suspended）のときは届きません。別メールを Email Services に接続するか、mailto フォールバックで手動送信してください。
 //
 // 手順の概要:
 // 1) https://www.emailjs.com/ でアカウント作成
 // 2) Email Services で送信に使うメール（Gmail / Outlook 等）を1つ以上接続
 //    → serviceId は「どの接続で送るか」の ID（＝実質どのメールアカウント経路で送るか）
 // 3) Email Templates でテンプレートを1つ作成し、次の変数を使えるようにする:
-//    To（宛先）: {{to_email}}
+//    To（宛先）: {{to_email}}（必須。未設定だと 422 The recipients address is empty）
+//      代替として {{email}} {{to}} {{user_email}} も同じ値が渡る
 //    Subject: {{subject}}
 //    本文: {{message}} {{admin_link}} {{approver_public_link}} {{report_id}} {{reporter_name}}
 //    From（接続先が許す場合）: {{from_email}} や表示名 {{from_name}}
@@ -74,7 +80,10 @@ window.HH_FIREBASE_CONFIG = {
 //   fromName: "安全衛生管理システム",
 //   mailtoFromEmail: "",
 //   composeMode: "mailto",
-//   outlookWebComposeBase: "https://outlook.office.com/mail/deeplink/compose"
+//   outlookWebComposeBase: "https://outlook.office.com/mail/deeplink/compose",
+//   mailtoFromEmail: "anzen@example.com", // workflowNotifyVia: mailto 時の &from=（空なら fromEmail を使用）
+//   // 省略または "emailjs" = EmailJS で自動送信。"mailto" = OS のメーラーで手動送信
+//   workflowNotifyVia: "emailjs"
 // };
 
 // ============================================
