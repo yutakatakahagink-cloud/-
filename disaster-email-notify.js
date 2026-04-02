@@ -105,18 +105,16 @@
   }
 
   function mailtoBodyForApprover(rec, stepIndex) {
-    var sub = '【災害報告】承認依頼 (報告ID:' + (rec && rec.id != null ? rec.id : '') + ')';
+    /* 件名・本文は短く・URLは1本に抑え、受信側 M365 のスパム判定（550 5.7.520 等）を避けやすくする */
+    var sub = '日新興業 災害報告 承認依頼 (ID:' + (rec && rec.id != null ? rec.id : '') + ')';
     var pub = global.disasterApproverPublicUrl ? global.disasterApproverPublicUrl(rec) : '';
     var body =
-      '災害事故発生報告の承認をお願いします。\n\n' +
-      '報告者: ' +
-      (rec && rec.reporter ? rec.reporter : '') +
-      '\n報告ID: ' +
+      '日新興業株式会社 安全衛生管理システムからの通知です。\n\n' +
+      '報告ID: ' +
       (rec && rec.id != null ? rec.id : '') +
-      (pub ? '\n\n【ログイン不要】報告の確認・承認・差戻し・追記:\n' + pub : '') +
-      '\n\n管理者ログイン（一覧）: ' +
-      adminLink() +
-      '\n\n※ 確実な自動送信には config.js の HH_EMAILJS（EmailJS）を設定してください。' +
+      '\n報告者: ' +
+      (rec && rec.reporter ? rec.reporter : '') +
+      (pub ? '\n\n承認・差戻しは次のURLから行えます（ログイン不要）。\n' + pub : '') +
       notifyFromLine();
     return { sub: sub, body: body };
   }
@@ -211,9 +209,10 @@
   global.disasterOpenMailtoReturned = function (rec) {
     var to = safeMailtoAddr(global.disasterWorkflowReturnNotifyTo ? global.disasterWorkflowReturnNotifyTo(rec) : '');
     if (!to) return;
-    var sub2 = '【災害報告】差戻し（報告ID:' + (rec && rec.id != null ? rec.id : '') + '）';
+    var sub2 = '日新興業 災害報告 差戻し (ID:' + (rec && rec.id != null ? rec.id : '') + ')';
     var body2 =
-      '災害報告が差戻されました。\n\n' +
+      '日新興業株式会社 安全衛生管理システムからの通知です。\n\n' +
+      '報告が差戻されました。\n' +
       (rec.wf && rec.wf.returnNote ? 'コメント: ' + rec.wf.returnNote + '\n\n' : '') +
       '報告ID: ' +
       (rec && rec.id != null ? rec.id : '') +
@@ -564,20 +563,20 @@
 
     var subj =
       kind === 'returned'
-        ? '【災害報告】差戻し（報告ID:' + rec.id + '）'
-        : '【災害報告】承認依頼 (報告ID:' + rec.id + ')';
+        ? '日新興業 災害報告 差戻し (ID:' + rec.id + ')'
+        : '日新興業 災害報告 承認依頼 (ID:' + rec.id + ')';
     var pubL = global.disasterApproverPublicUrl ? global.disasterApproverPublicUrl(rec) : '';
     var idFields = emailJsFromReplyFields();
     var replyLine = idFields.replyTo || idFields.fromEmail;
+    /* 本文は短く・URLは承認用1本（admin_link はテンプレ用パラメータで別渡し。重複URLはスパムスコアが上がりやすい） */
     var msg =
+      '日新興業株式会社 安全衛生管理システムからの通知です。\n' +
       '報告ID: ' +
       rec.id +
       '\n報告者: ' +
       (rec.reporter || '') +
-      (pubL ? '\nログイン不要で承認: ' + pubL : '') +
-      '\n管理者画面: ' +
-      adminLink() +
-      (replyLine ? '\n\n送信元（返信先）: ' + replyLine : '');
+      (pubL ? '\n\n承認・差戻しURL:\n' + pubL : '') +
+      (replyLine ? '\n\n返信先: ' + replyLine : '');
 
     ensureEmailJs(function (ok) {
       if (!ok || !global.emailjs || !global.emailjs.send) {
