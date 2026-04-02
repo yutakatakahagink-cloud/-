@@ -618,6 +618,10 @@
       if (kind === 'returned' && bccSrc && normAddr(bccSrc) !== normAddr(to)) {
         params.bcc_email = bccSrc;
       }
+      console.info(
+        '[disaster-email] EmailJS 送信用 subject（テンプレの Subject が {{subject}} 固定でないとこの値は使われません）:',
+        subj
+      );
       global.emailjs
         .send(cfg.serviceId, cfg.templateId, params, { publicKey: cfg.publicKey })
         .then(
