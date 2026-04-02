@@ -20,9 +20,9 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認メール（HH_EMAILJS）— 既定は EmailJS による自動送信（接続したメールサービス＝通常 anzensystem@outlook.com から送信）
-// EmailJS 失敗時の手動フォールバック用に mailtoFromEmail を残しています。
-// 会社の M365 宛だけ届かない・Outlook がブロックされる場合は workflowNotifyVia: 'mailto' を追加し、デスクトップメールで手動送信に切り替え可能（config.example.js 参照）
+// 災害承認メール（HH_EMAILJS）— EmailJS による自動送信（anzensystem@outlook.com 接続想定）
+// allowMailtoFallbackOnEmailJsFailure: true … EmailJS 失敗時のみ従来どおりメール作成画面を開く（既定は false＝画面を出さない）
+// workflowNotifyVia: 'mailto' … EmailJS を使わず常に手動メール（config.example.js 参照）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   // EmailJS API はメールアドレスを service ID にできない。ダッシュボードで「デフォルト」のサービス1つのときは default_service
@@ -31,7 +31,8 @@ window.HH_EMAILJS = {
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
   fromName: '安全衛生管理システム',
-  mailtoFromEmail: 'anzensystem@outlook.com'
+  mailtoFromEmail: 'anzensystem@outlook.com',
+  allowMailtoFallbackOnEmailJsFailure: false
 };
 
 // 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
