@@ -529,7 +529,7 @@ input[type="file"].photo-input{display:none}
   <div id="disFormArea">
   <div id="disWfUserWrap" class="dis-wf-user-block" style="margin:0 0 16px;padding:12px;background:rgba(106,27,154,.06);border:1px solid rgba(106,27,154,.28);border-radius:8px">
     <div class="sd" style="margin-top:0">承認ワークフロー（任意）</div>
-    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者のメールを1件以上入れると、<b>最終承認まで「確定済み」一覧に表示されません</b>。承認者は管理者画面で、<b>ここに入力したメール</b>と一致するアカウント（または所有者）でログインし、<b>差戻し・追記・訂正・承認</b>ができます。<br><strong>送信者メール</strong>は、この報告をワークフローに載せる際の<b>連絡先（差戻し通知の宛先）</b>です。入れておくと差戻し時にもこのアドレスへ通知されます（EmailJS／メール作成のいずれでも利用）。<br><strong>提出時の通知:</strong> <code style="font-size:10px">config.js</code> に <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）があると承認者へ自動でメール送信されます。未設定の場合は提出直後にメール作成画面が開くので、<b>送信ボタンで送ってください</b>。メール本文には <b>ログイン不要で開く承認用URL</b>（<code style="font-size:10px">disaster-approver.html?id=…&t=…</code>）が含まれます。<code style="font-size:10px">HH_BASE_URL</code> を設定すると、そのURLが本番アドレスになります。</p>
+    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者のメールを1件以上入れると、<b>最終承認まで「確定済み」一覧に表示されません</b>。承認者は管理者画面で、<b>ここに入力したメール</b>と一致するアカウント（または所有者）でログインし、<b>差戻し・追記・訂正・承認</b>ができます。<br><b>ここが空のとき</b>は、所有者画面で保存した<b>既定の承認者メール</b>が使われます（災害の多段承認設定）。<br><strong>送信者メール</strong>は、この報告をワークフローに載せる際の<b>連絡先（差戻し通知の宛先）</b>です。入れておくと差戻し時にもこのアドレスへ通知されます（EmailJS／メール作成のいずれでも利用）。<br><strong>提出時の通知:</strong> <code style="font-size:10px">config.js</code> に <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）があると承認者へ自動でメール送信されます。未設定の場合は提出直後にメール作成画面が開くので、<b>送信ボタンで送ってください</b>。メール本文には <b>ログイン不要で開く承認用URL</b>（<code style="font-size:10px">disaster-approver.html?id=…&t=…</code>）が含まれます。<code style="font-size:10px">HH_BASE_URL</code> を設定すると、そのURLが本番アドレスになります。</p>
     <div id="disWfUserSteps"></div>
     <button type="button" class="fp" style="margin-top:6px;font-size:11px;padding:8px 12px;border-radius:8px" onclick="disWfUserAddApproverRow()">＋ 承認段階を追加</button>
     <div class="fg" style="margin-top:12px;margin-bottom:0"><label class="fl">送信者メール（任意）</label><input class="fi" type="email" id="f_wf_sender_email" placeholder="ワークフロー連絡・差戻し通知の宛先"></div>
@@ -946,10 +946,10 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260402-1" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js" onerror="console.warn('disaster-workflow.js load failed')"></script>
-<script src="disaster-email-notify.js" onerror="console.warn('disaster-email-notify.js load failed')"></script>
+<script src="disaster-email-notify.js?v=20260330-9" onerror="console.warn('disaster-email-notify.js load failed')"></script>
 <script src="disaster-webhook-notify.js" onerror="console.warn('disaster-webhook-notify.js load failed')"></script>
 <script src="laws_refresh.js" onerror="console.warn('laws_refresh.js load failed')"></script>
 <script>
@@ -1282,6 +1282,25 @@ function collectDisUserApproverSteps(){
   });
   return out;
 }
+/** 提出時: フォームに承認者メールがあればそれを使う。空なら所有者画面で保存した既定承認者（DISASTER_WF_STEPS）を使う */
+function effectiveDisApproverStepsForSubmit(){
+  var raw=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var cleaned=[];
+  raw.forEach(function(s){
+    var em=String(s&&s.email||'').trim();
+    if(!em)return;
+    cleaned.push({label:String(s&&s.label||'').trim()||'承認',email:em});
+  });
+  if(cleaned.length)return cleaned;
+  var g=(typeof window!=='undefined'&&window.DISASTER_WF_STEPS)?window.DISASTER_WF_STEPS:[];
+  if(!Array.isArray(g)||!g.length)return[];
+  var out=[];
+  g.forEach(function(s){
+    var em=typeof disasterNormEmail==='function'?disasterNormEmail(s&&s.email):String(s&&s.email||'').trim().toLowerCase();
+    if(em)out.push({label:String(s&&s.label||'').trim()||'承認',email:em});
+  });
+  return out;
+}
 function ensureDisWfUserRows(){
   var box=document.getElementById('disWfUserSteps');if(!box||box.querySelector('.dis-wf-u-row'))return;
   disWfUserAddApproverRow();
@@ -1342,19 +1361,19 @@ function doDisSubmit(){
   var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),status:'draft',gyoshu:document.getElementById('f_gyoshu').value,jigyosho:document.getElementById('f_jigyosho').value,address:document.getElementById('f_address').value,workers:document.getElementById('f_workers').value,datetime:dt,place:place,machine:document.getElementById('f_machine').value,type:document.getElementById('f_type').value,victim:victim,victim_dept:document.getElementById('f_victim_dept').value,human_damage:document.getElementById('f_human_damage').value,material_damage:document.getElementById('f_material_damage').value,situation:situation,cause:document.getElementById('f_cause').value,measure:document.getElementById('f_measure').value,reporter:CUR.name,situation_img:imgs[0]||null,situation_imgs:imgs};
   var wfs=document.getElementById('f_wf_sender_email');if(wfs&&wfs.value.trim())rec.wf_sender_email=wfs.value.trim();
   if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
-  var stPreM=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var stPreM=typeof effectiveDisApproverStepsForSubmit==='function'?effectiveDisApproverStepsForSubmit():(typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[]);
   var wfMailtoPopM=null;
-  if(stPreM.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())))wfMailtoPopM=disasterPrepareMailtoPopup();
+  if(stPreM.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterNeedPrepareMailtoOnSubmit==='function'&&disasterNeedPrepareMailtoOnSubmit())wfMailtoPopM=disasterPrepareMailtoPopup();
   function saveNew(){
-    var st=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+    var st=typeof effectiveDisApproverStepsForSubmit==='function'?effectiveDisApproverStepsForSubmit():(typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[]);
     if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,st);
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
     if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase())HHDB.mergeDisasterReport(rec);
     else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
-    else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
+    else try{var _lsM=(typeof HHDB!=='undefined'&&HHDB.stripDisasterReportsForStorage)?HHDB.stripDisasterReportsForStorage(DIS_LIST):DIS_LIST;localStorage.setItem('hh_disaster_reports',JSON.stringify(_lsM))}catch(e){}
     if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPopM);
     window._disPendingMailRec=rec.wf?rec:null;
-    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))?'block':'none';
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterNeedPrepareMailtoOnSubmit==='function'&&disasterNeedPrepareMailtoOnSubmit()?'block':'none';
     resetDisasterFormMobile();
     if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
     var t=document.getElementById('toastDis');if(t){
@@ -1376,24 +1395,25 @@ function doDisSubmitPC(){
   var rec={id:Date.now(),date:new Date().toISOString().slice(0,10),datetime:datetimeStr,status:'draft',form:'pc',keigen:document.getElementById('f_keigen_pc')?.value,basho:document.getElementById('f_basho_pc')?.value,basho_jusho:document.getElementById('f_basho_jusho_pc')?.value,jusho:document.getElementById('f_jusho_pc')?.value,victim:document.getElementById('f_victim_pc')?.value,age:document.getElementById('f_age_pc')?.value,birth:document.getElementById('f_birth_y_pc')?.value+'-'+document.getElementById('f_birth_m_pc')?.value+'-'+document.getElementById('f_birth_d_pc')?.value,victim_dept:document.getElementById('f_victim_dept_pc')?.value,hire_date:document.getElementById('f_hire_date_pc')?.value,exp:document.getElementById('f_exp_y_pc')?.value+'-'+document.getElementById('f_exp_m_pc')?.value,shobyomei:document.getElementById('f_shobyomei_pc')?.value,byoin:document.getElementById('f_byoin_pc')?.value,koui:document.querySelector('input[name="koui_pc"]:checked')?.value,kyugyo:kyugyoStr,kyugyo_type:kt,kyugyo_days:kd,kyugyo_yen:ky,gennin:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,gennin_aru:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,shokumei:document.getElementById('f_shokumei_pc')?.value,gennin_name:document.getElementById('f_gennin_pc')?.value,kyukun_person:document.getElementById('f_kyukun_person_pc')?.value,kyukun_equip:document.getElementById('f_kyukun_equip_pc')?.value,kyukun_mgmt:document.getElementById('f_kyukun_mgmt_pc')?.value,basho_detail:document.getElementById('f_basho_detail_pc')?.value,sagyo:document.getElementById('f_sagyo_pc')?.value,genin_busshi:document.getElementById('f_genin_busshi_pc')?.value,genin_jin:document.getElementById('f_genin_jin_pc')?.value,kekka:document.getElementById('f_kekka_pc')?.value,kaizen_honin:document.getElementById('f_kaizen_honin_pc')?.value,kaizen_kantoku:document.getElementById('f_kaizen_kantoku_pc')?.value,situation_img:imgsPC[0]||null,situation_imgs:imgsPC,taisaku:document.getElementById('f_taisaku_pc')?.value,kiinbutsu:document.getElementById('f_kiinbutsu_pc')?.value,fuanzen:document.getElementById('f_fuanzen_pc')?.value,fuanzen_kodo:document.getElementById('f_fuanzen_kodo_pc')?.value,jiko:document.getElementById('f_jiko_pc')?.value,kanri:document.getElementById('f_kanri_pc')?.value,reporter:CUR?CUR.name:'',report_date:document.getElementById('f_report_date_pc')?.value,sekininsha:document.getElementById('f_sekininsha_pc')?.value};
   var wfsPc=document.getElementById('f_wf_sender_email');if(wfsPc&&wfsPc.value.trim())rec.wf_sender_email=wfsPc.value.trim();
   if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
-  var stPre=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var stPre=typeof effectiveDisApproverStepsForSubmit==='function'?effectiveDisApproverStepsForSubmit():(typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[]);
   var wfMailtoPop=null;
-  if(stPre.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured())))wfMailtoPop=disasterPrepareMailtoPopup();
+  if(stPre.some(function(s){return String(s&&s.email||'').trim()})&&typeof disasterPrepareMailtoPopup==='function'&&typeof disasterNeedPrepareMailtoOnSubmit==='function'&&disasterNeedPrepareMailtoOnSubmit())wfMailtoPop=disasterPrepareMailtoPopup();
   function savePc(){
-    var stPc=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+    var stPc=typeof effectiveDisApproverStepsForSubmit==='function'?effectiveDisApproverStepsForSubmit():(typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[]);
     if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,stPc);
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
     if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase()){try{HHDB.mergeDisasterReport(rec)}catch(fe){console.warn('Firebase save error',fe)}}
     else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
     try{
       if(!(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase())){
-        localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST));
+        var _lsPc=(typeof HHDB!=='undefined'&&HHDB.stripDisasterReportsForStorage)?HHDB.stripDisasterReportsForStorage(DIS_LIST):DIS_LIST;
+        localStorage.setItem('hh_disaster_reports',JSON.stringify(_lsPc));
       }
     }catch(le){console.warn('localStorage save error',le)}
     if(window._disPhotosPC_render)window._disPhotosPC_render();
     if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPop);
     window._disPendingMailRec=rec.wf?rec:null;
-    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))?'block':'none';
+    var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterNeedPrepareMailtoOnSubmit==='function'&&disasterNeedPrepareMailtoOnSubmit()?'block':'none';
     resetDisasterFormPC();
     if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
     if(rec.wf){
