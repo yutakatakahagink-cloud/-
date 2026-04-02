@@ -21,7 +21,7 @@ window.HH_FIREBASE_CONFIG = {
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
 // 災害承認メール（HH_EMAILJS）— EmailJS による自動送信（anzensystem@outlook.com 接続想定）
-// allowMailtoFallbackOnEmailJsFailure: true … EmailJS 失敗時のみ従来どおりメール作成画面を開く（既定は false＝画面を出さない）
+// allowMailtoFallbackOnEmailJsFailure: false（既定）… EmailJS 失敗時もメール作成は開かない。true にすると失敗時だけ従来の作成画面を開く
 // workflowNotifyVia: 'mailto' … EmailJS を使わず常に手動メール（config.example.js 参照）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
