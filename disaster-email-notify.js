@@ -13,6 +13,7 @@
  *   mailtoFromEmail: '',  // mailto 時に &from= を付与（クライアントは無視することがある）
  *   emailJsBundleUrl: '', // 任意: EmailJS SDK の URL（空なら同一オリジンの email.min.js?v=4.4.1 → 失敗時 CDN）
  *   workflowNotifyVia: 'emailjs', // 'emailjs'（既定）| 'mailto' — 後者は EmailJS を使わず OS のメーラーで送る（M365 等で第三者経由が隔離されるとき）
+ *   allowMailtoFallbackOnEmailJsFailure: false, // true のときのみ、EmailJS 失敗後にメール作成画面を開く（既定は開かない）
  * };
  * serviceId は EmailJS の「Email Services」で Gmail / Outlook 等どれを接続したかに対応（＝送信に使うメールアカウント経路）。
  * テンプレート例: To フィールドに必ず {{to_email}}（または {{email}} / {{to}} / {{user_email}} のいずれか）を指定
@@ -335,6 +336,12 @@
     return !!(cfg && cfg.publicKey && cfg.serviceId && cfg.templateId);
   };
 
+  /** EmailJS 送信失敗後に mailto で作成画面を開くか（既定: 開かない＝ブラウザの Outlook が勝手に出ない） */
+  function allowMailtoFallbackOnEmailJsFailure() {
+    var cfg = global.HH_EMAILJS || {};
+    return cfg.allowMailtoFallbackOnEmailJsFailure === true;
+  }
+
   /** HH_EMAILJS.workflowNotifyVia === 'mailto' のとき、災害WF通知は EmailJS ではなくデスクトップメーラー経路にする */
   global.disasterWorkflowPrefersMailto = function () {
     var cfg = global.HH_EMAILJS || {};
@@ -574,8 +581,10 @@
 
     ensureEmailJs(function (ok) {
       if (!ok || !global.emailjs || !global.emailjs.send) {
-        console.warn('[disaster-email] EmailJS SDK load/init に失敗しました（オフライン・ブロック・file:// 等）');
-        if (kind === 'submitted') {
+        console.warn(
+          '[disaster-email] EmailJS SDK load/init に失敗しました（オフライン・ブロック・file://・email.min.js 未配置 等）。メール作成は開きません。HH_BASE_URL と email.min.js の配置を確認するか、config の allowMailtoFallbackOnEmailJsFailure: true で従来のフォールバックを有効にできます。'
+        );
+        if (allowMailtoFallbackOnEmailJsFailure() && kind === 'submitted') {
           var st0 = getSteps(rec)[0];
           var to0 = safeMailtoAddr(stepApproverEmail(st0));
           if (to0) {
@@ -628,19 +637,24 @@
               setTimeout(function () {
                 try {
                   alert(
-                    '承認依頼メールの自動送信に失敗しました。\n\n原因: EmailJS に接続している Outlook が Microsoft 側で「停止」扱いになっている可能性が高いです。\n\n対処: (1) outlook.com で該当メールを復旧する (2) EmailJS に別のメール（会社の Microsoft 365 や Gmail 等）を接続し config を更新する\n\nこの後、メール作成画面が開いた場合は「送信」で第1承認者へ手動送付できます。'
+                    '承認依頼メールの自動送信に失敗しました。\n\n原因: EmailJS に接続している Outlook が Microsoft 側で「停止」扱いになっている可能性が高いです。\n\n対処: (1) outlook.com で anzensystem@outlook.com を復旧する (2) EmailJS に別のメールサービスを接続し config を更新する\n\n（メール作成画面は自動では開きません。手動送付が必要なときは config に allowMailtoFallbackOnEmailJsFailure: true を追加してください。）'
                   );
                 } catch (eAl) {}
               }, 500);
             }
           }
-          if (kind === 'submitted' && rec && rec.wf) {
+          if (allowMailtoFallbackOnEmailJsFailure() && kind === 'submitted' && rec && rec.wf) {
             var st = getSteps(rec)[0];
             var toF = safeMailtoAddr(stepApproverEmail(st));
             if (toF) {
               var m = mailtoBodyForApprover(rec, 0);
               disasterOpenMailtoCompose(toF, m.sub, m.body, '');
             }
+          } else if (kind === 'submitted') {
+            console.warn(
+              '[disaster-email] EmailJS 送信に失敗しました。メール作成は開きません（allowMailtoFallbackOnEmailJsFailure: true でフォールバック可）。',
+              err
+            );
           }
         }
       );
