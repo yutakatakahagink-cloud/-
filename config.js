@@ -33,6 +33,8 @@ window.HH_EMAILJS = {
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
   fromName: '安全衛生管理システム',
+  // workflowNotifyVia: mailto のとき、メール作成に &from= を付与（Outlook でこのアカウントから送るよう促す）
+  mailtoFromEmail: 'anzensystem@outlook.com',
   workflowNotifyVia: 'mailto'
 };
 
