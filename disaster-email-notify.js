@@ -10,10 +10,14 @@
  *   replyToEmail: '',   // 任意: Reply-To 専用（空なら所有者の送信元メール）
  *   composeMode: 'mailto', // EmailJS 未使用／失敗時の compose: 'mailto' | 'outlookWeb'
  *   outlookWebComposeBase: 'https://outlook.office.com/mail/deeplink/compose',
- *   mailtoFromEmail: ''   // mailto 時に &from= を付与（クライアントは無視することがある）
+ *   mailtoFromEmail: '',  // mailto 時に &from= を付与（クライアントは無視することがある）
+ *   emailJsBundleUrl: '', // 任意: EmailJS SDK の URL（空なら同一オリジンの email.min.js?v=4.4.1 → 失敗時 CDN）
+ *   workflowNotifyVia: 'emailjs', // 'emailjs'（既定）| 'mailto' — 後者は EmailJS を使わず OS のメーラーで送る（M365 等で第三者経由が隔離されるとき）
  * };
  * serviceId は EmailJS の「Email Services」で Gmail / Outlook 等どれを接続したかに対応（＝送信に使うメールアカウント経路）。
- * テンプレート例: To = {{to_email}}、From に {{from_email}} {{from_name}}、Reply-To = {{reply_to}} 等
+ * テンプレート例: To フィールドに必ず {{to_email}}（または {{email}} / {{to}} / {{user_email}} のいずれか）を指定
+ *   未設定や別名のみだと API が 422「The recipients address is empty」になる。
+ *   From に {{from_email}} {{from_name}}、Reply-To = {{reply_to}} 等
  * 所有者が設定した送信元は、上記が空のとき {{reply_to}} {{sender_email}} に反映。差戻し時のみ副本 {{bcc_email}}
  *
  * ※ メールアドレスをフォームに入れただけでは送信されません。EmailJS 設定時は API 送信、未設定時は使用者画面の「承認者にメールを作成」や承認後の確認ダイアログから mailto を開きます。
@@ -61,6 +65,22 @@
     var s = String(addr || '').trim();
     if (!/^[^\s<>"']+@[^\s<>"']+\.[^\s<>"']+$/.test(s)) return '';
     return s;
+  }
+
+  /** 承認段階オブジェクトから宛先を取り出す（キー揺れ・Firebase 経由の大文字など） */
+  function stepApproverEmail(st) {
+    if (!st || typeof st !== 'object') return '';
+    var raw =
+      st.email != null
+        ? st.email
+        : st.Email != null
+          ? st.Email
+          : st.user_email != null
+            ? st.user_email
+            : st.mail != null
+              ? st.mail
+              : '';
+    return String(raw || '').trim();
   }
 
   /** 提出時「送信者メール」。差戻し通知の宛先。旧データは reporter_notify_email */
@@ -111,13 +131,24 @@
     disasterOpenMailtoCompose(to, m.sub, m.body, '');
   };
 
+  /** mailto の &from=（Outlook が既定アカウントを切り替えることがある）。未指定時は fromEmail / replyToEmail を使う */
+  function effectiveMailtoFromEmail() {
+    var cfg = global.HH_EMAILJS || {};
+    var a = String(cfg.mailtoFromEmail || '').trim();
+    if (a && safeMailtoAddr(a)) return a;
+    a = String(cfg.fromEmail || '').trim();
+    if (a && safeMailtoAddr(a)) return a;
+    a = String(cfg.replyToEmail || '').trim();
+    if (a && safeMailtoAddr(a)) return a;
+    return '';
+  }
+
   function openMailtoLink(to, sub, body, bcc) {
     var q = 'subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(body);
     var bc = safeMailtoAddr(bcc);
     if (bc) q += '&bcc=' + encodeURIComponent(bc);
-    var cfg = global.HH_EMAILJS || {};
-    var fromAddr = String(cfg.mailtoFromEmail || '').trim();
-    if (fromAddr && safeMailtoAddr(fromAddr)) {
+    var fromAddr = effectiveMailtoFromEmail();
+    if (fromAddr) {
       q += '&from=' + encodeURIComponent(fromAddr);
     }
     var href = 'mailto:' + to + '?' + q;
@@ -195,8 +226,41 @@
   };
 
   var _emailJsLoading = false;
+  /** EmailJS 内部のレート制限が localStorage に依存する。Edge のトラッキング防止で失敗するためメモリに逃がす */
+  function emailJsMemoryStorageProvider() {
+    var mem = Object.create(null);
+    return {
+      get: function (key) {
+        return Promise.resolve(Object.prototype.hasOwnProperty.call(mem, key) ? String(mem[key]) : null);
+      },
+      set: function (key, val) {
+        mem[key] = val;
+        return Promise.resolve();
+      },
+      remove: function (key) {
+        delete mem[key];
+        return Promise.resolve();
+      },
+    };
+  }
+
+  function emailJsInitWithCfg(cfg) {
+    if (!global.emailjs || typeof global.emailjs.init !== 'function' || !cfg || !cfg.publicKey) return;
+    global.emailjs.init({
+      publicKey: cfg.publicKey,
+      storageProvider: emailJsMemoryStorageProvider(),
+    });
+  }
+
+  /** 同一オリジン配信を優先（Edge 等のトラッキング防止で cdn.jsdelivr.net のストレージがブロックされうる） */
+  var EMAILJS_BUNDLE_DEFAULT = 'email.min.js?v=4.4.1';
+  var EMAILJS_CDN_FALLBACK = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js';
+
   function ensureEmailJs(cb) {
-    if (global.emailjs && typeof global.emailjs.init === 'function') {
+    if (global.emailjs && typeof global.emailjs.init === 'function' && typeof global.emailjs.send === 'function') {
+      try {
+        emailJsInitWithCfg(global.HH_EMAILJS || {});
+      } catch (eRe) {}
       cb(true);
       return;
     }
@@ -207,23 +271,63 @@
       return;
     }
     _emailJsLoading = true;
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-    s.onload = function () {
+
+    function afterBundleLoaded() {
       _emailJsLoading = false;
       var cfg = global.HH_EMAILJS;
       try {
         if (global.emailjs && cfg && cfg.publicKey) {
-          global.emailjs.init({ publicKey: cfg.publicKey });
+          emailJsInitWithCfg(cfg);
         }
-      } catch (e) {}
-      cb(!!(global.emailjs && cfg && cfg.publicKey && cfg.serviceId && cfg.templateId));
-    };
-    s.onerror = function () {
-      _emailJsLoading = false;
-      cb(false);
-    };
-    document.head.appendChild(s);
+      } catch (e) {
+        console.warn('[disaster-email] EmailJS init に失敗しました', e);
+      }
+      var ok = !!(
+        global.emailjs &&
+        typeof global.emailjs.send === 'function' &&
+        cfg &&
+        cfg.publicKey &&
+        cfg.serviceId &&
+        cfg.templateId
+      );
+      if (!ok) {
+        console.warn(
+          '[disaster-email] EmailJS が利用できません（SDK 未読込・init 失敗・HH_EMAILJS 不足）。email.min.js をサイトと同じフォルダにデプロイしているか確認してください。'
+        );
+      }
+      cb(ok);
+    }
+
+    function appendBundle(src, isCdnFallback) {
+      var s = document.createElement('script');
+      s.async = true;
+      s.onload = afterBundleLoaded;
+      s.onerror = function () {
+        if (!isCdnFallback) {
+          console.warn('[disaster-email] 同一オリジンの email.min.js が読めません。CDN にフォールバックします。');
+          appendBundle(EMAILJS_CDN_FALLBACK, true);
+        } else {
+          _emailJsLoading = false;
+          console.warn('[disaster-email] EmailJS SDK の読み込みに失敗しました（ネットワーク・ブロック等）');
+          cb(false);
+        }
+      };
+      s.src = src;
+      document.head.appendChild(s);
+    }
+
+    var cfg0 = global.HH_EMAILJS || {};
+    var primary = (function () {
+      if (typeof cfg0.emailJsBundleUrl === 'string' && cfg0.emailJsBundleUrl.trim()) {
+        return cfg0.emailJsBundleUrl.trim();
+      }
+      var bu = global.HH_BASE_URL;
+      if (typeof bu === 'string' && bu.trim()) {
+        return bu.replace(/\/?$/, '/') + 'email.min.js?v=4.4.1';
+      }
+      return EMAILJS_BUNDLE_DEFAULT;
+    })();
+    appendBundle(primary, false);
   }
 
   global.disasterHasEmailJsConfigured = function () {
@@ -231,9 +335,70 @@
     return !!(cfg && cfg.publicKey && cfg.serviceId && cfg.templateId);
   };
 
+  /** HH_EMAILJS.workflowNotifyVia === 'mailto' のとき、災害WF通知は EmailJS ではなくデスクトップメーラー経路にする */
+  global.disasterWorkflowPrefersMailto = function () {
+    var cfg = global.HH_EMAILJS || {};
+    var v = String(cfg.workflowNotifyVia || '')
+      .toLowerCase()
+      .replace(/[\s_-]/g, '');
+    return v === 'mailto';
+  };
+
+  /** EmailJS で API 送信するか（キーが揃っていて mailto 優先でない） */
+  global.disasterUsesApiForWorkflowEmail = function () {
+    if (!global.disasterHasEmailJsConfigured || !global.disasterHasEmailJsConfigured()) return false;
+    if (global.disasterWorkflowPrefersMailto && global.disasterWorkflowPrefersMailto()) return false;
+    return true;
+  };
+
+  /**
+   * 提出時に空タブを先に開く／案内（disWfMailPrompt）を出すか。
+   * disaster-webhook-notify.js の disasterShouldOpenMailtoForWf はこのファイルより後に読み込まれる想定（実行時には両方そろっていること）。
+   */
+  global.disasterNeedPrepareMailtoOnSubmit = function () {
+    if (global.disasterWorkflowPrefersMailto && global.disasterWorkflowPrefersMailto()) return true;
+    if (typeof global.disasterShouldOpenMailtoForWf === 'function' && global.disasterShouldOpenMailtoForWf()) return true;
+    if (
+      typeof global.disasterShouldOpenMailtoForWf !== 'function' &&
+      typeof global.disasterHasEmailJsConfigured === 'function' &&
+      !global.disasterHasEmailJsConfigured()
+    )
+      return true;
+    return false;
+  };
+
+  /** EmailJS 未使用／mailto 優先時に TryNotify から承認者・差戻し先へ mailto を開く */
+  function tryNotifyWorkflowViaMailto(kind, rec) {
+    var steps = getSteps(rec);
+    if (!steps.length) return;
+    if (kind === 'returned') {
+      if (global.disasterOpenMailtoReturned) global.disasterOpenMailtoReturned(rec);
+      return;
+    }
+    if (kind === 'submitted') {
+      var to0 = safeMailtoAddr(stepApproverEmail(steps[0]));
+      if (to0) {
+        var m0 = mailtoBodyForApprover(rec, 0);
+        disasterOpenMailtoCompose(to0, m0.sub, m0.body, '');
+      }
+      return;
+    }
+    if (kind === 'approved_next') {
+      if (rec.wf.state !== 'pending') return;
+      var si = rec.wf.step != null ? Number(rec.wf.step) : 0;
+      if (isNaN(si) || si < 0) si = 0;
+      var st = steps[si];
+      var toA = safeMailtoAddr(stepApproverEmail(st));
+      if (toA) {
+        var mm = mailtoBodyForApprover(rec, si);
+        disasterOpenMailtoCompose(toA, mm.sub, mm.body, '');
+      }
+    }
+  }
+
   /** 災害WF付き提出後のトースト文言（EmailJS / Webhook / mailto のいずれかに合わせる） */
   global.disasterWfAfterSubmitHint = function () {
-    if (global.disasterHasEmailJsConfigured()) {
+    if (global.disasterUsesApiForWorkflowEmail && global.disasterUsesApiForWorkflowEmail()) {
       return '送信しました。承認者にメールで通知しました';
     }
     if (typeof global.disasterHasWebhookNotifyConfigured === 'function' && global.disasterHasWebhookNotifyConfigured()) {
@@ -273,16 +438,30 @@
    */
   global.disasterNotifySubmitted = function (rec, mailtoPopup) {
     if (!rec || !rec.wf) {
+      if (global.disasterHasEmailJsConfigured && global.disasterHasEmailJsConfigured()) {
+        console.warn(
+          '[disaster-email] この報告にワークフローがありません（承認者メール未入力など）。第1承認者へメールは送られません。'
+        );
+      }
       closePopupSafe(mailtoPopup);
       return;
     }
     var steps = getSteps(rec);
     if (!steps.length) {
+      if (global.disasterHasEmailJsConfigured && global.disasterHasEmailJsConfigured()) {
+        console.warn(
+          '[disaster-email] 承認者ステップが0件のためメール通知をスキップしました。災害タブで承認者メールを1件以上入力してください。'
+        );
+      }
       closePopupSafe(mailtoPopup);
       return;
     }
-    if (global.disasterHasEmailJsConfigured()) {
+    if (global.disasterUsesApiForWorkflowEmail && global.disasterUsesApiForWorkflowEmail()) {
       closePopupSafe(mailtoPopup);
+      console.info('[disaster-email] 提出後の承認者通知（EmailJS）を試行します', {
+        reportId: rec.id,
+        firstApprover: stepApproverEmail(steps[0]) ? '（設定あり）' : '（未設定・届きません）',
+      });
       global.disasterTryNotifyWorkflow('submitted', rec);
       return;
     }
@@ -293,11 +472,16 @@
         console.warn('[disaster-email] webhook', e);
       }
     }
-    if (typeof global.disasterShouldOpenMailtoForWf === 'function' && !global.disasterShouldOpenMailtoForWf()) {
+    var prefM = global.disasterWorkflowPrefersMailto && global.disasterWorkflowPrefersMailto();
+    if (
+      typeof global.disasterShouldOpenMailtoForWf === 'function' &&
+      !global.disasterShouldOpenMailtoForWf() &&
+      !prefM
+    ) {
       closePopupSafe(mailtoPopup);
       return;
     }
-    var to = safeMailtoAddr(steps[0] && steps[0].email);
+    var to = safeMailtoAddr(stepApproverEmail(steps[0]));
     if (!to) {
       closePopupSafe(mailtoPopup);
       return;
@@ -309,9 +493,8 @@
       return;
     }
     var href = 'mailto:' + to + '?subject=' + encodeURIComponent(m.sub) + '&body=' + encodeURIComponent(m.body);
-    var cfgM = global.HH_EMAILJS || {};
-    var mf = String(cfgM.mailtoFromEmail || '').trim();
-    if (mf && safeMailtoAddr(mf)) href += '&from=' + encodeURIComponent(mf);
+    var mf = effectiveMailtoFromEmail();
+    if (mf) href += '&from=' + encodeURIComponent(mf);
     if (mailtoPopup && !mailtoPopup.closed) {
       try {
         mailtoPopup.location.href = href;
@@ -339,22 +522,38 @@
       }
     }
 
+    if (!(global.disasterUsesApiForWorkflowEmail && global.disasterUsesApiForWorkflowEmail())) {
+      console.info('[disaster-email] ワークフロー通知（mailto 経路）', kind, 'reportId=', rec && rec.id);
+      tryNotifyWorkflowViaMailto(kind, rec);
+      return;
+    }
+
     var cfg = global.HH_EMAILJS;
     if (!(cfg && cfg.publicKey && cfg.serviceId && cfg.templateId)) return;
 
+    console.info('[disaster-email] EmailJS API 送信を準備しています', kind, 'reportId=', rec && rec.id);
+
     var to = '';
     if (kind === 'submitted') {
-      to = (steps[0] && steps[0].email) || '';
+      to = stepApproverEmail(steps[0]);
     } else if (kind === 'approved_next') {
       if (rec.wf.state !== 'pending') return;
-      to = (steps[rec.wf.step] && steps[rec.wf.step].email) || '';
+      var si = rec.wf.step != null ? Number(rec.wf.step) : 0;
+      if (isNaN(si) || si < 0) si = 0;
+      to = stepApproverEmail(steps[si]);
     } else if (kind === 'returned') {
       to = global.disasterWorkflowReturnNotifyTo ? global.disasterWorkflowReturnNotifyTo(rec) : '';
       if (!to) return;
     } else {
       return;
     }
-    if (!to) return;
+    to = safeMailtoAddr(to);
+    if (!to) {
+      console.warn(
+        '[disaster-email] 承認者／通知先のメールが空または形式不正のため EmailJS を送れません。使用者画面の承認者メールを確認してください。'
+      );
+      return;
+    }
 
     var subj =
       kind === 'returned'
@@ -378,7 +577,7 @@
         console.warn('[disaster-email] EmailJS SDK load/init に失敗しました（オフライン・ブロック・file:// 等）');
         if (kind === 'submitted') {
           var st0 = getSteps(rec)[0];
-          var to0 = st0 && safeMailtoAddr(st0.email);
+          var to0 = safeMailtoAddr(stepApproverEmail(st0));
           if (to0) {
             var m0 = mailtoBodyForApprover(rec, 0);
             disasterOpenMailtoCompose(to0, m0.sub, m0.body, '');
@@ -386,8 +585,13 @@
         }
         return;
       }
+      // EmailJS テンプレの「To」は必ずいずれかと一致させる: to_email（推奨） / email / to / user_email
       var params = {
         to_email: to,
+        email: to,
+        to: to,
+        user_email: to,
+        recipient_email: to,
         subject: subj,
         message: msg,
         admin_link: adminLink(),
@@ -409,12 +613,30 @@
       global.emailjs
         .send(cfg.serviceId, cfg.templateId, params, { publicKey: cfg.publicKey })
         .then(
-        function () {},
+        function () {
+          console.info('[disaster-email] EmailJS 送信リクエスト成功', kind, to);
+        },
         function (err) {
           console.warn('[disaster-email] EmailJS', err);
+          var stNum = err && err.status != null ? Number(err.status) : NaN;
+          var errTxt = err && typeof err.text === 'string' ? err.text : '';
+          if (stNum === 412 && /suspend|Outlook:/i.test(errTxt)) {
+            console.warn(
+              '[disaster-email] 送信経路の Outlook アカウントが Microsoft により停止扱いです（412）。outlook.com で該当メールにログインし復旧手順を行うか、会社の Microsoft 365 メール・Gmail など別アカウントを EmailJS の Email Services に接続し、serviceId / fromEmail / replyToEmail を合わせてください。'
+            );
+            if (kind === 'submitted') {
+              setTimeout(function () {
+                try {
+                  alert(
+                    '承認依頼メールの自動送信に失敗しました。\n\n原因: EmailJS に接続している Outlook が Microsoft 側で「停止」扱いになっている可能性が高いです。\n\n対処: (1) outlook.com で該当メールを復旧する (2) EmailJS に別のメール（会社の Microsoft 365 や Gmail 等）を接続し config を更新する\n\nこの後、メール作成画面が開いた場合は「送信」で第1承認者へ手動送付できます。'
+                  );
+                } catch (eAl) {}
+              }, 500);
+            }
+          }
           if (kind === 'submitted' && rec && rec.wf) {
             var st = getSteps(rec)[0];
-            var toF = st && safeMailtoAddr(st.email);
+            var toF = safeMailtoAddr(stepApproverEmail(st));
             if (toF) {
               var m = mailtoBodyForApprover(rec, 0);
               disasterOpenMailtoCompose(toF, m.sub, m.body, '');
