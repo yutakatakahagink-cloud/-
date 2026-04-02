@@ -20,11 +20,9 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認メール（HH_EMAILJS）
-// ■ 会社の Microsoft 365 宛に「届く」運用（推奨・既定）: workflowNotifyVia: 'mailto'
-//   → 提出・承認のあとに Outlook 等のメール作成が開くので、必ず「送信」を押す。送信経路は手動テストで届いたのと同じ。
-//   → anzensystem@outlook.com が Microsoft にブロックされている間は送信できない。Outlook から届く「verify your account」で解除する。
-// ■ EmailJS のみで自動送信に戻す場合: 下の workflowNotifyVia の1行を削除するか 'emailjs' にする（会社宛は届かない・ブロックされやすいことがある）
+// 災害承認メール（HH_EMAILJS）— 既定は EmailJS による自動送信（接続したメールサービス＝通常 anzensystem@outlook.com から送信）
+// EmailJS 失敗時の手動フォールバック用に mailtoFromEmail を残しています。
+// 会社の M365 宛だけ届かない・Outlook がブロックされる場合は workflowNotifyVia: 'mailto' を追加し、デスクトップメールで手動送信に切り替え可能（config.example.js 参照）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   // EmailJS API はメールアドレスを service ID にできない。ダッシュボードで「デフォルト」のサービス1つのときは default_service
@@ -33,13 +31,11 @@ window.HH_EMAILJS = {
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
   fromName: '安全衛生管理システム',
-  // workflowNotifyVia: mailto のとき、メール作成に &from= を付与（Outlook でこのアカウントから送るよう促す）
-  mailtoFromEmail: 'anzensystem@outlook.com',
-  workflowNotifyVia: 'mailto'
+  mailtoFromEmail: 'anzensystem@outlook.com'
 };
 
 // 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
-// いずれかを入れると提出・承認・差戻し時に Webhook も送る。EmailJS のみのときは通常 mailto は開かない。workflowNotifyVia: 'mailto' のときは Webhook と併せてメール作成も開く。
+// いずれかを入れると提出・承認・差戻し時に Webhook も送る。EmailJS 利用時は通常メール作成は開かない（失敗時のみ mailto フォールバックのことがある）。
 // powerAutomateUrl: フロー「HTTP リクエストの受信時」で発行した POST 用 URL（config.example.js の JSON スキーマ参照）
 window.HH_WEBHOOK_NOTIFY = {
   slackIncomingUrl: '',
