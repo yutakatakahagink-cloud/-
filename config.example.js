@@ -82,6 +82,7 @@ window.HH_FIREBASE_CONFIG = {
 //   composeMode: "mailto",
 //   outlookWebComposeBase: "https://outlook.office.com/mail/deeplink/compose",
 //   mailtoFromEmail: "anzen@example.com", // workflowNotifyVia: mailto 時の &from=（空なら fromEmail を使用）
+//   allowMailtoFallbackOnEmailJsFailure: false, // true なら EmailJS 失敗時にメール作成画面を開く
 //   // 省略または "emailjs" = EmailJS で自動送信。"mailto" = OS のメーラーで手動送信
 //   workflowNotifyVia: "emailjs"
 // };
