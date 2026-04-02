@@ -20,8 +20,11 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認メール: EmailJS 無料プラン運用（月200通まで等）。Account→Security の Domains 制限は有料のため未設定で可。
-// publicKey / serviceId / templateId 設定済み。本番 URL から動作確認。所有者画面の送信元を anzensystem@outlook.com に。
+// 災害承認メール（HH_EMAILJS）
+// ■ 会社の Microsoft 365 宛に「届く」運用（推奨・既定）: workflowNotifyVia: 'mailto'
+//   → 提出・承認のあとに Outlook 等のメール作成が開くので、必ず「送信」を押す。送信経路は手動テストで届いたのと同じ。
+//   → anzensystem@outlook.com が Microsoft にブロックされている間は送信できない。Outlook から届く「verify your account」で解除する。
+// ■ EmailJS のみで自動送信に戻す場合: 下の workflowNotifyVia の1行を削除するか 'emailjs' にする（会社宛は届かない・ブロックされやすいことがある）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   // EmailJS API はメールアドレスを service ID にできない。ダッシュボードで「デフォルト」のサービス1つのときは default_service
@@ -30,7 +33,6 @@ window.HH_EMAILJS = {
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
   fromName: '安全衛生管理システム',
-  // Microsoft 365 等で EmailJS 経由が届かないとき: デスクトップ Outlook と同じ経路で送る（提出・承認・差戻しはメール作成画面）
   workflowNotifyVia: 'mailto'
 };
 
