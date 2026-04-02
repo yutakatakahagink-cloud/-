@@ -1,8 +1,10 @@
 // Firebase 設定（config.example.js を参考に編集）
 // 設定すると携帯・他PCからも同じデータで利用できます
 
-// ★ 携帯・他PCから開くURL（GitHub Pagesの場合はここに記入）
-// 末尾の / を忘れずに。ローカルで開くときもQRコードがこのURLを指します
+// ★ 本番サイトのルート（GitHub Pages で user.html・email.min.js・config.js を置いている階層）
+// リポジトリ: github.com/yutakatakahagink-cloud/- ／ 公開例: …/user.html と同じパス直下
+// 末尾は必ず / 。QRコード・承認メール内リンク・EmailJS SDK（email.min.js）の読み込み基準になります
+// ※ ユーザー名の綴り注意: takahagink（正）／ takahaqink・takatahagink・takataka… などは別URLで別configになります
 window.HH_BASE_URL = "https://yutakatakahagink-cloud.github.io/-/";
 
 window.HH_FIREBASE_CONFIG = {
@@ -27,11 +29,13 @@ window.HH_EMAILJS = {
   templateId: 'template_cnyi3sx',
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
-  fromName: '安全衛生管理システム'
+  fromName: '安全衛生管理システム',
+  // Microsoft 365 等で EmailJS 経由が届かないとき: デスクトップ Outlook と同じ経路で送る（提出・承認・差戻しはメール作成画面）
+  workflowNotifyVia: 'mailto'
 };
 
 // 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
-// いずれかを入れると提出・承認・差戻し時に通知し、Outlook（mailto）は開きません。
+// いずれかを入れると提出・承認・差戻し時に Webhook も送る。EmailJS のみのときは通常 mailto は開かない。workflowNotifyVia: 'mailto' のときは Webhook と併せてメール作成も開く。
 // powerAutomateUrl: フロー「HTTP リクエストの受信時」で発行した POST 用 URL（config.example.js の JSON スキーマ参照）
 window.HH_WEBHOOK_NOTIFY = {
   slackIncomingUrl: '',
