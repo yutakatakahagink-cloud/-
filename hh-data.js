@@ -16,6 +16,18 @@
   function getDisasterRef(){return db?db.ref(DB_PATH+'/hh_disaster_reports'):null}
   function getDisasterWfRef(){return db?db.ref(DB_PATH+'/hh_disaster_workflow'):null}
 
+  /** localStorage 用：画像 base64 を除き容量超過を防ぐ */
+  function hhStripDisasterReportsForStorage(arr){
+    if(!Array.isArray(arr))return[];
+    return arr.map(function(r){
+      if(!r||typeof r!=='object')return r;
+      var o=Object.assign({},r);
+      if(o.situation_img!=null)o.situation_img='';
+      if(Array.isArray(o.situation_imgs))o.situation_imgs=[];
+      return o;
+    });
+  }
+
   /** Firebase 互換: 配列・{0:…}・{報告id:…} のいずれでも一覧配列へ */
   function normalizeDisasterRecord(raw,keyHint){
     if(!raw||typeof raw!=='object')return null;
@@ -120,7 +132,12 @@
 
   window.HHDB={
     useFirebase:function(){return useFirebase},
-    init:function(done){
+    /**
+     * @param {function} done 初期化完了後
+     * @param {{anonymousSignIn?:boolean}} opt disaster-approver 等: true なら匿名ログインしてから done（ルールが auth != null でも読める）
+     */
+    init:function(done,opt){
+      opt=opt||{};
       if(!useFirebase){
         if(typeof done==='function')done();
         return Promise.resolve();
@@ -130,6 +147,9 @@
         if(typeof done==='function')done();
         return Promise.resolve();
       }
+      function callDone(){
+        if(typeof done==='function')done();
+      }
       try{
         if(firebase.apps&&firebase.apps.length>0){
           db=firebase.app().database();
@@ -137,12 +157,29 @@
           firebase.initializeApp(cfg);
           db=firebase.database();
         }
-        if(typeof done==='function')done();
+        if(opt.anonymousSignIn){
+          var authSvc=null;
+          try{
+            if(firebase&&typeof firebase.auth==='function')authSvc=firebase.auth();
+          }catch(eAuth){}
+          if(!authSvc||typeof authSvc.signInAnonymously!=='function'){
+            console.warn('[HHDB] firebase-auth が未読込のため匿名ログインをスキップします（承認ページの読込に失敗する場合は disaster-approver.html に firebase-auth-compat.js を追加してください）');
+            callDone();
+            return Promise.resolve();
+          }
+          return authSvc.signInAnonymously().then(function(){
+            callDone();
+          }).catch(function(e){
+            console.warn('[HHDB] 匿名ログインに失敗しました。Authentication で「匿名」を有効にするか、Database ルールで未認証の read を許可してください。',e);
+            callDone();
+          });
+        }
+        callDone();
         return Promise.resolve();
       }catch(e){
         console.warn('Firebase init failed',e);
         useFirebase=false;
-        if(typeof done==='function')done();
+        callDone();
         return Promise.resolve();
       }
     },
@@ -311,7 +348,7 @@
           var ix=-1;
           for(var i=0;i<arr.length;i++){if(String(arr[i].id)===String(rec.id)){ix=i;break}}
           if(ix>=0)arr[ix]=toSave;else arr.push(toSave);
-          localStorage.setItem('hh_disaster_reports',JSON.stringify(arr));
+          localStorage.setItem('hh_disaster_reports',JSON.stringify(hhStripDisasterReportsForStorage(arr)));
         }catch(e){if(typeof onErr==='function')onErr(e)}
         if(typeof onDone==='function')onDone();
         return;
@@ -399,7 +436,7 @@
     },
     saveDisasterReports:function(arr){
       if(!useFirebase||!db){
-        try{localStorage.setItem('hh_disaster_reports',JSON.stringify(arr))}catch(e){}
+        try{localStorage.setItem('hh_disaster_reports',JSON.stringify(hhStripDisasterReportsForStorage(arr||[])))}catch(e){}
         return;
       }
       getDisasterRef().set(arrayToDisasterIdMap(arr||[]));
@@ -447,6 +484,7 @@
           notify_from_email:String(v.notify_from_email!=null?v.notify_from_email:'').trim().toLowerCase()
         });
       });
-    }
+    },
+    stripDisasterReportsForStorage:hhStripDisasterReportsForStorage
   };
 })();
