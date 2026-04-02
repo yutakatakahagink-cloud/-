@@ -24,10 +24,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 </div>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js"></script>
-<script src="hh-data.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="config.js?v=20260401-1"></script>
+<script src="hh-data.js?v=20260401-1"></script>
 <script src="disaster-workflow.js"></script>
-<script src="disaster-email-notify.js"></script>
+<script src="disaster-email-notify.js?v=20260330-9"></script>
 <script src="disaster-webhook-notify.js"></script>
 <script src="disaster-detail-html.js"></script>
 <script>
@@ -122,7 +123,7 @@ function render(){
   if(!r){
     var hint='';
     if(DIS_LIST_LOAD_ERROR){
-      hint='<p style="margin-top:10px;font-size:12px;line-height:1.6"><strong>データの取得に失敗した可能性があります。</strong> Firebase Realtime Database の<b>読み取りルール</b>で、未ログインでも <code style="font-size:11px">hh_data/hh_disaster_reports</code>（または実際のパス）が読めるか確認してください。F12 → コンソールにエラーが出ていないかもご確認ください。</p>';
+      hint='<p style="margin-top:10px;font-size:12px;line-height:1.6"><strong>データの取得に失敗した可能性があります。</strong> F12 コンソールに <code style="font-size:11px">PERMISSION_DENIED</code> がある場合: (1) Firebase Console → Authentication → <b>匿名</b> を有効にする（本ページは匿名ログイン後に読み込みます）(2) Realtime Database のルールで <code style="font-size:11px">hh_data</code> の read が認証済み向けなら、匿名が必須です。またはテスト用に <code style="font-size:11px">hh_data</code> の read を許可するルールに変更してください。詳細はリポジトリの <code style="font-size:11px">FirebaseConfig.md</code> を参照。</p>';
     }else if(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&DIS_LIST.length===0){
       hint='<p style="margin-top:10px;font-size:12px;line-height:1.6">クラウド上の災害報告が<strong>0件</strong>です。提出した端末と<b>同じFirebase</b>を参照できているか、<code style="font-size:11px">config.js</code> がこのサイトにデプロイされているか確認してください。承認用リンクはログインしないため、Database を匿名読取りできるルールが必要です。</p>';
     }else if(DIS_LIST.length>0){
@@ -241,7 +242,8 @@ function boot(){
     }
   }
   if(typeof HHDB!=='undefined'){
-    HHDB.init(function(){loadList(afterLoad)});
+    /* 匿名ログイン: Database ルールが auth != null のときも災害一覧を読める（Console で「匿名」プロバイダを有効化すること） */
+    HHDB.init(function(){loadList(afterLoad)},{anonymousSignIn:true});
   }else{
     loadList(afterLoad);
   }
