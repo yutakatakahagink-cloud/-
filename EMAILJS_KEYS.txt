@@ -8,8 +8,8 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
 テンプレート例（変数名は disaster-email-notify.js と一致）:
   To: {{to_email}}  ← EmailJS の「To Email」欄に必須。空のままや固定メールのみだと送信できない。
      コード側は email / to / user_email / recipient_email にも同じ宛先を渡すので、テンプレで {{email}} 等でも可。
-  Subject: {{subject}}
-  本文: {{message}}
+  Subject: {{subject}}  ← 必須。固定文字（例:「災害発生報告書 承認依頼」）のままだと、アプリで変えた件名が反映されずスパム判定も変わりません。Subject 欄は {{subject}} のみにする。
+  本文: {{message}}  ← 本文も固定の長文＋URLを足さず、基本は {{message}} のみ推奨（重複URLは AS4810 で弾かれやすい）。
 
 ■ 422「The recipients address is empty」: テンプレートの「To」が上記変数と繋がっていないことがほとんど。
   EmailJS → Email Templates → 該当テンプレ → Settings / Content で To を {{to_email}} にする。
