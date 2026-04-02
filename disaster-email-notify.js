@@ -637,7 +637,14 @@
               setTimeout(function () {
                 try {
                   alert(
-                    '承認依頼メールの自動送信に失敗しました。\n\n原因: EmailJS に接続している Outlook が Microsoft 側で「停止」扱いになっている可能性が高いです。\n\n対処: (1) outlook.com で anzensystem@outlook.com を復旧する (2) EmailJS に別のメールサービスを接続し config を更新する\n\n（メール作成画面は自動では開きません。手動送付が必要なときは config に allowMailtoFallbackOnEmailJsFailure: true を追加してください。）'
+                    '【承認依頼メール】自動送信に失敗しました（EmailJS 412 / Outlook 停止の可能性）。\n\n' +
+                      '■ まず試すこと\n' +
+                      '1) ブラウザで https://outlook.com にログインし、anzensystem@outlook.com の「アカウント確認・ブロック解除」を完了する\n' +
+                      '2) または EmailJS のダッシュボードで Gmail / 会社の Microsoft 365 など別メールをサービスに追加し、config.js の serviceId・fromEmail・replyToEmail を合わせる\n\n' +
+                      '■ すぐ手動で送りたいとき（メール作成画面を開く）\n' +
+                      'config.js の HH_EMAILJS に次の1行を追加（J は大文字）:\n' +
+                      'allowMailtoFallbackOnEmailJsFailure: true\n' +
+                      '保存して GitHub に再アップロード後、ページを再読み込みして再度提出してください。'
                   );
                 } catch (eAl) {}
               }, 500);
