@@ -80,6 +80,26 @@
   function normApproveTokenStr(t){
     return String(t||'').trim().replace(/\s+/g,'').toLowerCase();
   }
+  /** base64 等の長い現場写真が含まれると Firebase .set のシリアライズ＋転送だけで数十秒〜分単位になる */
+  function disasterHasHeavyPhotoPayload(rec){
+    if(!rec||typeof rec!=='object')return false;
+    var img=rec.situation_img;
+    if(img!=null&&String(img).length>400)return true;
+    var ims=rec.situation_imgs;
+    if(!Array.isArray(ims))return false;
+    for(var i=0;i<ims.length;i++){
+      if(ims[i]!=null&&String(ims[i]).length>400)return true;
+    }
+    return false;
+  }
+  function disasterCloneWithoutSituationPhotos(rec){
+    if(!rec||typeof rec!=='object')return rec;
+    var o=Object.assign({},rec);
+    if(o.wf&&typeof o.wf==='object')o.wf=Object.assign({},o.wf);
+    o.situation_img=null;
+    o.situation_imgs=[];
+    return o;
+  }
   /** wf 内またはレガシー直下の承認トークン文字列 */
   function rawItemApproveToken(item){
     if(!item||typeof item!=='object')return null;
@@ -385,6 +405,42 @@
           return;
         }
         if(typeof onDone==='function')onDone();
+      });
+    },
+    /**
+     * 写真付き提出: 先に本文・wf だけを軽量 set → 続けて写真入りを set（巨大 base64 の1回 set が数十秒〜1分かかるのを避ける）
+     */
+    mergeDisasterReportLightThenFull:function(rec,onDone,onErr){
+      if(!rec||rec.id==null){
+        if(typeof onDone==='function')onDone();
+        return;
+      }
+      var self=window.HHDB;
+      if(!useFirebase||!db||!disasterHasHeavyPhotoPayload(rec)){
+        return self.mergeDisasterReport(rec,onDone,onErr);
+      }
+      var toLight=normalizeDisasterRecord(disasterCloneWithoutSituationPhotos(rec),rec.id)||disasterCloneWithoutSituationPhotos(rec);
+      var toFull=normalizeDisasterRecord(rec,rec.id)||rec;
+      getDisasterRef().child(String(rec.id)).set(toLight,function(err1){
+        if(err1){
+          console.warn('[HHDB] mergeDisasterReportLightThenFull 先行保存に失敗。フル1回で再試行します。',err1);
+          getDisasterRef().child(String(rec.id)).set(toFull,function(err2){
+            if(err2){
+              console.warn('[HHDB] mergeDisasterReportLightThenFull フル保存も失敗',err2);
+              if(typeof onErr==='function')onErr(err2);
+              return;
+            }
+            if(typeof onDone==='function')onDone();
+          });
+          return;
+        }
+        setTimeout(function(){
+          getDisasterRef().child(String(rec.id)).set(toFull,function(err2){
+            if(err2)console.warn('[HHDB] 写真の後続保存に失敗（本文・wfは先行済みの可能性）',err2);
+            if(typeof onDone==='function')onDone();
+            if(err2&&typeof onErr==='function')onErr(err2);
+          });
+        },0);
       });
     },
     /** URLの id= のみ一致させたいとき（一覧に無いレガシー配列の取りこぼし対策） */

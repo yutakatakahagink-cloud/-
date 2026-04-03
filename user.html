@@ -947,9 +947,9 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260403-2" onerror="console.warn('config.js load failed')"></script>
-<script src="hh-data.js" onerror="console.warn('hh-data.js load failed')"></script>
+<script src="hh-data.js?v=20260331-fast" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js" onerror="console.warn('disaster-workflow.js load failed')"></script>
-<script src="disaster-email-notify.js?v=20260404-2" onerror="console.warn('disaster-email-notify.js load failed')"></script>
+<script src="disaster-email-notify.js?v=20260331-preload" onerror="console.warn('disaster-email-notify.js load failed')"></script>
 <script src="disaster-webhook-notify.js" onerror="console.warn('disaster-webhook-notify.js load failed')"></script>
 <script src="laws_refresh.js" onerror="console.warn('laws_refresh.js load failed')"></script>
 <script>
@@ -1182,6 +1182,9 @@ function doDataInit(){
   if(HHDB.useFirebase()&&HHDB.onDisasterChange)HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
   if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()});
   if(typeof HHDB.useFirebase==='function'&&HHDB.useFirebase()&&HHDB.onDisasterWorkflowChange)HHDB.onDisasterWorkflowChange(function(){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()})});
+  setTimeout(function(){
+    if(typeof disasterPreloadEmailJs==='function')disasterPreloadEmailJs();
+  },2500);
 }
 
 // ===== REQUEST (要望) =====
@@ -1353,6 +1356,26 @@ function fillDisFormDefaults(){
 }
 function handleDisPhoto(){}
 function handleDisPhotoPC(){}
+/** 災害送信: Firebase+merge 時は全件再取得を待たず保存（トースト遅延の主因を解消）。後から一覧だけ裏同期 */
+function disSubmitRunAfterListReady(saveFn){
+  if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase()){
+    DIS_LIST=DIS_LIST||[];
+    saveFn();
+    if(HHDB.loadDisasterReports){
+      HHDB.loadDisasterReports(function(arr){
+        DIS_LIST=arr||[];
+        try{if(document.querySelector('#pDis.pg.on')&&typeof rDisList==='function')rDisList()}catch(eR){}
+      });
+    }
+    return;
+  }
+  if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){
+    HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];saveFn()});
+  }else{
+    try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]}
+    saveFn();
+  }
+}
 function doDisSubmit(){
   var dt=document.getElementById('f_datetime').value,place=document.getElementById('f_place').value.trim(),victim=document.getElementById('f_victim').value.trim(),situation=document.getElementById('f_situation').value.trim();
   if(!dt||!place||!victim||!situation){alert('事故発生日時・発生場所・被害者氏名・発生状況は必須です');return}
@@ -1368,7 +1391,8 @@ function doDisSubmit(){
     var st=typeof effectiveDisApproverStepsForSubmit==='function'?effectiveDisApproverStepsForSubmit():(typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[]);
     if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,st);
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
-    if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase())HHDB.mergeDisasterReport(rec);
+    if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReportLightThenFull&&HHDB.useFirebase&&HHDB.useFirebase())HHDB.mergeDisasterReportLightThenFull(rec);
+    else if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase())HHDB.mergeDisasterReport(rec);
     else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
     else try{var _lsM=(typeof HHDB!=='undefined'&&HHDB.stripDisasterReportsForStorage)?HHDB.stripDisasterReportsForStorage(DIS_LIST):DIS_LIST;localStorage.setItem('hh_disaster_reports',JSON.stringify(_lsM))}catch(e){}
     if(typeof disasterNotifySubmitted==='function')disasterNotifySubmitted(rec,wfMailtoPopM);
@@ -1382,7 +1406,7 @@ function doDisSubmit(){
       t.textContent=msgM;t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='送信しました'},rec.wf?5000:3200)
     }
   }
-  if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];saveNew()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};saveNew();}
+  disSubmitRunAfterListReady(saveNew);
 }
 function doDisSubmitPC(){
   try{
@@ -1402,7 +1426,8 @@ function doDisSubmitPC(){
     var stPc=typeof effectiveDisApproverStepsForSubmit==='function'?effectiveDisApproverStepsForSubmit():(typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[]);
     if(typeof disasterApplyWfOnSubmit==='function')disasterApplyWfOnSubmit(rec,CUR.name,stPc);
     DIS_LIST=DIS_LIST||[];DIS_LIST.push(rec);
-    if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase()){try{HHDB.mergeDisasterReport(rec)}catch(fe){console.warn('Firebase save error',fe)}}
+    if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReportLightThenFull&&HHDB.useFirebase&&HHDB.useFirebase()){try{HHDB.mergeDisasterReportLightThenFull(rec)}catch(fe){console.warn('Firebase save error',fe)}}
+    else if(typeof HHDB!=='undefined'&&HHDB.mergeDisasterReport&&HHDB.useFirebase&&HHDB.useFirebase()){try{HHDB.mergeDisasterReport(rec)}catch(fe){console.warn('Firebase save error',fe)}}
     else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports){try{HHDB.saveDisasterReports(DIS_LIST)}catch(fe){console.warn('Firebase save error',fe)}}
     try{
       if(!(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase())){
@@ -1425,7 +1450,7 @@ function doDisSubmitPC(){
       alert('報告書を送信しました。');
     }
   }
-  if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];savePc()});}else{try{var s=localStorage.getItem('hh_disaster_reports');DIS_LIST=s?JSON.parse(s):[]}catch(e){DIS_LIST=[]};savePc();}
+  disSubmitRunAfterListReady(savePc);
   }catch(err){alert('送信エラー: '+err.message);console.error('doDisSubmitPC error',err)}
 }
 function disListRowUser(r){

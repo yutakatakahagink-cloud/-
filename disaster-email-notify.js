@@ -335,6 +335,11 @@
     return !!(cfg && cfg.publicKey && cfg.serviceId && cfg.templateId);
   };
 
+  /** ページ表示後に先読みすると、提出ボタン直後の EmailJS 初回読み込み待ちを減らせる */
+  global.disasterPreloadEmailJs = function (cb) {
+    ensureEmailJs(typeof cb === 'function' ? cb : function () {});
+  };
+
   /** EmailJS 送信失敗後に mailto で作成画面を開くか（既定: 開かない＝ブラウザの Outlook が勝手に出ない） */
   function allowMailtoFallbackOnEmailJsFailure() {
     var cfg = global.HH_EMAILJS || {};
