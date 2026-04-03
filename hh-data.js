@@ -167,7 +167,17 @@
             callDone();
             return Promise.resolve();
           }
-          return authSvc.signInAnonymously().then(function(){
+          var anonMs=15000;
+          var timeoutP=new Promise(function(resolve){
+            setTimeout(function(){resolve({__hhdbAnonTimeout:true});},anonMs);
+          });
+          return Promise.race([
+            authSvc.signInAnonymously().then(function(){return {__hhdbAnonOk:true};}),
+            timeoutP
+          ]).then(function(res){
+            if(res&&res.__hhdbAnonTimeout){
+              console.warn('[HHDB] 匿名ログインが'+anonMs+'msでタイムアウトしました。読込を続行します（ネットワークや認証設定次第で PERMISSION_DENIED になる場合があります）。');
+            }
             callDone();
           }).catch(function(e){
             console.warn('[HHDB] 匿名ログインに失敗しました。Authentication で「匿名」を有効にするか、Database ルールで未認証の read を許可してください。',e);

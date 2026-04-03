@@ -26,7 +26,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="config.js?v=20260403-2"></script>
-<script src="hh-data.js?v=20260401-1"></script>
+<script src="hh-data.js?v=20260430-1"></script>
 <script src="disaster-workflow.js"></script>
 <script src="disaster-email-notify.js?v=20260404-2"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -101,6 +101,8 @@ function bindPubActions(){
 
 function render(){
   var root=document.getElementById('root');
+  if(!root)return;
+  try{
   if(!REPORT_ID||!REPORT_TOKEN){
     root.innerHTML=
       '<div class="err">'+
@@ -174,10 +176,21 @@ function render(){
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+
     (typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+
     (typeof disasterWfPublicPanelHtml==='function'?disasterWfPublicPanelHtml(r,REPORT_ID,{token:REPORT_TOKEN,step:REPORT_STEP}):'');
-  root.innerHTML=h+ex;
+  var combined=String(h||'')+String(ex||'');
+  if(!combined.trim()){
+    root.innerHTML='<div class="err">表示する内容が生成できませんでした（ワークフロー段階が未設定の可能性）。管理者は owner.html で災害承認の段階設定を保存し、Firebase の <code style="font-size:11px">hh_disaster_workflow</code> が読めるルールか確認してください。F12 コンソールのエラーもご確認ください。</div>';
+    return;
+  }
+  root.innerHTML=combined;
+  }catch(eRender){
+    console.error('[disaster-approver] render',eRender);
+    root.innerHTML='<div class="err">画面の描画中にエラーが発生しました。ページを再読み込みするか、別ブラウザでお試しください。<pre style="margin-top:10px;font-size:11px;white-space:pre-wrap;word-break:break-all">'+String(eRender&&eRender.message?eRender.message:eRender)+'</pre></div>';
+  }
 }
 
 function boot(){
+  var root0=document.getElementById('root');
+  if(root0)root0.innerHTML='<p class="note" style="padding:24px 12px;text-align:center;max-width:560px;margin:0 auto">データを読み込んでいます…（この表示が長く続く場合はネットワーク・Firebase ルール・匿名ログインを確認してください）</p>';
   REPORT_ID=String(qs('id')||'').trim();
   REPORT_TOKEN=String(qs('t')||'').trim().replace(/\s+/g,'');
   REPORT_STEP=String(qs('s')||'').trim();
@@ -253,12 +266,23 @@ function boot(){
   }
   if(typeof HHDB!=='undefined'){
     /* 匿名ログイン: Database ルールが auth != null のときも災害一覧を読める（Console で「匿名」プロバイダを有効化すること） */
-    HHDB.init(function(){loadList(afterLoad)},{anonymousSignIn:true});
+    HHDB.init(function(){
+      /* 承認パネル・バナーは DB の hh_disaster_workflow（段階リスト）が必要。未読込だとパネルが空のままになる */
+      if(typeof disasterLoadWfConfig==='function'){
+        disasterLoadWfConfig(function(){loadList(afterLoad);});
+      }else{
+        loadList(afterLoad);
+      }
+    },{anonymousSignIn:true});
   }else{
     loadList(afterLoad);
   }
 }
-boot();
+try{boot();}catch(eBoot){
+  console.error('[disaster-approver] boot',eBoot);
+  var r=document.getElementById('root');
+  if(r)r.innerHTML='<div class="err">初期化に失敗しました。config.js やスクリプトの読み込みを確認してください。<pre style="margin-top:10px;font-size:11px;white-space:pre-wrap">'+String(eBoot&&eBoot.message?eBoot.message:eBoot)+'</pre></div>';
+}
 </script>
 </body>
 </html>
