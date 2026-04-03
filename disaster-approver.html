@@ -25,7 +25,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="config.js?v=20260403-2"></script>
+<script src="config.js?v=20260430-perf"></script>
 <script src="hh-data.js?v=20260430-3"></script>
 <script src="disaster-workflow.js"></script>
 <script src="disaster-email-notify.js?v=20260404-2"></script>
@@ -206,7 +206,13 @@ function boot(){
   }
   function loadList(fn){
     DIS_LIST_LOAD_ERROR=null;
-    if(typeof HHDB!=='undefined'&&HHDB.loadDisasterReports){
+    if(typeof HHDB==='undefined'||!HHDB.loadDisasterReports){
+      try{DIS_LIST=JSON.parse(localStorage.getItem('hh_disaster_reports')||'[]')}catch(e){DIS_LIST=[]}
+      fn();
+      return;
+    }
+    /* メールリンクは通常 id+t 付き → 全件一覧のダウンロードを避け、子1件 read を優先して表示までの時間を短縮 */
+    function runFullListLoad(done){
       HHDB.loadDisasterReports(function(arr,err){
         DIS_LIST=arr||[];
         DIS_LIST_LOAD_ERROR=err||null;
@@ -224,7 +230,7 @@ function boot(){
           if(!dup)DIS_LIST=DIS_LIST.concat([rec]);
         }
         function stepIdByPath(){
-          if(haveReport()){fn();return;}
+          if(haveReport()){done();return;}
           if(REPORT_ID&&typeof HHDB.loadDisasterReportById==='function'){
             HHDB.loadDisasterReportById(REPORT_ID,function(rec,e2){
               mergeRec(rec);
@@ -236,7 +242,7 @@ function boot(){
           stepTokenDeep();
         }
         function stepTokenDeep(){
-          if(haveReport()){fn();return;}
+          if(haveReport()){done();return;}
           if(REPORT_TOKEN&&typeof HHDB.findDisasterReportByPublicToken==='function'){
             HHDB.findDisasterReportByPublicToken(REPORT_TOKEN,function(rec,e3){
               mergeRec(rec);
@@ -248,24 +254,72 @@ function boot(){
           stepIdDeep();
         }
         function stepIdDeep(){
-          if(haveReport()){fn();return;}
+          if(haveReport()){done();return;}
           if(REPORT_ID&&typeof HHDB.findDisasterReportByIdInTree==='function'){
             HHDB.findDisasterReportByIdInTree(REPORT_ID,function(rec,e4){
               mergeRec(rec);
               if(e4&&!DIS_LIST_LOAD_ERROR)DIS_LIST_LOAD_ERROR=e4;
-              fn();
+              done();
             });
             return;
           }
-          fn();
+          done();
         }
-        if(haveReport()){fn();return;}
+        if(haveReport()){done();return;}
         stepIdByPath();
       });
-    }else{
-      try{DIS_LIST=JSON.parse(localStorage.getItem('hh_disaster_reports')||'[]')}catch(e){DIS_LIST=[]}
-      fn();
     }
+    var useFb=HHDB.useFirebase&&HHDB.useFirebase();
+    if(useFb&&REPORT_ID&&typeof HHDB.loadDisasterReportById==='function'){
+      HHDB.loadDisasterReportById(REPORT_ID,function(rec,eId){
+        if(rec){
+          DIS_LIST=[rec];
+          DIS_LIST_LOAD_ERROR=eId||null;
+          fn();
+          return;
+        }
+        if(REPORT_TOKEN&&typeof HHDB.findDisasterReportByPublicToken==='function'){
+          HHDB.findDisasterReportByPublicToken(REPORT_TOKEN,function(recT,eT){
+            if(recT){
+              DIS_LIST=[recT];
+              DIS_LIST_LOAD_ERROR=eT||eId||null;
+              try{
+                var u=new URL(location.href);
+                u.searchParams.set('id',String(recT.id));
+                history.replaceState(null,'',u.toString());
+                REPORT_ID=String(recT.id);
+              }catch(eU){}
+              fn();
+              return;
+            }
+            runFullListLoad(fn);
+          });
+          return;
+        }
+        runFullListLoad(fn);
+      });
+      return;
+    }
+    if(useFb&&REPORT_TOKEN&&!REPORT_ID&&typeof HHDB.findDisasterReportByPublicToken==='function'){
+      HHDB.findDisasterReportByPublicToken(REPORT_TOKEN,function(rec,e){
+        if(rec){
+          DIS_LIST=[rec];
+          DIS_LIST_LOAD_ERROR=e||null;
+          try{
+            var u2=new URL(location.href);
+            u2.searchParams.set('id',String(rec.id));
+            history.replaceState(null,'',u2.toString());
+            REPORT_ID=String(rec.id);
+          }catch(eU2){}
+        }else{
+          DIS_LIST=[];
+          DIS_LIST_LOAD_ERROR=e||null;
+        }
+        fn();
+      });
+      return;
+    }
+    runFullListLoad(fn);
   }
   /* 一覧取得はワークフロー設定より先に必ず走らせる（workflow の once が返らないと永遠に「読み込み中」になるのを防ぐ） */
   setTimeout(function(){
