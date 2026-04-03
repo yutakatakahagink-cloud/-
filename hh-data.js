@@ -337,11 +337,26 @@
         try{var s=localStorage.getItem('hh_disaster_reports');onLoaded(s?JSON.parse(s):[])}catch(e){onLoaded([])}
         return;
       }
+      var lrDone=false;
+      var lrMs=25000;
+      function finishLr(arr,err){
+        if(lrDone)return;
+        lrDone=true;
+        if(typeof onLoaded==='function')onLoaded(arr,err);
+      }
+      var lrTimer=setTimeout(function(){
+        if(!lrDone){
+          console.warn('[HHDB] loadDisasterReports が'+lrMs+'ms以内に完了しませんでした。');
+          finishLr([],{code:'TIMEOUT',message:'loadDisasterReports timed out'});
+        }
+      },lrMs);
       getDisasterRef().once('value',function(snap){
-        onLoaded(disasterSnapshotToArray(snap.val()));
+        clearTimeout(lrTimer);
+        finishLr(disasterSnapshotToArray(snap.val()),null);
       },function(err){
+        clearTimeout(lrTimer);
         console.warn('[HHDB] loadDisasterReports failed',err);
-        if(typeof onLoaded==='function')onLoaded([],err);
+        finishLr([],err);
       });
     },
     /** 1件だけ書き込み（他クライアントの提出と競合しにくい） */
@@ -469,9 +484,26 @@
         try{var s=localStorage.getItem('hh_disaster_workflow');onLoaded(s?normWf(JSON.parse(s)):{steps:[],notify_from_email:''})}catch(e){onLoaded({steps:[],notify_from_email:''})}
         return
       }
+      var wfDone=false;
+      var wfMs=12000;
+      function finishWf(payload){
+        if(wfDone)return;
+        wfDone=true;
+        if(typeof onLoaded==='function')onLoaded(payload);
+      }
+      var wfTimer=setTimeout(function(){
+        if(!wfDone){
+          console.warn('[HHDB] loadDisasterWorkflow が'+wfMs+'ms以内に完了しませんでした。空の設定として続行します（承認ページの一覧読込はブロックしません）。');
+          finishWf({steps:[],notify_from_email:''});
+        }
+      },wfMs);
       getDisasterWfRef().once('value',function(snap){
-        onLoaded(normWf(snap.val()));
-      },function(){onLoaded({steps:[],notify_from_email:''});});
+        clearTimeout(wfTimer);
+        finishWf(normWf(snap.val()));
+      },function(){
+        clearTimeout(wfTimer);
+        finishWf({steps:[],notify_from_email:''});
+      });
     },
     saveDisasterWorkflow:function(obj){
       var data={

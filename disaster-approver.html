@@ -26,7 +26,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="config.js?v=20260403-2"></script>
-<script src="hh-data.js?v=20260430-1"></script>
+<script src="hh-data.js?v=20260430-3"></script>
 <script src="disaster-workflow.js"></script>
 <script src="disaster-email-notify.js?v=20260404-2"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -39,6 +39,8 @@ var REPORT_TOKEN='';
 var REPORT_STEP='';
 /** Firebase 読み込み失敗時にセット（メッセージ用） */
 var DIS_LIST_LOAD_ERROR=null;
+/** loadList→afterLoad 完了まで false（長時間「読み込み中」のフォールバック用） */
+var DIS_APPROVER_LOAD_FINISHED=false;
 
 function qs(name){
   try{
@@ -196,6 +198,7 @@ function boot(){
   REPORT_STEP=String(qs('s')||'').trim();
   bindPubActions();
   function afterLoad(){
+    DIS_APPROVER_LOAD_FINISHED=true;
     render();
     if(typeof HHDB!=='undefined'&&HHDB.onDisasterChange){
       HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];DIS_LIST_LOAD_ERROR=null;render()});
@@ -264,15 +267,21 @@ function boot(){
       fn();
     }
   }
+  /* 一覧取得はワークフロー設定より先に必ず走らせる（workflow の once が返らないと永遠に「読み込み中」になるのを防ぐ） */
+  setTimeout(function(){
+    if(DIS_APPROVER_LOAD_FINISHED)return;
+    var root=document.getElementById('root');
+    if(!root)return;
+    if(root.innerHTML.indexOf('読み込んでいます')<0)return;
+    root.innerHTML='<div class="err">読み込みが約40秒以内に完了しませんでした。<p style="margin-top:10px;font-size:13px;line-height:1.65">よくある原因: <strong>企業ネットワーク</strong>で Firebase（<code style="font-size:11px">*.firebaseio.com</code> 等）がブロックされている、Realtime Database の<strong>ルール</strong>で read が拒否されている、<strong>Authentication → 匿名</strong>が無効で匿名ログインが完了しない。</p><p style="margin-top:10px;font-size:12px">自宅回線やスマホのモバイルデータで試す、Firebase Console でルールと匿名を確認し、<strong>Ctrl+Shift+R</strong>で再読み込みしてください。詳細は <code style="font-size:11px">FirebaseConfig.md</code> を参照。</p><p style="margin-top:12px"><button type="button" onclick="location.reload()" style="padding:10px 16px;cursor:pointer;border-radius:8px;border:1px solid #C62828;background:#fff;color:#C62828;font-weight:600">再読み込み</button></p></div>';
+  },40000);
   if(typeof HHDB!=='undefined'){
     /* 匿名ログイン: Database ルールが auth != null のときも災害一覧を読める（Console で「匿名」プロバイダを有効化すること） */
     HHDB.init(function(){
-      /* 承認パネル・バナーは DB の hh_disaster_workflow（段階リスト）が必要。未読込だとパネルが空のままになる */
       if(typeof disasterLoadWfConfig==='function'){
-        disasterLoadWfConfig(function(){loadList(afterLoad);});
-      }else{
-        loadList(afterLoad);
+        disasterLoadWfConfig(function(){render();});
       }
+      loadList(afterLoad);
     },{anonymousSignIn:true});
   }else{
     loadList(afterLoad);
