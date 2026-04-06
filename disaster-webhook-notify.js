@@ -279,8 +279,14 @@
     );
   };
 
-  /** EmailJS も Webhook も無いときだけ mailto を使う */
+  /**
+   * 管理者承認後の「メール作成を開くか」確認ダイアログ用。
+   * workflowNotifyVia: mailto のときは disasterTryNotifyWorkflow が既に mailto を開くため false。
+   */
   global.disasterShouldOpenMailtoForWf = function () {
+    if (typeof global.disasterWorkflowPrefersMailto === 'function' && global.disasterWorkflowPrefersMailto()) {
+      return false;
+    }
     if (typeof global.disasterHasEmailJsConfigured === 'function' && global.disasterHasEmailJsConfigured()) {
       return false;
     }

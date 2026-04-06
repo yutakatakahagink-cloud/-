@@ -20,19 +20,22 @@ window.HH_FIREBASE_CONFIG = {
 // Gemini Vision API キー（OCR用）
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
-// 災害承認メール（HH_EMAILJS）— EmailJS による自動送信（anzensystem@outlook.com 接続想定）
-// allowMailtoFallbackOnEmailJsFailure: false（既定）… EmailJS 失敗時もメール作成は開かない。true にすると失敗時だけ従来の作成画面を開く
-// workflowNotifyVia: 'mailto' … EmailJS を使わず常に手動メール（config.example.js 参照）
+// 災害承認メール（HH_EMAILJS）
+// ■ M365 が EmailJS→Outlook.com 経由を 550 5.7.520 / AS(4810) で弾く場合:
+//   workflowNotifyVia: 'mailto' にすると自動送信せず、手元の Outlook で作成画面が開きます。
+//   そこで「送信」すると、多くの場合は会社の既定アカウント（@…onmicrosoft.com）から送れ、受信側に届きやすいです。
+//   EmailJS のキーは残してあります。自動送信に戻すときは下行の mailto をコメントアウトするか 'emailjs' に変更。
+// allowMailtoFallbackOnEmailJsFailure: false … EmailJS 失敗時も mailto を開かない（true で失敗時のみ開く）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
-  // EmailJS API はメールアドレスを service ID にできない。ダッシュボードで「デフォルト」のサービス1つのときは default_service
   serviceId: 'default_service',
   templateId: 'template_cnyi3sx',
   fromEmail: 'anzensystem@outlook.com',
   replyToEmail: 'anzensystem@outlook.com',
   fromName: '安全衛生管理システム',
   mailtoFromEmail: 'anzensystem@outlook.com',
-  allowMailtoFallbackOnEmailJsFailure: false
+  allowMailtoFallbackOnEmailJsFailure: false,
+  workflowNotifyVia: 'mailto'
 };
 
 // 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
