@@ -21,21 +21,18 @@ window.HH_FIREBASE_CONFIG = {
 window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
 // 災害承認メール（HH_EMAILJS）
-// ■ M365 が EmailJS→Outlook.com 経由を 550 5.7.520 / AS(4810) で弾く場合:
-//   workflowNotifyVia: 'mailto' にすると自動送信せず、手元の Outlook で作成画面が開きます。
-//   そこで「送信」すると、多くの場合は会社の既定アカウント（@…onmicrosoft.com）から送れ、受信側に届きやすいです。
-//   EmailJS のキーは残してあります。自動送信に戻すときは下行の mailto をコメントアウトするか 'emailjs' に変更。
-// allowMailtoFallbackOnEmailJsFailure: false … EmailJS 失敗時も mailto を開かない（true で失敗時のみ開く）
+// ■ 送信元は社用 Microsoft 365（下記）。EmailJS の Outlook 接続と同じアカウントにすること。
+// ■ 既定は EmailJS による自動送信（Outlook の作成画面は開かない）。手動送信に戻すときだけ次行を有効化: workflowNotifyVia: 'mailto'
+// allowMailtoFallbackOnEmailJsFailure: true … EmailJS 失敗時に mailto で作成画面を開く（任意）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   serviceId: 'default_service',
   templateId: 'template_cnyi3sx',
-  fromEmail: 'anzensystem@outlook.com',
-  replyToEmail: 'anzensystem@outlook.com',
+  fromEmail: 'yutaka_takahagi@nissinkohgyo.onmicrosoft.com',
+  replyToEmail: 'yutaka_takahagi@nissinkohgyo.onmicrosoft.com',
   fromName: '安全衛生管理システム',
-  mailtoFromEmail: 'anzensystem@outlook.com',
-  allowMailtoFallbackOnEmailJsFailure: false,
-  workflowNotifyVia: 'mailto'
+  mailtoFromEmail: 'yutaka_takahagi@nissinkohgyo.onmicrosoft.com',
+  allowMailtoFallbackOnEmailJsFailure: false
 };
 
 // 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
