@@ -724,10 +724,19 @@
     if (getStepsForRecord(r).length === 0) return '';
     if (!global.disasterReporterNamesMatch(r.reporter, reporterName)) return '';
     var idStr = String(id).replace(/'/g, "\\'");
+    var rn = String(r.wf.returnNote || '').trim();
+    var retBox = rn
+      ? '<div style="margin:0 0 10px;padding:10px;background:#FFEBEE;border:1px solid #E57373;border-radius:8px;font-size:11px;line-height:1.55;color:#333">' +
+        '<strong style="color:#C62828">差戻し理由（承認者コメント）</strong>' +
+        '<div style="margin-top:6px;white-space:pre-wrap;word-break:break-word">' +
+        esc(rn) +
+        '</div></div>'
+      : '';
     return (
       '<div style="margin-top:12px;padding:12px;background:#E8F5E9;border:1px solid #66BB6A;border-radius:8px">' +
+      retBox +
       '<div style="font-weight:700;font-size:12px;margin-bottom:6px">差戻しへの対応</div>' +
-      '<p style="font-size:11px;color:var(--t3);margin:0 0 10px;line-height:1.55"><strong>報告書の各欄を修正</strong>するには、下のボタンで災害フォームを開いてください。修正後「修正を保存して再提出」を押すと再承認に戻ります。</p>' +
+      '<p style="font-size:11px;color:var(--t3);margin:0 0 10px;line-height:1.55"><strong>報告書フォームで修正する</strong>と、差戻し前の<strong>承認者追記</strong>も各欄にあわせて表示されます（欄未指定の追記はフォーム上部の参考欄に出ます）。</p>' +
       '<button type="button" class="sub" style="margin:0 0 10px;padding:10px 16px;font-size:13px;display:block;width:100%;box-sizing:border-box" onclick="if(typeof disasterOpenReturnedFormEdit===\'function\')disasterOpenReturnedFormEdit(\'' +
       idStr +
       "')\">報告書フォームで修正する</button>" +

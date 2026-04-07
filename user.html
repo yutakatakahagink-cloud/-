@@ -573,7 +573,15 @@ input[type="file"].photo-input{display:none}
   <div class="dis-form-pc">
   <div id="disReturnedEditBanner" style="display:none;margin:0 0 12px;padding:12px;background:#E8F5E9;border:1px solid #43A047;border-radius:8px;font-size:12px;line-height:1.5">
     <strong>差戻し修正モード</strong>　報告ID: <span id="disReturnedEditIdSpan"></span>
-    <p style="margin:8px 0 0;font-size:11px;color:var(--t2)">内容を修正し、下の「修正を保存して再提出」を押すと再承認に戻ります。</p>
+    <div id="disReturnedReturnNoteWrap" style="display:none;margin-top:12px;padding:10px 12px;background:#FFEBEE;border:1px solid #E57373;border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:6px">承認者からの差戻しコメント（修正のポイント）</div>
+      <div id="disReturnedReturnNoteBody" style="font-size:12px;white-space:pre-wrap;word-break:break-word;color:#333;line-height:1.55"></div>
+    </div>
+    <div id="disReturnedLooseApproverWrap" style="display:none;margin-top:12px;padding:10px 12px;background:#FFF8E1;border:1px solid #FFB74D;border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:#E65100;margin-bottom:6px">承認者追記（報告書の欄に差し込んでいない分・参考）</div>
+      <pre id="disReturnedLooseApproverBody" style="margin:0;font-size:11px;white-space:pre-wrap;word-break:break-word;font-family:inherit;color:#333;line-height:1.5"></pre>
+    </div>
+    <p style="margin:10px 0 0;font-size:11px;color:var(--t2)">下のフォームには、差戻し前までの<strong>承認者の追記</strong>も各欄に反映済みです。必要に応じて編集のうえ「修正を保存して再提出」を押すと再承認に戻ります。</p>
     <button type="button" class="fp" style="margin-top:10px;padding:8px 14px;font-size:11px;border-radius:8px" onclick="clearDisReturnedEditMode()">キャンセルして新規入力に戻す</button>
   </div>
   <div class="dis-sect dis-title" style="border:1px solid #333;padding:10px;margin-bottom:0;text-align:center;font-weight:bold;font-size:18pt;background:#D9D9D9">災害事故(人身・物損)発生報告書</div>
@@ -1403,6 +1411,51 @@ function parseDisDatetimeForPc(str){
     min:tm?String(parseInt(tm[2],10)).padStart(2,'0'):''
   };
 }
+/** 差戻しフォーム用: 承認者の report_addenda を該当入力欄へ追記（DBの r の素値は変えない） */
+function applyApproverReportAddendaToReturnedPcForm(r){
+  var fieldToId={
+    keigen:'f_keigen_pc',
+    basho:'f_basho_pc',
+    basho_jusho:'f_basho_jusho_pc',
+    shobyomei:'f_shobyomei_pc',
+    kyukun_person:'f_kyukun_person_pc',
+    kyukun_equip:'f_kyukun_equip_pc',
+    kyukun_mgmt:'f_kyukun_mgmt_pc',
+    basho_detail:'f_basho_detail_pc',
+    sagyo:'f_sagyo_pc',
+    genin_busshi:'f_genin_busshi_pc',
+    genin_jin:'f_genin_jin_pc',
+    kekka:'f_kekka_pc',
+    kaizen_honin:'f_kaizen_honin_pc',
+    kaizen_kantoku:'f_kaizen_kantoku_pc',
+    taisaku:'f_taisaku_pc'
+  };
+  var addenda=r&&r.wf&&Array.isArray(r.wf.report_addenda)?r.wf.report_addenda:[];
+  var loose=[];
+  function isApproverEntry(e){
+    return e&&String(e.role||'').indexOf('承認者')!==-1;
+  }
+  function fmtBlock(e){
+    var at=(e.at||'').slice(0,19).replace('T',' ');
+    return '\n\n────────\n【承認者追記】'+(e.by||'（氏名なし）')+(at?' '+at:'')+'\n'+String(e.text||'');
+  }
+  addenda.forEach(function(e){
+    if(!isApproverEntry(e)||!String(e.text||'').trim())return;
+    var fk=String(e.field||'').trim();
+    if(fk&&fieldToId[fk]){
+      var el=document.getElementById(fieldToId[fk]);
+      if(el)el.value=String(el.value||'')+fmtBlock(e);
+    }else{
+      loose.push('【'+(e.role||'承認者追記')+'】'+(e.by||'')+' '+(e.at||'').slice(0,19).replace('T',' ')+'\n'+String(e.text||''));
+    }
+  });
+  var lw=document.getElementById('disReturnedLooseApproverWrap');
+  var lb=document.getElementById('disReturnedLooseApproverBody');
+  if(lw&&lb){
+    if(loose.length){lb.textContent=loose.join('\n\n────────\n');lw.style.display='block'}
+    else{lb.textContent='';lw.style.display='none'}
+  }
+}
 function fillDisFormFromReturnedEdit(){
   var id=window._disEditReturnedId;
   if(!id)return;
@@ -1464,6 +1517,14 @@ function fillDisFormFromReturnedEdit(){
     window._disPhotosPC=(r.situation_imgs&&r.situation_imgs.length?r.situation_imgs.slice():(r.situation_img?[r.situation_img]:[]));
     window._disPhotosPC_names=window._disPhotosPC.map(function(_,i){return'画像'+(i+1)});
     if(window._disPhotosPC_render)window._disPhotosPC_render();
+    applyApproverReportAddendaToReturnedPcForm(r);
+    var rnw=document.getElementById('disReturnedReturnNoteWrap');
+    var rnb=document.getElementById('disReturnedReturnNoteBody');
+    var ret=r.wf&&r.wf.returnNote?String(r.wf.returnNote).trim():'';
+    if(rnw&&rnb){
+      if(ret){rnb.textContent=ret;rnw.style.display='block'}
+      else{rnb.textContent='';rnw.style.display='none'}
+    }
     var opt=document.getElementById('disWfReturnedOptionalNote');
     if(opt)opt.value='';
     updateDisReturnedEditUi();
@@ -1480,6 +1541,16 @@ function updateDisReturnedEditUi(){
   var btn=document.getElementById('btnDisSubmitPC');
   if(ban)ban.style.display=edit?'block':'none';
   if(sp&&window._disEditReturnedId)sp.textContent=window._disEditReturnedId;
+  if(!edit){
+    var rnw=document.getElementById('disReturnedReturnNoteWrap');
+    var rnb=document.getElementById('disReturnedReturnNoteBody');
+    var lw=document.getElementById('disReturnedLooseApproverWrap');
+    var lb=document.getElementById('disReturnedLooseApproverBody');
+    if(rnw)rnw.style.display='none';
+    if(rnb)rnb.textContent='';
+    if(lw)lw.style.display='none';
+    if(lb)lb.textContent='';
+  }
   if(ow)ow.style.display=edit?'block':'none';
   if(btn)btn.textContent=edit?'修正を保存して再提出する':'報告書を提出する';
 }

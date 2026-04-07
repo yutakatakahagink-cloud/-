@@ -228,7 +228,9 @@
     var body2 =
       '日新興業株式会社 安全衛生管理システムからの通知です。\n\n' +
       '報告が差戻されました。\n' +
-      (rec.wf && rec.wf.returnNote ? 'コメント: ' + rec.wf.returnNote + '\n\n' : '') +
+      (rec.wf && String(rec.wf.returnNote || '').trim()
+        ? '【差戻しコメント】\n' + String(rec.wf.returnNote).trim() + '\n\n'
+        : '') +
       '報告ID: ' +
       (rec && rec.id != null ? rec.id : '') +
       '\n' +
@@ -596,14 +598,19 @@
     var idFields = emailJsFromReplyFields();
     var replyLine = idFields.replyTo || idFields.fromEmail;
     /* 本文は短く・URLは承認用1本（admin_link はテンプレ用パラメータで別渡し。重複URLはスパムスコアが上がりやすい） */
+    var returnNoteLine =
+      kind === 'returned' && rec.wf && String(rec.wf.returnNote || '').trim()
+        ? '\n\n【差戻しコメント】\n' + String(rec.wf.returnNote).trim() + '\n'
+        : '';
     var msg =
       '日新興業株式会社 安全衛生管理システムからの通知です。\n' +
       '報告ID: ' +
       rec.id +
       '\n報告者: ' +
       (rec.reporter || '') +
+      returnNoteLine +
       (kind === 'returned' && editL
-        ? '\n\n報告書の修正・再提出（ログイン後）:\n' + editL
+        ? '\n報告書の修正・再提出（ログイン後）:\n' + editL
         : pubL
           ? '\n\n承認・差戻しURL:\n' + pubL
           : '') +
@@ -637,6 +644,7 @@
         admin_link: adminLink(),
         approver_public_link: pubL || '',
         reporter_edit_link: kind === 'returned' ? repEdit || '' : '',
+        return_note: kind === 'returned' && rec.wf && rec.wf.returnNote != null ? String(rec.wf.returnNote) : '',
         report_id: String(rec.id),
         reporter_name: rec.reporter || '',
       };
