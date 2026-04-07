@@ -22,8 +22,9 @@ window.HH_GEMINI_API_KEY = "AIzaSyANRvganYmBn0lnqTX81ipC59JSsWs3Ns4";
 
 // 災害承認メール（HH_EMAILJS）
 // ■ 送信元は社用 Microsoft 365（下記）。EmailJS の Outlook 接続と同じアカウントにすること。
-// ■ 既定は EmailJS による自動送信（Outlook の作成画面は開かない）。手動送信に戻すときだけ次行を有効化: workflowNotifyVia: 'mailto'
-// allowMailtoFallbackOnEmailJsFailure: true … EmailJS 失敗時に mailto で作成画面を開く（任意）
+// ■ workflowNotifyVia: 'emailjs' … EmailJS のみ（ブラウザ版/デスクトップの下書き画面は開かない）。手動に戻すときは 'mailto'
+// ■ composeMode は mailto フォールバック時のみ効く。'outlookWeb' にすると OWA が開くので自動送信時は付けないこと。
+// allowMailtoFallbackOnEmailJsFailure: true … EmailJS 失敗時だけ mailto/OWA を開く（任意）
 window.HH_EMAILJS = {
   publicKey: 'dKdOCX_WE0eYN_A5X',
   serviceId: 'default_service',
@@ -32,7 +33,8 @@ window.HH_EMAILJS = {
   replyToEmail: 'yutaka_takahagi@nissinkohgyo.onmicrosoft.com',
   fromName: '安全衛生管理システム',
   mailtoFromEmail: 'yutaka_takahagi@nissinkohgyo.onmicrosoft.com',
-  allowMailtoFallbackOnEmailJsFailure: false
+  allowMailtoFallbackOnEmailJsFailure: false,
+  workflowNotifyVia: 'emailjs'
 };
 
 // 災害承認ワークフロー: Slack / Teams（Webhook）/ Power Automate（HTTP トリガー URL）
