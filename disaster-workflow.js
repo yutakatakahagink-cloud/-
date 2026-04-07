@@ -18,6 +18,50 @@
 
   global.disasterNormEmail = normEmail;
 
+  /** 報告者名の表記ゆれ（全半角・空白）を吸収して同一人物か判定 */
+  function normReporterName(s) {
+    try {
+      return String(s || '')
+        .normalize('NFKC')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+    } catch (e) {
+      return String(s || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+    }
+  }
+  global.disasterReporterNamesMatch = function (a, b) {
+    return normReporterName(a) === normReporterName(b);
+  };
+
+  /** 承認者追記の「表示する報告書の欄」（disaster-detail-html と値を一致させる） */
+  global.disasterApproverFieldSelectHtml = function () {
+    return (
+      '<label style="font-size:11px;display:block;margin-bottom:4px;color:var(--t2)">追記を表示する欄（報告書内に差し込み）</label>' +
+      '<select id="disApproverField" class="fs" style="width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px;padding:6px 8px">' +
+      '<option value="">下部の「追記一覧」のみ（欄には差し込まない）</option>' +
+      '<option value="taisaku" selected>【対策】</option>' +
+      '<option value="basho_detail">●場所(・・・で)</option>' +
+      '<option value="sagyo">●作業(・・・しているとき)</option>' +
+      '<option value="genin_busshi">●原因 — 物・環境的要因</option>' +
+      '<option value="genin_jin">●原因 — 人的要因</option>' +
+      '<option value="kekka">●結果(・・・した)</option>' +
+      '<option value="kaizen_honin">こうすればよかった — 本人</option>' +
+      '<option value="kaizen_kantoku">こうすればよかった — 監督者</option>' +
+      '<option value="kyukun_person">教訓（人）</option>' +
+      '<option value="kyukun_equip">教訓（設備）</option>' +
+      '<option value="kyukun_mgmt">教訓（管理）</option>' +
+      '<option value="keigen">工事件名</option>' +
+      '<option value="basho">災害場所</option>' +
+      '<option value="basho_jusho">住所（災害場所）</option>' +
+      '<option value="shobyomei">傷病名（損害状況）</option>' +
+      '</select>'
+    );
+  };
+
   function refreshStepsFromLocalStorageIfEmpty() {
     if (STEPS.length > 0) return;
     try {
@@ -302,7 +346,7 @@
     return { ok: true };
   };
 
-  global.disasterReviewerAppendNote = function (DIS_LIST, id, note, approverName, approverEmail, isOwner, publicToken, publicStep) {
+  global.disasterReviewerAppendNote = function (DIS_LIST, id, note, approverName, approverEmail, isOwner, publicToken, publicStep, targetField) {
     var r = DIS_LIST.find(function (x) {
       return String(x.id) === String(id);
     });
@@ -321,13 +365,16 @@
     var now = new Date().toISOString();
     var steps = getStepsForRecord(r);
     var stepLab = (steps[r.wf.step] && steps[r.wf.step].label) || '第' + (r.wf.step + 1) + '承認';
+    var fk = String(targetField || '').trim();
     r.wf.report_addenda = Array.isArray(r.wf.report_addenda) ? r.wf.report_addenda : [];
-    r.wf.report_addenda.push({
+    var entry = {
       at: now,
       by: approverName || '',
       role: '承認者追記（' + stepLab + '）',
       text: t,
-    });
+    };
+    if (fk) entry.field = fk;
+    r.wf.report_addenda.push(entry);
     r.wf.history.push({
       type: 'approver_note',
       at: now,
@@ -338,12 +385,101 @@
     return { ok: true };
   };
 
+  var REPORT_MERGE_KEYS = [
+    'datetime',
+    'date',
+    'status',
+    'form',
+    'keigen',
+    'basho',
+    'basho_jusho',
+    'jusho',
+    'victim',
+    'age',
+    'birth',
+    'victim_dept',
+    'hire_date',
+    'exp',
+    'shobyomei',
+    'byoin',
+    'koui',
+    'kyugyo',
+    'kyugyo_type',
+    'kyugyo_days',
+    'kyugyo_yen',
+    'gennin',
+    'gennin_aru',
+    'shokumei',
+    'gennin_name',
+    'kyukun_person',
+    'kyukun_equip',
+    'kyukun_mgmt',
+    'basho_detail',
+    'sagyo',
+    'genin_busshi',
+    'genin_jin',
+    'kekka',
+    'kaizen_honin',
+    'kaizen_kantoku',
+    'situation_img',
+    'situation_imgs',
+    'taisaku',
+    'kiinbutsu',
+    'fuanzen',
+    'fuanzen_kodo',
+    'jiko',
+    'kanri',
+    'report_date',
+    'sekininsha',
+    'wf_sender_email',
+  ];
+
+  /**
+   * 差戻し後: 報告書フィールドをマージして再提出（wf を pending に戻す）
+   * @param {object} partial — id / wf を含めないこと
+   */
+  global.disasterReporterResubmitMerged = function (DIS_LIST, id, reporterName, partial, addendum) {
+    var r = DIS_LIST.find(function (x) {
+      return String(x.id) === String(id);
+    });
+    if (!r || !r.wf || r.wf.state !== 'returned') return { ok: false, msg: '差戻中の報告のみ再提出できます' };
+    if (!global.disasterReporterNamesMatch(r.reporter, reporterName)) return { ok: false, msg: '本人の報告のみ再提出できます' };
+    var p = partial && typeof partial === 'object' ? partial : {};
+    for (var i = 0; i < REPORT_MERGE_KEYS.length; i++) {
+      var k = REPORT_MERGE_KEYS[i];
+      if (Object.prototype.hasOwnProperty.call(p, k)) r[k] = p[k];
+    }
+    var now = new Date().toISOString();
+    var add = String(addendum || '').trim();
+    r.wf.report_addenda = Array.isArray(r.wf.report_addenda) ? r.wf.report_addenda : [];
+    if (add) {
+      r.wf.report_addenda.push({
+        at: now,
+        by: reporterName || '',
+        role: '報告者（差戻し後の追記・訂正）',
+        text: add,
+      });
+    }
+    r.wf.history.push({
+      type: 'revise',
+      at: now,
+      by: reporterName || '',
+      note: add || '再提出（報告書を修正）',
+    });
+    r.wf.stamps = [];
+    r.wf.state = 'pending';
+    r.wf.step = 0;
+    r.wf.returnNote = '';
+    disasterSaveReports(DIS_LIST, id);
+    return { ok: true };
+  };
+
   global.disasterUserAppendAndResubmit = function (DIS_LIST, id, reporterName, addendum) {
     var r = DIS_LIST.find(function (x) {
       return String(x.id) === String(id);
     });
     if (!r || !r.wf || r.wf.state !== 'returned') return { ok: false, msg: '差戻中の報告のみ再提出できます' };
-    if ((r.reporter || '') !== (reporterName || '')) return { ok: false, msg: '本人の報告のみ再提出できます' };
+    if (!global.disasterReporterNamesMatch(r.reporter, reporterName)) return { ok: false, msg: '本人の報告のみ再提出できます' };
     var now = new Date().toISOString();
     var add = String(addendum || '').trim();
     r.wf.report_addenda = Array.isArray(r.wf.report_addenda) ? r.wf.report_addenda : [];
@@ -514,7 +650,8 @@
       hint +
       '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
       '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">承認者による追記・訂正</div>' +
-      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">入力内容は<b>報告書内の「追記・訂正」欄</b>に氏名・日時付きで表示され、履歴にも記録されます。</p>' +
+      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと<b>報告書の該当箇所</b>に追記として表示されます（承認者名は小さく赤色）。一覧のみにしたい場合は先頭を選んでください。</p>' +
+      (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
       '<textarea id="disApproverNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px" placeholder="指摘・補足・訂正文など"></textarea>' +
       '<button type="button" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="disasterDoApproverNote(\'' +
       idStr +
@@ -571,7 +708,8 @@
       hint +
       '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
       '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">追記・訂正（報告書に表示）</div>' +
-      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">保存すると<b>報告書内の「追記・訂正」欄</b>に、入力者名・日時付きで追記されます。</p>' +
+      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">表示する欄を選ぶと<b>該当箇所</b>に差し込まれます（承認者名は小さく赤色）。</p>' +
+      (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
       '<textarea id="disApproverNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px" placeholder="指摘・補足・訂正文など"></textarea>' +
       '<button type="button" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="if(typeof disasterPubDoApproverNote===\'function\')disasterPubDoApproverNote()">追記・訂正を保存</button></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
@@ -584,15 +722,20 @@
   global.disasterWfUserPanelHtml = function (r, id, reporterName) {
     if (!r || !r.wf || r.wf.state !== 'returned') return '';
     if (getStepsForRecord(r).length === 0) return '';
-    if ((r.reporter || '') !== (reporterName || '')) return '';
+    if (!global.disasterReporterNamesMatch(r.reporter, reporterName)) return '';
     var idStr = String(id).replace(/'/g, "\\'");
     return (
       '<div style="margin-top:12px;padding:12px;background:#E8F5E9;border:1px solid #66BB6A;border-radius:8px">' +
-      '<div style="font-weight:700;font-size:12px;margin-bottom:6px">訂正・追記して再提出</div>' +
-      '<textarea id="disWfUserNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px" placeholder="差戻しに対する追記・訂正内容"></textarea>' +
-      '<button type="button" class="sub" style="margin:0;padding:10px 16px;font-size:13px" onclick="disasterDoUserResubmit(\'' +
+      '<div style="font-weight:700;font-size:12px;margin-bottom:6px">差戻しへの対応</div>' +
+      '<p style="font-size:11px;color:var(--t3);margin:0 0 10px;line-height:1.55"><strong>報告書の各欄を修正</strong>するには、下のボタンで災害フォームを開いてください。修正後「修正を保存して再提出」を押すと再承認に戻ります。</p>' +
+      '<button type="button" class="sub" style="margin:0 0 10px;padding:10px 16px;font-size:13px;display:block;width:100%;box-sizing:border-box" onclick="if(typeof disasterOpenReturnedFormEdit===\'function\')disasterOpenReturnedFormEdit(\'' +
       idStr +
-      "')\">再提出する</button></div>"
+      "')\">報告書フォームで修正する</button>" +
+      '<div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--t2)">追記のみで再提出する場合（任意）</div>' +
+      '<textarea id="disWfUserNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px" placeholder="テキストだけ追記して再提出する場合に入力"></textarea>' +
+      '<button type="button" class="fp" style="margin:0;padding:10px 16px;font-size:12px;border-radius:8px" onclick="disasterDoUserResubmit(\'' +
+      idStr +
+      "')\">追記のみ再提出</button></div>"
     );
   };
 })(window);

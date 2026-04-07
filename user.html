@@ -571,6 +571,11 @@ input[type="file"].photo-input{display:none}
   <button class="sub" onclick="doDisSubmit()">報告書を送信する</button>
   </div>
   <div class="dis-form-pc">
+  <div id="disReturnedEditBanner" style="display:none;margin:0 0 12px;padding:12px;background:#E8F5E9;border:1px solid #43A047;border-radius:8px;font-size:12px;line-height:1.5">
+    <strong>差戻し修正モード</strong>　報告ID: <span id="disReturnedEditIdSpan"></span>
+    <p style="margin:8px 0 0;font-size:11px;color:var(--t2)">内容を修正し、下の「修正を保存して再提出」を押すと再承認に戻ります。</p>
+    <button type="button" class="fp" style="margin-top:10px;padding:8px 14px;font-size:11px;border-radius:8px" onclick="clearDisReturnedEditMode()">キャンセルして新規入力に戻す</button>
+  </div>
   <div class="dis-sect dis-title" style="border:1px solid #333;padding:10px;margin-bottom:0;text-align:center;font-weight:bold;font-size:18pt;background:#D9D9D9">災害事故(人身・物損)発生報告書</div>
   <div class="dis-pc-grid">
     <div class="dis-pc-left">
@@ -628,7 +633,8 @@ input[type="file"].photo-input{display:none}
     </div>
   </div>
   <div class="dis-report-block"><div class="dis-report-msg">上記のとおり相違なく報告いたします。</div><div class="dis-report-date" style="justify-content:flex-end"><input class="fi" type="date" id="f_report_date_pc" style="width:140px">　責任者：<input class="fi" id="f_sekininsha_pc" placeholder="責任者名" style="width:120px" readonly></div></div>
-  <button class="sub" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
+  <div id="disReturnedOptionalNoteWrap" style="display:none;margin-top:14px"><div class="fg"><label class="fl">差戻しへの補足（任意）</label><textarea class="ft" id="disWfReturnedOptionalNote" placeholder="フォーム修正に加えて追記するコメント" style="min-height:56px"></textarea></div></div>
+  <button class="sub" id="btnDisSubmitPC" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
   </div>
   <div id="disWfMailPrompt" style="display:none;margin-top:14px;padding:14px;background:#E8F5E9;border:1px solid #66BB6A;border-radius:var(--rs);font-size:12px;line-height:1.55;color:var(--t1)">
     <strong style="color:#2E7D32">承認依頼メール（再送）</strong>
@@ -949,7 +955,8 @@ input[type="file"].photo-input{display:none}
 <script src="config.js?v=20260407-emailjs" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260331-fast" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js" onerror="console.warn('disaster-workflow.js load failed')"></script>
-<script src="disaster-email-notify.js?v=20260406-mailto" onerror="console.warn('disaster-email-notify.js load failed')"></script>
+<script src="disaster-detail-html.js" onerror="console.warn('disaster-detail-html.js load failed')"></script>
+<script src="disaster-email-notify.js?v=20260408-412" onerror="console.warn('disaster-email-notify.js load failed')"></script>
 <script src="disaster-webhook-notify.js" onerror="console.warn('disaster-webhook-notify.js load failed')"></script>
 <script src="laws_refresh.js" onerror="console.warn('laws_refresh.js load failed')"></script>
 <script>
@@ -962,6 +969,9 @@ var EMP=[{"name": "川名哲也", "honbu": "総務部", "bu": "", "ka": "", "kub
 // ROLE: 使用者専用（常にuser）
 var CUR=null,ROLE='user';
 window.CUR=CUR;window.ROLE=ROLE;
+(function captureDisReturnedParam(){
+  try{var p=new URLSearchParams(location.search||'');var v=p.get('disReturned');if(v)window._pendingDisReturnedFromUrl=String(v)}catch(e){}
+})();
 var ADMIN_ACCOUNTS=[];
 function saveAdminAccounts(){}
 
@@ -1014,6 +1024,7 @@ function doLogin(){
   if(typeof HHDB!=='undefined')HHDB.init(function(){doDataInit()});
   loadRequests();
   applyRole();
+  tryConsumeDisReturnedQuery();
 }
 
 // ===== ROLE-BASED UI (user.html: 常に使用者) =====
@@ -1055,11 +1066,13 @@ function goTo(pgId,opts){
   if(pgId==='pDis'){
     var dfa=document.getElementById('disFormArea');var dla=document.getElementById('disListArea');
     if(opts&&opts.listMode){
+      window._disEditReturnedId=null;
       if(dfa)dfa.style.display='none';if(dla)dla.style.display='block';
       rDisList();
     }else{
       if(dfa)dfa.style.display='block';if(dla)dla.style.display='none';
-      fillDisFormDefaults();
+      if(!window._disEditReturnedId){fillDisFormDefaults()}
+      updateDisReturnedEditUi();
     }
   }
   if(pgId==='pD')rDash();
@@ -1354,6 +1367,198 @@ function fillDisFormDefaults(){
     var he=document.getElementById('f_hire_date_pc');if(he){he.addEventListener('input',updateDisExp);he.addEventListener('change',updateDisExp)}
   }
 }
+function stripDisReturnedQueryFromUrl(){
+  try{
+    if(!history.replaceState)return;
+    var path=(location.pathname||'').split('/').pop()||'user.html';
+    history.replaceState(null,'',path);
+  }catch(e){}
+}
+function tryConsumeDisReturnedQuery(){
+  var id=window._pendingDisReturnedFromUrl;
+  if(!id||!CUR)return;
+  loadReqDis(function(){
+    var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+    var match=typeof disasterReporterNamesMatch==='function'?disasterReporterNamesMatch(r&&r.reporter,CUR.name):((r&&r.reporter||'')===(CUR.name||''));
+    if(!(r&&r.wf&&r.wf.state==='returned'&&match)){
+      window._pendingDisReturnedFromUrl=null;
+      return;
+    }
+    window._pendingDisReturnedFromUrl=null;
+    window._disEditReturnedId=String(id);
+    goTo('pDis');
+    fillDisFormFromReturnedEdit();
+    stripDisReturnedQueryFromUrl();
+  });
+}
+function parseDisDatetimeForPc(str){
+  var s=String(str||'');
+  var m=/^(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(s);
+  var tm=/\s+(\d{1,2}):(\d{1,2})\s*頃/.exec(s);
+  return{
+    y:m?m[1]:'',
+    mo:m?String(parseInt(m[2],10)).padStart(2,'0'):'',
+    d:m?String(parseInt(m[3],10)).padStart(2,'0'):'',
+    h:tm?String(parseInt(tm[1],10)).padStart(2,'0'):'',
+    min:tm?String(parseInt(tm[2],10)).padStart(2,'0'):''
+  };
+}
+function fillDisFormFromReturnedEdit(){
+  var id=window._disEditReturnedId;
+  if(!id)return;
+  loadReqDis(function(){
+    var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+    if(!r)return;
+    resetDisasterFormPC();
+    var p=parseDisDatetimeForPc(r.datetime||'');
+    var dy=document.getElementById('f_dt_y_pc'),dm=document.getElementById('f_dt_m_pc'),dd=document.getElementById('f_dt_d_pc'),dh=document.getElementById('f_dt_h_pc'),dmin=document.getElementById('f_dt_min_pc');
+    if(dy){dy.value=p.y||'';dm.value=p.mo||'';dd.value=p.d||'';dh.value=p.h||'';dmin.value=p.min||''}
+    updateDisDtWeek();
+    function setv(fid,val){var el=document.getElementById(fid);if(el)el.value=val!=null?String(val):''}
+    setv('f_keigen_pc',r.keigen);
+    setv('f_basho_pc',r.basho);
+    setv('f_basho_jusho_pc',r.basho_jusho);
+    setv('f_jusho_pc',r.jusho);
+    setv('f_victim_pc',r.victim);
+    setv('f_victim_dept_pc',r.victim_dept);
+    var bp=(r.birth||'').split('-');
+    setv('f_birth_y_pc',bp[0]||'');setv('f_birth_m_pc',bp[1]||'');setv('f_birth_d_pc',bp[2]||'');
+    updateDisAge();
+    setv('f_hire_date_pc',r.hire_date);
+    updateDisExp();
+    var ep=(r.exp||'').split('-');
+    if(ep[0])setv('f_exp_y_pc',ep[0]);
+    if(ep[1])setv('f_exp_m_pc',ep[1]);
+    setv('f_shobyomei_pc',r.shobyomei);
+    setv('f_byoin_pc',r.byoin);
+    if(r.koui==='有'){var kya=document.querySelector('input[name="koui_pc"][value="有"]');if(kya)kya.checked=true}
+    else{var kyn=document.querySelector('input[name="koui_pc"][value="無"]');if(kyn)kyn.checked=true}
+    if(r.kyugyo_type==='不休'){var kn=document.querySelector('input[name="kyugyo_type_pc"][value="不休"]');if(kn)kn.checked=true}
+    else{var ky=document.querySelector('input[name="kyugyo_type_pc"][value="休業"]');if(ky)ky.checked=true}
+    setv('f_kyugyo_days_pc',r.kyugyo_days);
+    setv('f_kyugyo_yen_pc',r.kyugyo_yen);
+    if(r.gennin_aru==='有'){var ga=document.querySelector('input[name="gennin_aru_pc"][value="有"]');if(ga)ga.checked=true}
+    else{var gn=document.querySelector('input[name="gennin_aru_pc"][value="無"]');if(gn)gn.checked=true}
+    setv('f_shokumei_pc',r.shokumei);
+    setv('f_gennin_pc',r.gennin_name||r.gennin);
+    setv('f_kyukun_person_pc',r.kyukun_person);
+    setv('f_kyukun_equip_pc',r.kyukun_equip);
+    setv('f_kyukun_mgmt_pc',r.kyukun_mgmt);
+    setv('f_kiinbutsu_pc',r.kiinbutsu);
+    setv('f_fuanzen_pc',r.fuanzen);
+    setv('f_fuanzen_kodo_pc',r.fuanzen_kodo);
+    setv('f_jiko_pc',r.jiko);
+    setv('f_kanri_pc',r.kanri);
+    setv('f_basho_detail_pc',r.basho_detail);
+    setv('f_sagyo_pc',r.sagyo);
+    setv('f_genin_busshi_pc',r.genin_busshi);
+    setv('f_genin_jin_pc',r.genin_jin);
+    setv('f_kekka_pc',r.kekka);
+    setv('f_kaizen_honin_pc',r.kaizen_honin);
+    setv('f_kaizen_kantoku_pc',r.kaizen_kantoku);
+    setv('f_taisaku_pc',r.taisaku);
+    setv('f_report_date_pc',r.report_date);
+    setv('f_sekininsha_pc',r.sekininsha||(CUR?CUR.name:''));
+    var wse=document.getElementById('f_wf_sender_email');
+    if(wse)wse.value=(r.wf_sender_email!=null?String(r.wf_sender_email):'');
+    window._disPhotosPC=(r.situation_imgs&&r.situation_imgs.length?r.situation_imgs.slice():(r.situation_img?[r.situation_img]:[]));
+    window._disPhotosPC_names=window._disPhotosPC.map(function(_,i){return'画像'+(i+1)});
+    if(window._disPhotosPC_render)window._disPhotosPC_render();
+    var opt=document.getElementById('disWfReturnedOptionalNote');
+    if(opt)opt.value='';
+    updateDisReturnedEditUi();
+    setTimeout(function(){try{var b=document.getElementById('btnDisSubmitPC');if(b)b.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}},300);
+  });
+}
+function updateDisReturnedEditUi(){
+  var edit=!!window._disEditReturnedId;
+  var wf=document.getElementById('disWfUserWrap');
+  if(wf)wf.style.display=edit?'none':'';
+  var ban=document.getElementById('disReturnedEditBanner');
+  var sp=document.getElementById('disReturnedEditIdSpan');
+  var ow=document.getElementById('disReturnedOptionalNoteWrap');
+  var btn=document.getElementById('btnDisSubmitPC');
+  if(ban)ban.style.display=edit?'block':'none';
+  if(sp&&window._disEditReturnedId)sp.textContent=window._disEditReturnedId;
+  if(ow)ow.style.display=edit?'block':'none';
+  if(btn)btn.textContent=edit?'修正を保存して再提出する':'報告書を提出する';
+}
+function clearDisReturnedEditMode(){
+  window._disEditReturnedId=null;
+  resetDisasterFormPC();
+  fillDisFormDefaults();
+  updateDisReturnedEditUi();
+}
+function disasterOpenReturnedFormEdit(id){
+  if(!CUR){alert('ログインしてください');return}
+  loadReqDis(function(){
+    var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+    if(!r||!r.wf||r.wf.state!=='returned'){alert('差戻中の報告ではありません');return}
+    if(typeof disasterReporterNamesMatch==='function'?!disasterReporterNamesMatch(r.reporter,CUR.name):r.reporter!==CUR.name){alert('この報告の報告者のみ修正できます');return}
+    window._disEditReturnedId=String(id);
+    var modal=document.getElementById('modal');if(modal)modal.classList.remove('show');
+    goTo('pDis');
+    fillDisFormFromReturnedEdit();
+  });
+}
+window.disasterOpenReturnedFormEdit=disasterOpenReturnedFormEdit;
+function collectDisPcFormPayload(){
+  var kt=document.querySelector('input[name="kyugyo_type_pc"]:checked')?.value,kd=document.getElementById('f_kyugyo_days_pc')?.value,ky=document.getElementById('f_kyugyo_yen_pc')?.value;
+  var kyugyoStr=(kt==='不休'?'不休':(kd||ky)?((kd?kd+'日間 ':'')+(ky?ky+'円':'')).trim():'');
+  var dy=document.getElementById('f_dt_y_pc')?.value,dm=document.getElementById('f_dt_m_pc')?.value,dd=document.getElementById('f_dt_d_pc')?.value,dh=document.getElementById('f_dt_h_pc')?.value,dmin=document.getElementById('f_dt_min_pc')?.value,dw=document.getElementById('f_dt_week_pc')?.value;
+  var datetimeStr=(dy&&dm&&dd)?(dy+'年'+dm+'月'+dd+'日'+(dw?'('+dw+')':'')+' '+(dh||'')+':'+(dmin||'')+'頃'):'';
+  var imgsPC=(window._disPhotosPC||[]).slice();
+  var wfse=document.getElementById('f_wf_sender_email');
+  return{
+    datetime:datetimeStr,
+    date:new Date().toISOString().slice(0,10),
+    status:'draft',
+    form:'pc',
+    keigen:document.getElementById('f_keigen_pc')?.value,
+    basho:document.getElementById('f_basho_pc')?.value,
+    basho_jusho:document.getElementById('f_basho_jusho_pc')?.value,
+    jusho:document.getElementById('f_jusho_pc')?.value,
+    victim:document.getElementById('f_victim_pc')?.value,
+    age:document.getElementById('f_age_pc')?.value,
+    birth:document.getElementById('f_birth_y_pc')?.value+'-'+document.getElementById('f_birth_m_pc')?.value+'-'+document.getElementById('f_birth_d_pc')?.value,
+    victim_dept:document.getElementById('f_victim_dept_pc')?.value,
+    hire_date:document.getElementById('f_hire_date_pc')?.value,
+    exp:document.getElementById('f_exp_y_pc')?.value+'-'+document.getElementById('f_exp_m_pc')?.value,
+    shobyomei:document.getElementById('f_shobyomei_pc')?.value,
+    byoin:document.getElementById('f_byoin_pc')?.value,
+    koui:document.querySelector('input[name="koui_pc"]:checked')?.value,
+    kyugyo:kyugyoStr,
+    kyugyo_type:kt,
+    kyugyo_days:kd,
+    kyugyo_yen:ky,
+    gennin:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,
+    gennin_aru:document.querySelector('input[name="gennin_aru_pc"]:checked')?.value,
+    shokumei:document.getElementById('f_shokumei_pc')?.value,
+    gennin_name:document.getElementById('f_gennin_pc')?.value,
+    kyukun_person:document.getElementById('f_kyukun_person_pc')?.value,
+    kyukun_equip:document.getElementById('f_kyukun_equip_pc')?.value,
+    kyukun_mgmt:document.getElementById('f_kyukun_mgmt_pc')?.value,
+    basho_detail:document.getElementById('f_basho_detail_pc')?.value,
+    sagyo:document.getElementById('f_sagyo_pc')?.value,
+    genin_busshi:document.getElementById('f_genin_busshi_pc')?.value,
+    genin_jin:document.getElementById('f_genin_jin_pc')?.value,
+    kekka:document.getElementById('f_kekka_pc')?.value,
+    kaizen_honin:document.getElementById('f_kaizen_honin_pc')?.value,
+    kaizen_kantoku:document.getElementById('f_kaizen_kantoku_pc')?.value,
+    situation_img:imgsPC[0]||null,
+    situation_imgs:imgsPC,
+    taisaku:document.getElementById('f_taisaku_pc')?.value,
+    kiinbutsu:document.getElementById('f_kiinbutsu_pc')?.value,
+    fuanzen:document.getElementById('f_fuanzen_pc')?.value,
+    fuanzen_kodo:document.getElementById('f_fuanzen_kodo_pc')?.value,
+    jiko:document.getElementById('f_jiko_pc')?.value,
+    kanri:document.getElementById('f_kanri_pc')?.value,
+    reporter:CUR?CUR.name:'',
+    report_date:document.getElementById('f_report_date_pc')?.value,
+    sekininsha:document.getElementById('f_sekininsha_pc')?.value,
+    wf_sender_email:wfse?String(wfse.value||'').trim():''
+  };
+}
 function handleDisPhoto(){}
 function handleDisPhotoPC(){}
 /** 災害送信: Firebase+merge 時は全件再取得を待たず保存（トースト遅延の主因を解消）。後から一覧だけ裏同期 */
@@ -1411,6 +1616,35 @@ function doDisSubmit(){
 function doDisSubmitPC(){
   try{
   if(!CUR){alert('ログインしてください');return}
+  if(window._disEditReturnedId){
+    var eid=window._disEditReturnedId;
+    var dy0=document.getElementById('f_dt_y_pc')?.value,dm0=document.getElementById('f_dt_m_pc')?.value,dd0=document.getElementById('f_dt_d_pc')?.value,dh0=document.getElementById('f_dt_h_pc')?.value,dmin0=document.getElementById('f_dt_min_pc')?.value;
+    if(!dy0||!dm0||!dd0||dh0===''||dmin0===''){alert('災害日時（年月日・時分）は必須です');return}
+    var victim0=document.getElementById('f_victim_pc')?.value.trim();
+    if(!victim0){alert('被災者・事故者の氏名は必須です');return}
+    var partial=collectDisPcFormPayload();
+    var optN=document.getElementById('disWfReturnedOptionalNote');
+    var addendum=optN?String(optN.value||'').trim():'';
+    function saveMerged(){
+      if(typeof disasterReporterResubmitMerged!=='function'){alert('機能が読み込まれていません');return}
+      var res=disasterReporterResubmitMerged(DIS_LIST,eid,CUR.name,partial,addendum);
+      if(!res.ok){alert(res.msg);return}
+      window._disEditReturnedId=null;
+      updateDisReturnedEditUi();
+      var r2=DIS_LIST.find(function(x){return String(x.id)===String(eid)});
+      if(r2&&typeof disasterTryNotifyWorkflow==='function')disasterTryNotifyWorkflow('submitted',r2);
+      if(r2&&r2.wf&&((typeof disasterShouldOpenMailtoForWf==='function'&&disasterShouldOpenMailtoForWf())||(typeof disasterShouldOpenMailtoForWf!=='function'&&typeof disasterHasEmailJsConfigured==='function'&&!disasterHasEmailJsConfigured()))){
+        var stU=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r2):[];
+        if(stU[0]&&String(stU[0].email||'').trim()&&typeof disasterOpenMailtoForStep==='function'&&confirm('承認者にメール作成画面を開きますか？'))disasterOpenMailtoForStep(r2,0);
+      }
+      resetDisasterFormPC();
+      fillDisFormDefaults();
+      var t=document.getElementById('toastDis');if(t){t.textContent=typeof disasterWfAfterSubmitHint==='function'?disasterWfAfterSubmitHint():'再提出しました';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},5000)}
+      rDisList();
+    }
+    disSubmitRunAfterListReady(saveMerged);
+    return;
+  }
   var kt=document.querySelector('input[name="kyugyo_type_pc"]:checked')?.value,kd=document.getElementById('f_kyugyo_days_pc')?.value,ky=document.getElementById('f_kyugyo_yen_pc')?.value;
   var kyugyoStr=(kt==='不休'?'不休':(kd||ky)?((kd?kd+'日間 ':'')+(ky?ky+'円':'')).trim():'');
   var dy=document.getElementById('f_dt_y_pc')?.value,dm=document.getElementById('f_dt_m_pc')?.value,dd=document.getElementById('f_dt_d_pc')?.value,dh=document.getElementById('f_dt_h_pc')?.value,dmin=document.getElementById('f_dt_min_pc')?.value,dw=document.getElementById('f_dt_week_pc')?.value;
@@ -1471,7 +1705,10 @@ function rDisList(){
     var myName=CUR?CUR.name:'';
     var parts=[];
     if(myName&&typeof disasterIsPending==='function'){
-      var mine=sorted.filter(function(r){return r.reporter===myName&&(disasterIsPending(r)||disasterIsReturned(r))});
+      var mine=sorted.filter(function(r){
+        var m=typeof disasterReporterNamesMatch==='function'?disasterReporterNamesMatch(r.reporter,myName):r.reporter===myName;
+        return m&&(disasterIsPending(r)||disasterIsReturned(r));
+      });
       if(mine.length){
         parts.push('<div style="font-size:12px;font-weight:700;color:var(--t2);margin:4px 0 8px">あなたの申請（承認待ち・差戻）</div>');
         parts.push(mine.map(disListRowUser).join(''));
@@ -1483,75 +1720,9 @@ function rDisList(){
     el.innerHTML=parts.join('');
   });
 }
-function buildDisDetailHtml(r){
-  var V=function(v){var s=v!=null?String(v):'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
-  var birthParts=(r.birth||'').split('-');var by=birthParts[0]||'',bm=birthParts[1]||'',bd=birthParts[2]||'';
-  var expParts=(r.exp||'').split('-');var expY=expParts[0]||'',expM=expParts[1]||'';
-  var disImgs=r.situation_imgs&&r.situation_imgs.length?r.situation_imgs:(r.situation_img?[r.situation_img]:[]);
-  var imgsHtml=disImgs.length?disImgs.map(function(src){return'<img src="'+src+'" onclick="showFullPhotoSrc(this.src)" style="max-width:200px;border-radius:6px;cursor:pointer;margin:4px">'}).join(''):'';
-  var isMobile=window.innerWidth<768;
-  var bdr=isMobile?'border-bottom:1px solid #333;':'border-right:1px solid #333;';
-  var cols=isMobile?'1fr':'1fr 1fr 1fr';
-  var row=function(l,v){return'<div style="display:flex;align-items:stretch;border-bottom:1px solid #333;min-height:28px"><div style="flex-shrink:0;width:90px;padding:4px 8px;background:#e8e8e8;border-right:1px solid #333;display:flex;align-items:center;font-size:10pt;line-height:1.3">'+l+'</div><div style="flex:1;min-width:0;padding:4px 6px;display:flex;align-items:center;background:#fff;font-size:10pt;word-break:break-all">'+v+'</div></div>'};
-  var sub=function(l,v){return'<div style="display:flex;align-items:stretch;border-bottom:1px solid #ddd;min-height:28px"><div style="flex-shrink:0;width:70px;padding:4px 6px;background:#f0f0f0;border-right:1px solid #ddd;display:flex;align-items:center;font-size:9.5pt">'+l+'</div><div style="flex:1;min-width:0;padding:4px 6px;display:flex;align-items:center;background:#fff;font-size:10pt;word-break:break-all">'+v+'</div></div>'};
-  var gs=function(l){return'<div style="display:flex;border-bottom:1px solid #333"><div style="flex-shrink:0;width:90px;padding:8px 6px;background:#e8e8e8;border-right:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9.5pt;line-height:1.4">'+l+'</div><div style="flex:1;display:flex;flex-direction:column;min-width:0">'};
-  var ge='</div></div>';
-  var ss=function(t,v){return'<div style="padding:6px 10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:10pt;margin-bottom:4px">'+t+'</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:30px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(v)+'</div></div>'};
-  var h='<div style="border:1px solid #333;border-radius:6px;overflow:hidden;background:#fff;font-family:Meiryo,sans-serif;font-size:10.5pt">';
-  h+='<div style="border-bottom:1px solid #333;padding:10px;text-align:center;font-weight:bold;font-size:16pt;background:#D9D9D9">災害事故(人身・物損)発生報告書</div>';
-  h+='<div style="display:grid;grid-template-columns:'+cols+';gap:0;'+(isMobile?'':'min-height:400px')+'">';
-  h+='<div style="'+bdr+'display:flex;flex-direction:column"><div style="display:flex;flex-direction:column;gap:0;font-size:10.5pt">';
-  h+=row('工事件名',V(r.keigen||''));
-  h+=row('災害日時',V(r.datetime||''));
-  h+=row('災害場所',V(r.basho||r.place||''));
-  h+=row('住所',V(r.basho_jusho||''));
-  h+=gs('被災者又は<br>事故者');
-  h+=sub('住所',V(r.jusho||''));
-  h+=sub('氏名',V(r.victim||'')+' 年齢:'+V(r.age||'')+'才 生年月日:'+V(by)+'年'+V(bm)+'月'+V(bd)+'日 職種:'+V(r.victim_dept||''));
-  h+=sub('雇入年月日',V(r.hire_date||'')+' 経験年数:'+V(expY)+'年'+V(expM)+'カ月');
-  h+=ge;
-  h+=gs('被災(事故)の<br>程度');
-  h+=sub('傷病名<br>(損害状況)',V(r.shobyomei||''));
-  h+=sub('病院名',V(r.byoin||'')+' 後遺症:'+V(r.koui||''));
-  h+=sub('休業見込<br>(損害見込額)',V(r.kyugyo||''));
-  h+=ge;
-  h+=row('現認者',r.gennin_aru==='有'?('有 職名:'+V(r.shokumei||'')+' 氏名:'+V(r.gennin_name||r.gennin||'')):V(r.gennin_aru||'無'));
-  h+=gs('人・設備・管理に<br>ついての教訓');
-  h+=sub('(人)',V(r.kyukun_person||''));
-  h+=sub('(設備)',V(r.kyukun_equip||''));
-  h+=sub('(管理)',V(r.kyukun_mgmt||''));
-  h+=ge;
-  h+='<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">労災原因分類</div>';
-  h+=row('起因物',V(r.kiinbutsu||''));
-  h+=row('不安全状態',V(r.fuanzen||''));
-  h+=row('不安全行動',V(r.fuanzen_kodo||''));
-  h+=row('事故の型',V(r.jiko||''));
-  h+=row('管理の欠陥',V(r.kanri||''));
-  h+='</div></div>';
-  h+='<div style="'+bdr+'display:flex;flex-direction:column;padding:0">';
-  h+='<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">災害発生状況</div>';
-  h+=ss('●場所(・・・で)',r.basho_detail||'');
-  h+=ss('●作業(・・・しているとき)',r.sagyo||'');
-  h+='<div style="padding:6px 10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:10pt;margin-bottom:4px">●原因(・・・であったため)</div>';
-  h+='<div style="font-size:9.5pt;color:#555;margin-bottom:2px">○物・環境的要因</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:24px;background:#f9f9f9;padding:4px 6px;border-radius:4px;margin-bottom:6px">'+V(r.genin_busshi||'')+'</div>';
-  h+='<div style="font-size:9.5pt;color:#555;margin-bottom:2px">○人的要因</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:24px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(r.genin_jin||'')+'</div></div>';
-  h+=ss('●結果(・・・した)',r.kekka||'');
-  h+='<div style="padding:6px 10px"><div style="font-weight:bold;font-size:10pt;margin-bottom:6px">こうすればよかったと思うこと</div>';
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
-  h+='<div><div style="font-size:9.5pt;color:#555;margin-bottom:2px">本人</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:40px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(r.kaizen_honin||'')+'</div></div>';
-  h+='<div><div style="font-size:9.5pt;color:#555;margin-bottom:2px">監督者</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:40px;background:#f9f9f9;padding:4px 6px;border-radius:4px">'+V(r.kaizen_kantoku||'')+'</div></div>';
-  h+='</div></div></div>';
-  h+='<div style="display:flex;flex-direction:column">';
-  h+='<div style="padding:10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:11pt;margin-bottom:8px">発生状況図</div><div style="min-height:40px">'+imgsHtml+'</div></div>';
-  h+='<div style="padding:10px;flex:1"><div style="font-weight:bold;font-size:11pt;margin-bottom:8px">【対策】</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:60px;background:#f9f9f9;padding:6px 8px;border-radius:4px">'+V(r.taisaku||'')+'</div></div>';
-  h+='</div></div>';
-  h+='<div style="margin-top:12px;padding:12px;background:#f8f8f8;border:1px solid #333;border-radius:6px;font-size:11pt"><div style="margin-bottom:8px">上記のとおり相違なく報告いたします。</div><div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap">'+V(r.report_date||'')+'　責任者：'+V(r.sekininsha||'')+'</div></div>';
-  h+='</div>';
-  return h;
-}
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
-  var h=buildDisDetailHtml(r);
+  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r):'<p style="padding:12px">詳細表示の読み込みに失敗しました。</p>';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfUserPanelHtml==='function'?disasterWfUserPanelHtml(r,id,CUR?CUR.name:''):'');
   document.getElementById('mT').textContent='災害発生報告 詳細';

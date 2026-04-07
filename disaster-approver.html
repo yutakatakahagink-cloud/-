@@ -25,10 +25,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="config.js?v=20260430-perf"></script>
+<script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260430-3"></script>
 <script src="disaster-workflow.js"></script>
-<script src="disaster-email-notify.js?v=20260404-2"></script>
+<script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
 <script src="disaster-detail-html.js"></script>
 <script>
@@ -94,7 +94,9 @@ function bindPubActions(){
     var ta=document.getElementById('disApproverNote');
     var note=ta?String(ta.value||'').trim():'';
     if(!note){alert('追記・訂正内容を入力してください');return}
-    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN,REPORT_STEP);
+    var tfEl=document.getElementById('disApproverField');
+    var tf=tfEl?String(tfEl.value||'').trim():'';
+    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN,REPORT_STEP,tf);
     if(!res.ok){alert(res.msg);return}
     if(ta)ta.value='';
     render();

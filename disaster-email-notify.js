@@ -54,6 +54,12 @@
     );
   };
 
+  /** 差戻し後・報告者がログインして報告書を修正するための URL（要ログイン） */
+  global.disasterReporterEditUrl = function (rec) {
+    if (!rec || rec.id == null) return '';
+    return baseUrl() + 'user.html?disReturned=' + encodeURIComponent(rec.id);
+  };
+
   function getSteps(rec) {
     if (typeof global.disasterGetStepsForRecord === 'function') {
       return global.disasterGetStepsForRecord(rec) || [];
@@ -98,9 +104,13 @@
       .toLowerCase();
   }
 
+  /** mailto 本文フッタ用。config の fromEmail を最優先（所有者 Firebase が古いと anzensystem のままになるのを防ぐ） */
   function notifyFromLine() {
-    var f =
+    var cfg = global.HH_EMAILJS || {};
+    var cfgFrom = String(cfg.fromEmail || cfg.replyToEmail || '').trim();
+    var owner =
       typeof global.disasterGetNotifyFromEmail === 'function' ? String(global.disasterGetNotifyFromEmail() || '').trim() : '';
+    var f = cfgFrom || owner;
     return f ? '\n\n────────\n送信元（返信先）メール: ' + f : '';
   }
 
@@ -133,6 +143,10 @@
   /** mailto の &from=（Outlook が既定アカウントを切り替えることがある）。未指定時は fromEmail / replyToEmail を使う */
   function effectiveMailtoFromEmail() {
     var cfg = global.HH_EMAILJS || {};
+    /* workflowNotifyVia: mailto のときは &from= を付けない（意図しない送信元固定を避ける） */
+    if (global.disasterWorkflowPrefersMailto && global.disasterWorkflowPrefersMailto()) {
+      return '';
+    }
     var a = String(cfg.mailtoFromEmail || '').trim();
     if (a && safeMailtoAddr(a)) return a;
     a = String(cfg.fromEmail || '').trim();
@@ -210,13 +224,17 @@
     var to = safeMailtoAddr(global.disasterWorkflowReturnNotifyTo ? global.disasterWorkflowReturnNotifyTo(rec) : '');
     if (!to) return;
     var sub2 = '日新興業 災害報告 差戻し (ID:' + (rec && rec.id != null ? rec.id : '') + ')';
+    var editU = global.disasterReporterEditUrl ? global.disasterReporterEditUrl(rec) : '';
     var body2 =
       '日新興業株式会社 安全衛生管理システムからの通知です。\n\n' +
       '報告が差戻されました。\n' +
       (rec.wf && rec.wf.returnNote ? 'コメント: ' + rec.wf.returnNote + '\n\n' : '') +
       '報告ID: ' +
       (rec && rec.id != null ? rec.id : '') +
-      '\n再提出は使用者画面からお願いします。' +
+      '\n' +
+      (editU
+        ? '報告書の修正・再提出は、次のURLを開き、ログイン後に「報告書フォームで修正する」から行ってください。\n' + editU + '\n'
+        : '再提出は使用者画面（user.html）の災害発生報告からお願いします。\n') +
       notifyFromLine();
     var bcc = '';
     var from =
@@ -412,6 +430,9 @@
     if (global.disasterUsesApiForWorkflowEmail && global.disasterUsesApiForWorkflowEmail()) {
       return '送信しました。承認者にメールで通知しました';
     }
+    if (global.disasterWorkflowPrefersMailto && global.disasterWorkflowPrefersMailto()) {
+      return '送信しました。開いたメール画面で会社の Outlook アカウントを選び「送信」すると承認者に届きます（M365 が自動送信を弾くときの運用）';
+    }
     if (typeof global.disasterHasWebhookNotifyConfigured === 'function' && global.disasterHasWebhookNotifyConfigured()) {
       return '送信しました。Slack/Teams/自動化フローに通知しました。';
     }
@@ -571,6 +592,7 @@
         ? '日新興業 災害報告 差戻し (ID:' + rec.id + ')'
         : '日新興業 災害報告 承認依頼 (ID:' + rec.id + ')';
     var pubL = global.disasterApproverPublicUrl ? global.disasterApproverPublicUrl(rec) : '';
+    var editL = global.disasterReporterEditUrl ? global.disasterReporterEditUrl(rec) : '';
     var idFields = emailJsFromReplyFields();
     var replyLine = idFields.replyTo || idFields.fromEmail;
     /* 本文は短く・URLは承認用1本（admin_link はテンプレ用パラメータで別渡し。重複URLはスパムスコアが上がりやすい） */
@@ -580,7 +602,11 @@
       rec.id +
       '\n報告者: ' +
       (rec.reporter || '') +
-      (pubL ? '\n\n承認・差戻しURL:\n' + pubL : '') +
+      (kind === 'returned' && editL
+        ? '\n\n報告書の修正・再提出（ログイン後）:\n' + editL
+        : pubL
+          ? '\n\n承認・差戻しURL:\n' + pubL
+          : '') +
       (replyLine ? '\n\n返信先: ' + replyLine : '');
 
     ensureEmailJs(function (ok) {
@@ -599,6 +625,7 @@
         return;
       }
       // EmailJS テンプレの「To」は必ずいずれかと一致させる: to_email（推奨） / email / to / user_email
+      var repEdit = global.disasterReporterEditUrl ? global.disasterReporterEditUrl(rec) : '';
       var params = {
         to_email: to,
         email: to,
@@ -609,6 +636,7 @@
         message: msg,
         admin_link: adminLink(),
         approver_public_link: pubL || '',
+        reporter_edit_link: kind === 'returned' ? repEdit || '' : '',
         report_id: String(rec.id),
         reporter_name: rec.reporter || '',
       };
@@ -617,8 +645,16 @@
         params.reply_to = idFields.replyTo || idFields.fromEmail;
         params.sender_email = idFields.fromEmail || idFields.replyTo;
       }
-      if (idFields.fromEmail) params.from_email = idFields.fromEmail;
-      if (idFields.fromName) params.from_name = idFields.fromName;
+      if (idFields.fromEmail) {
+        params.from_email = idFields.fromEmail;
+        params.fromEmail = idFields.fromEmail;
+        params.from = idFields.fromEmail;
+        params.sender = idFields.fromEmail;
+      }
+      if (idFields.fromName) {
+        params.from_name = idFields.fromName;
+        params.fromName = idFields.fromName;
+      }
       var bccSrc = effReply;
       if (kind === 'returned' && bccSrc && normAddr(bccSrc) !== normAddr(to)) {
         params.bcc_email = bccSrc;
@@ -637,22 +673,26 @@
           console.warn('[disaster-email] EmailJS', err);
           var stNum = err && err.status != null ? Number(err.status) : NaN;
           var errTxt = err && typeof err.text === 'string' ? err.text : '';
-          if (stNum === 412 && /suspend|Outlook:/i.test(errTxt)) {
+          if (stNum === 412) {
             console.warn(
-              '[disaster-email] 送信経路の Outlook アカウントが Microsoft により停止扱いです（412）。outlook.com で該当メールにログインし復旧手順を行うか、会社の Microsoft 365 メール・Gmail など別アカウントを EmailJS の Email Services に接続し、serviceId / fromEmail / replyToEmail を合わせてください。'
+              '[disaster-email] EmailJS 412（Outlook/Microsoft 連携エラー）。メールサービスを切断→社用 M365 で再接続するか、別サービスを新規作成して config の serviceId を合わせてください。',
+              errTxt || ''
             );
             if (kind === 'submitted') {
               setTimeout(function () {
                 try {
                   alert(
-                    '【承認依頼メール】自動送信に失敗しました（EmailJS 412 / Outlook 停止の可能性）。\n\n' +
-                      '■ まず試すこと\n' +
-                      '1) ブラウザで https://outlook.com にログインし、anzensystem@outlook.com の「アカウント確認・ブロック解除」を完了する\n' +
-                      '2) または EmailJS のダッシュボードで Gmail / 会社の Microsoft 365 など別メールをサービスに追加し、config.js の serviceId・fromEmail・replyToEmail を合わせる\n\n' +
-                      '■ すぐ手動で送りたいとき（メール作成画面を開く）\n' +
-                      'config.js の HH_EMAILJS に次の1行を追加（J は大文字）:\n' +
-                      'allowMailtoFallbackOnEmailJsFailure: true\n' +
-                      '保存して GitHub に再アップロード後、ページを再読み込みして再度提出してください。'
+                    '【承認依頼メール】自動送信に失敗しました（EmailJS エラー 412・Outlook 連携の不整合が多いです）。\n\n' +
+                      '■ 推奨（EmailJS 側）\n' +
+                      '1) dashboard.emailjs.com → メールサービス → 該当の Outlook を「切断」\n' +
+                      '2) もう一度接続し、送信に使う Microsoft 365（例: yutaka_takahagi@…onmicrosoft.com）でサインインし直す\n' +
+                      '3) それでもダメなら「新しいメールサービス」を追加して社用だけ接続し、config.js の serviceId をそのサービスの ID に変更\n\n' +
+                      '■ アカウント確認\n' +
+                      '・ブラウザで https://portal.office.com または Outlook に、送信に使う社用メールでログインし、セキュリティ上の案内があれば対応\n\n' +
+                      '■ すぐ手動で送る（下書き画面が開く）\n' +
+                      'config.js の HH_EMAILJS に: allowMailtoFallbackOnEmailJsFailure: true\n' +
+                      'を追加 → 保存して GitHub に再アップロード → ページを Ctrl+Shift+R で再読み込み\n\n' +
+                      '（詳細は F12 コンソールの [disaster-email] EmailJS を確認）'
                   );
                 } catch (eAl) {}
               }, 500);

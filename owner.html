@@ -505,10 +505,10 @@ select,input,textarea,button{color:var(--t1)}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260403-2"></script>
+<script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js"></script>
 <script src="disaster-workflow.js"></script>
-<script src="disaster-email-notify.js?v=20260404-2"></script>
+<script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
 <script src="disaster-detail-html.js"></script>
 <script src="laws_refresh.js"></script>
@@ -743,7 +743,9 @@ function disasterDoApproverNote(id){
   var ta=document.getElementById('disApproverNote');
   var note=ta?String(ta.value||'').trim():'';
   if(!note){alert('追記・訂正内容を入力してください');return}
-  var res=typeof disasterReviewerAppendNote==='function'?disasterReviewerAppendNote(DIS_LIST,id,note,CUR?CUR.name:'',CUR?CUR.email||'':'',disasterIsOwnerSession()):{ok:false,msg:'機能が読み込まれていません'};
+  var tfEl=document.getElementById('disApproverField');
+  var tf=tfEl?String(tfEl.value||'').trim():'';
+  var res=typeof disasterReviewerAppendNote==='function'?disasterReviewerAppendNote(DIS_LIST,id,note,CUR?CUR.name:'',CUR?CUR.email||'':'',disasterIsOwnerSession(),undefined,undefined,tf):{ok:false,msg:'機能が読み込まれていません'};
   if(!res.ok){alert(res.msg);return}
   if(ta)ta.value='';
   showDisDetail(id);
