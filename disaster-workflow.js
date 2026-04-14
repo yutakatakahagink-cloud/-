@@ -18,6 +18,69 @@
 
   global.disasterNormEmail = normEmail;
 
+  function formatAtJst(iso) {
+    if (iso == null || iso === '') return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) {
+      var s0 = String(iso);
+      return s0.length >= 19 ? s0.slice(0, 19).replace('T', ' ') : s0;
+    }
+    try {
+      var fmt = new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      var p = {};
+      fmt.formatToParts(d).forEach(function (x) {
+        if (x.type !== 'literal') p[x.type] = x.value;
+      });
+      return p.year + '-' + p.month + '-' + p.day + ' ' + p.hour + ':' + p.minute + ':' + p.second;
+    } catch (err) {
+      return d.toISOString().slice(0, 19).replace('T', ' ');
+    }
+  }
+  global.disasterFormatAtJst = formatAtJst;
+
+  function normalizeParenStr(s) {
+    return String(s || '')
+      .replace(/\uFF08/g, '(')
+      .replace(/\uFF09/g, ')')
+      .trim();
+  }
+
+  function isMailLinkPlaceholderName(name) {
+    return normalizeParenStr(name) === '(メールリンク)';
+  }
+
+  /** メールリンク承認時など、hh_admins の承認用メールと一致する管理者名を使う */
+  function resolveApproverByName(approverName, approverEmail) {
+    if (!isMailLinkPlaceholderName(approverName)) {
+      return String(approverName || '').trim();
+    }
+    var need = normEmail(approverEmail);
+    if (!need) return '';
+    try {
+      var raw = localStorage.getItem('hh_admins');
+      if (!raw) return '';
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return '';
+      for (var i = 0; i < arr.length; i++) {
+        var a = arr[i];
+        if (a && normEmail(a.email) === need) {
+          var nm = String(a.name || '').trim();
+          if (nm) return nm;
+        }
+      }
+    } catch (e) {}
+    return '';
+  }
+
   /** 報告者名の表記ゆれ（全半角・空白）を吸収して同一人物か判定 */
   function normReporterName(s) {
     try {
@@ -367,18 +430,28 @@
     var stepLab = (steps[r.wf.step] && steps[r.wf.step].label) || '第' + (r.wf.step + 1) + '承認';
     var fk = String(targetField || '').trim();
     r.wf.report_addenda = Array.isArray(r.wf.report_addenda) ? r.wf.report_addenda : [];
+    var emStore = normEmail(approverEmail);
+    if (!emStore) emStore = stepEmailForRecord(r, r.wf.step);
+    var nameForResolve = String(approverName || '').trim();
+    if (nameForResolve.indexOf('メールリンク') !== -1) {
+      nameForResolve = nameForResolve.replace(/\s*[\(（]承認者追記[\)）]\s*$/g, '').trim();
+    }
+    var byResolved = resolveApproverByName(nameForResolve, emStore);
+    if (!byResolved) byResolved = nameForResolve;
+    if (!byResolved && emStore) byResolved = emStore;
     var entry = {
       at: now,
-      by: approverName || '',
+      by: byResolved,
       role: '承認者追記（' + stepLab + '）',
       text: t,
     };
     if (fk) entry.field = fk;
+    if (emStore) entry.approver_email = emStore;
     r.wf.report_addenda.push(entry);
     r.wf.history.push({
       type: 'approver_note',
       at: now,
-      by: approverName || '',
+      by: byResolved,
       note: '報告書に追記（' + stepLab + '）',
     });
     disasterSaveReports(DIS_LIST, id);
@@ -515,7 +588,7 @@
     if (!r || !r.wf || !r.wf.stamps || !r.wf.stamps.length) return '';
     return r.wf.stamps
       .map(function (s) {
-        var dt = (s.at || '').slice(0, 10).replace(/-/g, '/');
+        var dt = formatAtJst(s.at || '').slice(0, 10).replace(/-/g, '/');
         return (
           '<div style="width:76px;height:76px;border-radius:50%;border:3px solid #B71C1C;background:rgba(255,255,255,.98);box-shadow:0 2px 10px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;box-sizing:border-box;flex-shrink:0;pointer-events:none">' +
           '<div style="font-size:8px;font-weight:800;color:#B71C1C;letter-spacing:.06em;line-height:1">承認</div>' +
@@ -600,7 +673,7 @@
         return (
           '<div style="font-size:11px;border-bottom:1px solid #eee;padding:6px 0">' +
           '<span style="color:var(--t3)">' +
-          esc((h.at || '').slice(0, 19).replace('T', ' ')) +
+          esc(formatAtJst(h.at)) +
           '</span> ' +
           '<strong>' +
           esc(typeJa) +

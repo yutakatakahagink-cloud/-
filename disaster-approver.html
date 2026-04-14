@@ -27,10 +27,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260430-3"></script>
-<script src="disaster-workflow.js"></script>
+<script src="disaster-workflow.js?v=20260414-wf"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
-<script src="disaster-detail-html.js"></script>
+<script src="disaster-detail-html.js?v=20260414-detail"></script>
 <script>
 var DIS_LIST=[];
 var REPORT_ID=null;
@@ -60,6 +60,15 @@ function showFullPhotoSrc(src){
   document.body.appendChild(ov);
 }
 
+function disasterPubStepApproverEmail(){
+  var r=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
+  if(!r||!r.wf)return '';
+  var steps=typeof disasterGetStepsForRecord==='function'?disasterGetStepsForRecord(r):[];
+  var si=parseInt(String(REPORT_STEP),10);
+  if(isNaN(si)||si<0)si=r.wf.step!=null?Number(r.wf.step):0;
+  var st=steps[si]||{};
+  return String(st.email||'').trim();
+}
 function bindPubActions(){
   window.disasterPubDoApprove=function(){
     if(typeof disasterApprove!=='function')return;
@@ -96,7 +105,7 @@ function bindPubActions(){
     if(!note){alert('追記・訂正内容を入力してください');return}
     var tfEl=document.getElementById('disApproverField');
     var tf=tfEl?String(tfEl.value||'').trim():'';
-    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）','',false,REPORT_TOKEN,REPORT_STEP,tf);
+    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）',disasterPubStepApproverEmail(),false,REPORT_TOKEN,REPORT_STEP,tf);
     if(!res.ok){alert(res.msg);return}
     if(ta)ta.value='';
     render();

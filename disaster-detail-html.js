@@ -4,19 +4,14 @@
 (function (global) {
   'use strict';
 
+  var MERGE_MARKER = '\n\n────────\n【承認者追記】';
+
   global.disasterBuildDetailHtml = function (r) {
     if (!r) return '';
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     };
-    var birthParts = (r.birth || '').split('-');
-    var by = birthParts[0] || '',
-      bm = birthParts[1] || '',
-      bd = birthParts[2] || '';
-    var expParts = (r.exp || '').split('-');
-    var expY = expParts[0] || '',
-      expM = expParts[1] || '';
     var disImgs = r.situation_imgs && r.situation_imgs.length ? r.situation_imgs : r.situation_img ? [r.situation_img] : [];
     var imgsHtml = disImgs.length
       ? disImgs
@@ -58,63 +53,169 @@
       );
     };
     var ge = '</div></div>';
-    function addendaInline(fieldKey) {
+
+    function stripSavedApproverMerges(val) {
+      var s = String(val != null ? val : '');
+      var i = s.indexOf(MERGE_MARKER);
+      if (i === -1) return s;
+      return s.slice(0, i);
+    }
+
+    function isApproverAddendum(e) {
+      return e && String(e.role || '').indexOf('承認者') !== -1;
+    }
+
+    function adminNameForApproverEmail(em) {
+      var need = String(em || '')
+        .trim()
+        .toLowerCase();
+      if (!need) return '';
+      try {
+        var raw = localStorage.getItem('hh_admins');
+        if (!raw) return '';
+        var arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return '';
+        for (var i = 0; i < arr.length; i++) {
+          var a = arr[i];
+          if (!a || !a.email) continue;
+          if (String(a.email).trim().toLowerCase() === need) {
+            var nm = String(a.name || '').trim();
+            if (nm) return nm;
+          }
+        }
+      } catch (err) {}
+      return '';
+    }
+
+    function normalizeParenStr(s) {
+      return String(s || '')
+        .replace(/\uFF08/g, '(')
+        .replace(/\uFF09/g, ')')
+        .trim();
+    }
+
+    function approverDisplayName(e) {
+      var b0 = String(e.by || '').trim();
+      if (b0.indexOf('メールリンク') !== -1) {
+        b0 = b0.replace(/\s*[\(（]承認者追記[\)）]\s*$/g, '').trim();
+      }
+      var b = b0;
+      if (b && normalizeParenStr(b) !== '(メールリンク)') return b;
+      var adm = adminNameForApproverEmail(e.approver_email);
+      if (!adm && r.wf && Array.isArray(r.wf.steps)) {
+        for (var si = 0; si < r.wf.steps.length; si++) {
+          var sem = (r.wf.steps[si] && r.wf.steps[si].email) || '';
+          adm = adminNameForApproverEmail(sem);
+          if (adm) break;
+        }
+      }
+      if (adm) return adm;
+      var em = String(e.approver_email || '').trim();
+      if (!em && r.wf && Array.isArray(r.wf.steps)) {
+        for (var sj = 0; sj < r.wf.steps.length; sj++) {
+          var se2 = String((r.wf.steps[sj] && r.wf.steps[sj].email) || '').trim();
+          if (se2) {
+            em = se2;
+            break;
+          }
+        }
+      }
+      if (em) return em;
+      return '承認者（メールリンク）';
+    }
+
+    /** ISO（UTC）保存の at を日本標準時で YYYY-MM-DD HH:mm:ss 表示（追記操作の現地時刻に合わせる） */
+    function formatAddendaAt(raw) {
+      if (raw == null || raw === '') return '';
+      var d = new Date(raw);
+      if (isNaN(d.getTime())) {
+        var s = String(raw);
+        return s.length >= 19 ? s.slice(0, 19).replace('T', ' ') : s;
+      }
+      try {
+        var fmt = new Intl.DateTimeFormat('ja-JP', {
+          timeZone: 'Asia/Tokyo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        });
+        var p = {};
+        fmt.formatToParts(d).forEach(function (x) {
+          if (x.type !== 'literal') p[x.type] = x.value;
+        });
+        return p.year + '-' + p.month + '-' + p.day + ' ' + p.hour + ':' + p.minute + ':' + p.second;
+      } catch (err) {
+        var iso = d.toISOString();
+        return iso.slice(0, 19).replace('T', ' ');
+      }
+    }
+
+    function addendaForFieldUnified(fieldKey) {
       if (!r.wf || !Array.isArray(r.wf.report_addenda)) return '';
-      var blocks = '';
+      var seen = Object.create(null);
+      var out = [];
       r.wf.report_addenda.forEach(function (e) {
         if (!e || String(e.field || '') !== String(fieldKey)) return;
-        var at = (e.at || '').slice(0, 16).replace('T', ' ');
-        blocks +=
-          '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E57373;font-size:10pt;white-space:pre-wrap;word-break:break-all">' +
-          V(e.text || '') +
-          '<div style="font-size:9px;color:#C62828;margin-top:4px;font-weight:600">— ' +
-          V(e.by || '') +
-          '（承認者追記） ' +
-          V(at) +
-          '</div></div>';
+        if (!isApproverAddendum(e)) return;
+        var key = String(e.at || '') + '\t' + String(e.by || '') + '\t' + String(e.text || '').trim();
+        if (seen[key]) return;
+        seen[key] = true;
+        out.push(e);
       });
-      return blocks;
+      if (!out.length) return '';
+      return out
+        .map(function (e) {
+          var at = formatAddendaAt(e.at);
+          var who = approverDisplayName(e);
+          var txt = String(e.text || '').trim();
+          return (
+            '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E57373;font-size:10pt;white-space:pre-wrap;word-break:break-all">' +
+            V(txt) +
+            '<span style="font-size:9px;color:#C62828;font-weight:600;display:block;margin-top:6px"> — ' +
+            V(who) +
+            ' ' +
+            V(at) +
+            '</span></div>'
+          );
+        })
+        .join('');
     }
+
+    function cellWithApprovals(fieldKey, rawVal) {
+      var base = stripSavedApproverMerges(rawVal);
+      return V(base) + (fieldKey ? addendaForFieldUnified(fieldKey) : '');
+    }
+
     var ss = function (t, fieldKey, v) {
       return (
         '<div style="padding:6px 10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:10pt;margin-bottom:4px">' +
         t +
         '</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:30px;background:#f9f9f9;padding:4px 6px;border-radius:4px">' +
-        V(v) +
-        (fieldKey ? addendaInline(fieldKey) : '') +
+        cellWithApprovals(fieldKey, v) +
         '</div></div>'
       );
     };
+
     var h =
       '<div style="border:1px solid #333;border-radius:6px;overflow:hidden;background:#fff;font-family:Meiryo,sans-serif;font-size:10.5pt">';
     h += '<div style="border-bottom:1px solid #333;padding:10px;text-align:center;font-weight:bold;font-size:16pt;background:#D9D9D9">災害事故(人身・物損)発生報告書</div>';
     h += '<div style="display:grid;grid-template-columns:' + cols + ';gap:0;' + (isMobile ? '' : 'min-height:400px') + '">';
     h += '<div style="' + bdr + 'display:flex;flex-direction:column"><div style="display:flex;flex-direction:column;gap:0;font-size:10.5pt">';
-    h += row('工事件名', V(r.keigen || '') + addendaInline('keigen'));
     h += row('災害日時', V(r.datetime || ''));
-    h += row('災害場所', V(r.basho || r.place || '') + addendaInline('basho'));
-    h += row('住所', V(r.basho_jusho || '') + addendaInline('basho_jusho'));
-    h += gs('被災者又は<br>事故者');
-    h += sub('住所', V(r.jusho || ''));
-    h += sub(
-      '氏名',
-      V(r.victim || '') + ' 年齢:' + V(r.age || '') + '才 生年月日:' + V(by) + '年' + V(bm) + '月' + V(bd) + '日 職種:' + V(r.victim_dept || '')
-    );
-    h += sub('雇入年月日', V(r.hire_date || '') + ' 経験年数:' + V(expY) + '年' + V(expM) + 'カ月');
-    h += ge;
+    h += row('住所', cellWithApprovals('basho_jusho', r.basho_jusho || ''));
     h += gs('被災(事故)の<br>程度');
-    h += sub('傷病名<br>(損害状況)', V(r.shobyomei || '') + addendaInline('shobyomei'));
-    h += sub('病院名', V(r.byoin || '') + ' 後遺症:' + V(r.koui || ''));
+    h += sub('傷病名<br>(損害状況)', cellWithApprovals('shobyomei', r.shobyomei || ''));
+    h += sub('後遺症', V(r.koui || ''));
     h += sub('休業見込<br>(損害見込額)', V(r.kyugyo || ''));
     h += ge;
-    h += row(
-      '現認者',
-      r.gennin_aru === '有' ? '有 職名:' + V(r.shokumei || '') + ' 氏名:' + V(r.gennin_name || r.gennin || '') : V(r.gennin_aru || '無')
-    );
     h += gs('人・設備・管理に<br>ついての教訓');
-    h += sub('(人)', V(r.kyukun_person || '') + addendaInline('kyukun_person'));
-    h += sub('(設備)', V(r.kyukun_equip || '') + addendaInline('kyukun_equip'));
-    h += sub('(管理)', V(r.kyukun_mgmt || '') + addendaInline('kyukun_mgmt'));
+    h += sub('(人)', cellWithApprovals('kyukun_person', r.kyukun_person || ''));
+    h += sub('(設備)', cellWithApprovals('kyukun_equip', r.kyukun_equip || ''));
+    h += sub('(管理)', cellWithApprovals('kyukun_mgmt', r.kyukun_mgmt || ''));
     h += ge;
     h += '<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">労災原因分類</div>';
     h += row('起因物', V(r.kiinbutsu || ''));
@@ -130,58 +231,75 @@
     h += '<div style="padding:6px 10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:10pt;margin-bottom:4px">●原因(・・・であったため)</div>';
     h +=
       '<div style="font-size:9.5pt;color:#555;margin-bottom:2px">○物・環境的要因</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:24px;background:#f9f9f9;padding:4px 6px;border-radius:4px;margin-bottom:6px">' +
-      V(r.genin_busshi || '') +
-      addendaInline('genin_busshi') +
+      cellWithApprovals('genin_busshi', r.genin_busshi || '') +
       '</div>';
     h +=
       '<div style="font-size:9.5pt;color:#555;margin-bottom:2px">○人的要因</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:24px;background:#f9f9f9;padding:4px 6px;border-radius:4px">' +
-      V(r.genin_jin || '') +
-      addendaInline('genin_jin') +
+      cellWithApprovals('genin_jin', r.genin_jin || '') +
       '</div></div>';
     h += ss('●結果(・・・した)', 'kekka', r.kekka || '');
     h += '<div style="padding:6px 10px"><div style="font-weight:bold;font-size:10pt;margin-bottom:6px">こうすればよかったと思うこと</div>';
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
     h +=
       '<div><div style="font-size:9.5pt;color:#555;margin-bottom:2px">本人</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:40px;background:#f9f9f9;padding:4px 6px;border-radius:4px">' +
-      V(r.kaizen_honin || '') +
-      addendaInline('kaizen_honin') +
+      cellWithApprovals('kaizen_honin', r.kaizen_honin || '') +
       '</div></div>';
     h +=
       '<div><div style="font-size:9.5pt;color:#555;margin-bottom:2px">監督者</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:40px;background:#f9f9f9;padding:4px 6px;border-radius:4px">' +
-      V(r.kaizen_kantoku || '') +
-      addendaInline('kaizen_kantoku') +
+      cellWithApprovals('kaizen_kantoku', r.kaizen_kantoku || '') +
       '</div></div>';
     h += '</div></div></div>';
     h += '<div style="display:flex;flex-direction:column">';
     h += '<div style="padding:10px;border-bottom:1px solid #ddd"><div style="font-weight:bold;font-size:11pt;margin-bottom:8px">発生状況図</div><div style="min-height:40px">' + imgsHtml + '</div></div>';
     h +=
       '<div style="padding:10px;flex:1"><div style="font-weight:bold;font-size:11pt;margin-bottom:8px">【対策】</div><div style="font-size:10pt;white-space:pre-wrap;word-break:break-all;min-height:60px;background:#f9f9f9;padding:6px 8px;border-radius:4px">' +
-      V(r.taisaku || '') +
-      addendaInline('taisaku') +
+      cellWithApprovals('taisaku', r.taisaku || '') +
       '</div></div>';
     h += '</div></div>';
     if (r.wf && Array.isArray(r.wf.report_addenda) && r.wf.report_addenda.length) {
-      var looseAdd = r.wf.report_addenda.filter(function (e) {
+      var looseRaw = r.wf.report_addenda.filter(function (e) {
         return e && !e.field;
+      });
+      var seenLoose = Object.create(null);
+      var looseAdd = [];
+      looseRaw.forEach(function (e) {
+        var dk = String(e.at || '') + '\t' + String(e.by || '') + '\t' + String(e.role || '') + '\t' + String(e.text || '').trim();
+        if (seenLoose[dk]) return;
+        seenLoose[dk] = true;
+        looseAdd.push(e);
       });
       if (looseAdd.length) {
         h +=
           '<div style="margin-top:10px;border-top:2px solid #E65100;padding:10px 12px;background:#FFFDE7"><div style="font-weight:bold;font-size:11pt;margin-bottom:10px;color:#E65100;border-bottom:1px solid #FFCC80;padding-bottom:6px">追記・訂正（ワークフロー・欄未指定分）</div>';
         looseAdd.forEach(function (e) {
-          var at = (e.at || '').slice(0, 19).replace('T', ' ');
-          h +=
-            '<div style="margin-bottom:12px;padding:10px;background:#fff;border:1px solid #FFE082;border-radius:6px;font-size:10pt;line-height:1.5">' +
-            '<div style="font-size:9.5pt;color:#555;margin-bottom:6px"><strong>' +
-            V(e.role || '追記') +
-            '</strong>　<time style="color:#888">' +
-            V(at) +
-            '</time></div>' +
-            '<div style="white-space:pre-wrap;word-break:break-all;color:#1a1a1a">' +
-            V(e.text || '') +
-            '</div>' +
-            '<div style="font-size:9px;color:#C62828;margin-top:6px;font-weight:600">' +
-            V(e.by || '') +
-            '</div></div>';
+          var at = formatAddendaAt(e.at);
+          if (isApproverAddendum(e)) {
+            var who = approverDisplayName(e);
+            h +=
+              '<div style="margin-bottom:12px;padding:10px;background:#fff;border:1px solid #FFE082;border-radius:6px;font-size:10pt;line-height:1.5">' +
+              '<div style="white-space:pre-wrap;word-break:break-all;color:#1a1a1a">' +
+              V(e.text || '') +
+              '</div>' +
+              '<span style="font-size:9px;color:#C62828;font-weight:600;display:block;margin-top:8px"> — ' +
+              V(who) +
+              ' ' +
+              V(at) +
+              '</span></div>';
+          } else {
+            h +=
+              '<div style="margin-bottom:12px;padding:10px;background:#fff;border:1px solid #FFE082;border-radius:6px;font-size:10pt;line-height:1.5">' +
+              '<div style="font-size:9.5pt;color:#555;margin-bottom:6px"><strong>' +
+              V(e.role || '追記') +
+              '</strong>　<time style="color:#888">' +
+              V(at) +
+              '</time></div>' +
+              '<div style="white-space:pre-wrap;word-break:break-all;color:#1a1a1a">' +
+              V(e.text || '') +
+              '</div>' +
+              '<div style="font-size:9px;color:#C62828;margin-top:6px;font-weight:600">' +
+              V(e.by || '') +
+              '</div></div>';
+          }
         });
         h += '</div>';
       }
