@@ -100,8 +100,11 @@
         b0 = b0.replace(/\s*[\(（]承認者追記[\)）]\s*$/g, '').trim();
       }
       var b = b0;
-      if (b && normalizeParenStr(b) !== '(メールリンク)') return b;
-      var adm = adminNameForApproverEmail(e.approver_email);
+      var isPh = !b || normalizeParenStr(b) === '(メールリンク)';
+      var candEm = String(e.approver_email || '').trim();
+      if (!candEm && b.indexOf('@') !== -1) candEm = b;
+
+      var adm = adminNameForApproverEmail(candEm);
       if (!adm && r.wf && Array.isArray(r.wf.steps)) {
         for (var si = 0; si < r.wf.steps.length; si++) {
           var sem = (r.wf.steps[si] && r.wf.steps[si].email) || '';
@@ -110,7 +113,10 @@
         }
       }
       if (adm) return adm;
-      var em = String(e.approver_email || '').trim();
+
+      if (b && !isPh && b.indexOf('@') === -1) return b;
+
+      var em = candEm;
       if (!em && r.wf && Array.isArray(r.wf.steps)) {
         for (var sj = 0; sj < r.wf.steps.length; sj++) {
           var se2 = String((r.wf.steps[sj] && r.wf.steps[sj].email) || '').trim();
