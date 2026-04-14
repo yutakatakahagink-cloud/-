@@ -1435,9 +1435,39 @@ function applyApproverReportAddendaToReturnedPcForm(r){
   function isApproverEntry(e){
     return e&&String(e.role||'').indexOf('承認者')!==-1;
   }
+  function addendaDisplayWho(e){
+    function _np(s){return String(s||'').replace(/\uFF08/g,'(').replace(/\uFF09/g,')').trim()}
+    var b=String(e.by||'').trim();
+    if(b&&_np(b)!=='(メールリンク)')return b;
+    try{
+      var need=String(e.approver_email||'').trim().toLowerCase();
+      if(need){
+        var raw=localStorage.getItem('hh_admins');
+        if(raw){
+          var arr=JSON.parse(raw);
+          if(Array.isArray(arr)){
+            for(var i=0;i<arr.length;i++){
+              var ad=arr[i];
+              if(ad&&String(ad.email||'').trim().toLowerCase()===need){
+                var nm=String(ad.name||'').trim();
+                if(nm)return nm;
+              }
+            }
+          }
+        }
+      }
+    }catch(err){}
+    var em=String(e.approver_email||'').trim();
+    if(em)return em;
+    return '（氏名なし）';
+  }
+  function fmtAddendaAt(iso){
+    if(typeof disasterFormatAtJst==='function')return disasterFormatAtJst(iso);
+    return (iso||'').slice(0,19).replace('T',' ');
+  }
   function fmtBlock(e){
-    var at=(e.at||'').slice(0,19).replace('T',' ');
-    return '\n\n────────\n【承認者追記】'+(e.by||'（氏名なし）')+(at?' '+at:'')+'\n'+String(e.text||'');
+    var at=fmtAddendaAt(e.at);
+    return '\n\n────────\n【承認者追記】'+addendaDisplayWho(e)+(at?' '+at:'')+'\n'+String(e.text||'');
   }
   addenda.forEach(function(e){
     if(!isApproverEntry(e)||!String(e.text||'').trim())return;
@@ -1446,7 +1476,7 @@ function applyApproverReportAddendaToReturnedPcForm(r){
       var el=document.getElementById(fieldToId[fk]);
       if(el)el.value=String(el.value||'')+fmtBlock(e);
     }else{
-      loose.push('【'+(e.role||'承認者追記')+'】'+(e.by||'')+' '+(e.at||'').slice(0,19).replace('T',' ')+'\n'+String(e.text||''));
+      loose.push('【'+(e.role||'承認者追記')+'】'+addendaDisplayWho(e)+' '+fmtAddendaAt(e.at)+'\n'+String(e.text||''));
     }
   });
   var lw=document.getElementById('disReturnedLooseApproverWrap');
