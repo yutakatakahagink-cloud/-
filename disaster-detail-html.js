@@ -120,17 +120,37 @@
 
       if (b && !isPh && b.indexOf('@') === -1) return b;
 
-      var em = candEm;
-      if (!em && r.wf && Array.isArray(r.wf.steps)) {
-        for (var sj = 0; sj < r.wf.steps.length; sj++) {
-          var se2 = String((r.wf.steps[sj] && r.wf.steps[sj].email) || '').trim();
-          if (se2) {
-            em = se2;
-            break;
+      function wfStepLabelForApproverEmail(needRaw) {
+        var need =
+          typeof global.disasterNormEmail === 'function'
+            ? global.disasterNormEmail(needRaw)
+            : String(needRaw || '')
+                .trim()
+                .toLowerCase();
+        if (!need || !r.wf || !Array.isArray(r.wf.steps)) return '';
+        for (var wi = 0; wi < r.wf.steps.length; wi++) {
+          var st = r.wf.steps[wi];
+          var se =
+            typeof global.disasterNormEmail === 'function'
+              ? global.disasterNormEmail(st && st.email)
+              : String((st && st.email) || '')
+                  .trim()
+                  .toLowerCase();
+          if (se === need) {
+            var lb = String((st && st.label) || '').trim();
+            if (lb) return lb;
           }
         }
+        return '';
       }
-      if (em) return em;
+      var needEm = candEm;
+      if (!needEm && b.indexOf('@') !== -1) needEm = b;
+      var fromRoleM = String(e.role || '').match(/承認者追記[（(]([^）)]+)[）)]/);
+      var fromRole = fromRoleM ? fromRoleM[1].trim() : '';
+      var wfLab = wfStepLabelForApproverEmail(needEm);
+      if (!wfLab) wfLab = fromRole;
+      if (wfLab) return wfLab;
+
       return '承認者（メールリンク）';
     }
 
