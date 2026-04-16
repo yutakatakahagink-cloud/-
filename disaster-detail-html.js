@@ -77,8 +77,10 @@
         if (!Array.isArray(arr)) return '';
         for (var i = 0; i < arr.length; i++) {
           var a = arr[i];
-          if (!a || !a.email) continue;
-          if (String(a.email).trim().toLowerCase() === need) {
+          if (!a) continue;
+          var em = String(a.email || '').trim().toLowerCase();
+          var idEm = String(a.id || '').trim().toLowerCase();
+          if (em === need || (!em && idEm === need)) {
             var nm = String(a.name || '').trim();
             if (nm) return nm;
           }
@@ -95,6 +97,8 @@
     }
 
     function approverDisplayName(e) {
+      var saved = String(e.approver_display_name || '').trim();
+      if (saved) return saved;
       var b0 = String(e.by || '').trim();
       if (b0.indexOf('メールリンク') !== -1) {
         b0 = b0.replace(/\s*[\(（]承認者追記[\)）]\s*$/g, '').trim();

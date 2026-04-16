@@ -26,11 +26,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
-<script src="hh-data.js?v=20260430-3"></script>
-<script src="disaster-workflow.js?v=20260414-wf"></script>
+<script src="hh-data.js?v=20260430-4"></script>
+<script src="disaster-workflow.js?v=20260430-wf2"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
-<script src="disaster-detail-html.js?v=20260415-name"></script>
+<script src="disaster-detail-html.js?v=20260430-name2"></script>
 <script>
 var DIS_LIST=[];
 var REPORT_ID=null;
@@ -210,10 +210,20 @@ function boot(){
   bindPubActions();
   function afterLoad(){
     DIS_APPROVER_LOAD_FINISHED=true;
-    render();
-    if(typeof HHDB!=='undefined'&&HHDB.onDisasterChange){
-      HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];DIS_LIST_LOAD_ERROR=null;render()});
+    function finish(){
+      render();
+      if(typeof HHDB!=='undefined'&&HHDB.onDisasterChange){
+        HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];DIS_LIST_LOAD_ERROR=null;render()});
+      }
     }
+    if(typeof HHDB!=='undefined'&&typeof HHDB.loadAdmins==='function'){
+      HHDB.loadAdmins(function(admins){
+        try{if(admins&&admins.length)localStorage.setItem('hh_admins',JSON.stringify(admins));}catch(e){}
+        finish();
+      });
+      return;
+    }
+    finish();
   }
   function loadList(fn){
     DIS_LIST_LOAD_ERROR=null;

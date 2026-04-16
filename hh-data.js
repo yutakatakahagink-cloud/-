@@ -282,6 +282,7 @@
       getAdminsRef().once('value',function(snap){
         var v=snap.val();
         var arr=Array.isArray(v)?v:(v?Object.values(v):[{id:'admin',pass:'admin123',name:'管理者'}]);
+        try{localStorage.setItem('hh_admins',JSON.stringify(arr));}catch(eLs){}
         onLoaded(arr);
       },function(){onLoaded([{id:'admin',pass:'admin123',name:'管理者'}]);});
     },
@@ -305,6 +306,7 @@
       getAdminsRef().on('value',function(snap){
         var v=snap.val();
         var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
+        try{if(arr&&arr.length)localStorage.setItem('hh_admins',JSON.stringify(arr));}catch(eLs){}
         if(typeof cb==='function')cb(arr);
       });
     },
