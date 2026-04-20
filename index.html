@@ -1,54 +1,173 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>安全衛生管理システム</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(180deg,#E8F5E9,#C8E6C9);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-h1{font-size:20px;color:#1B5E20;margin-bottom:24px;text-align:center}
-.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:600px}
-.card{background:#fff;border:2px solid #81C784;border-radius:16px;padding:24px;min-width:160px;text-align:center;text-decoration:none;color:#1B5E20;transition:all .2s;box-shadow:0 4px 12px rgba(46,125,50,.15)}
-.card:hover,.card:active{background:#E8F5E9;border-color:#2E7D32;transform:translateY(-2px);box-shadow:0 6px 20px rgba(46,125,50,.25)}
-.card .ico{font-size:36px;margin-bottom:12px}
-.card .ttl{font-size:14px;font-weight:700;margin-bottom:6px}
-.card .desc{font-size:11px;color:#558B2F;line-height:1.5}
-.url-list{background:#fff;border:1px solid #A5D6A7;border-radius:12px;padding:16px;margin-top:20px;max-width:600px;width:100%}
-.url-list h2{font-size:13px;color:#1B5E20;margin-bottom:12px}
-.url-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
-.url-item:last-child{margin-bottom:0}
-.url-item a{color:#0277BD;word-break:break-all;flex:1}
-.url-item .copy{padding:4px 10px;font-size:10px;background:#E8F5E9;border:1px solid #81C784;border-radius:8px;color:#1B5E20;cursor:pointer;white-space:nowrap}
-.url-item .copy:active{background:#C8E6C9}
-.note{font-size:11px;color:#558B2F;margin-top:24px;text-align:center;max-width:400px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a1628">
+  <title>SORA - 安全支援アプリ | 日新興業</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>安全衛生管理システム</h1>
-<div class="cards">
-  <a href="kensaibou_hiyarihatto_v3.html" class="card">
-    <div class="ico">⚠</div>
-    <div class="ttl">安全衛生管理</div>
-    <div class="desc">使用者・管理者・所有者はログイン画面で選択</div>
-  </a>
-</div>
-<div class="url-list">
-  <h2>📱 携帯・他PCから開くURL（コピーして共有）</h2>
-  <div class="url-item">
-    <a href="kensaibou_hiyarihatto_v3.html" id="urlUser">-</a>
-    <button class="copy" onclick="copyUrl('urlUser')">コピー</button>
+  <!-- 背景画像: public/images/sora-scene.png（添付1枚目・全景） / sora-mascot.png（添付2枚目・キャラ）を配置してください -->
+  <div class="background-overlay">
+  <div class="sora-bg-layers" aria-hidden="true">
+    <div class="sora-bg-scene"></div>
+    <div class="sora-bg-scrim"></div>
+    <img class="sora-bg-mascot-img" src="images/sora-mascot.png" alt="" decoding="async" onerror="this.style.display='none'">
   </div>
-</div>
-<p class="note">※ 複数端末（携帯・PC）で同一データを表示するには、<b>Firebaseの設定</b>が必要です。所有者ログイン後、設定タブで手順を確認してください。<br>※ 全ての端末で<b>同じURL</b>（GitHub Pages等）から開いてください。</p>
-<script>
-(function(){
-  var base=location.href.replace(/[^\/]*$/,'');
-  var url=base+'kensaibou_hiyarihatto_v3.html';
-  document.getElementById('urlUser').href=url;document.getElementById('urlUser').textContent=url;
-})();
-function copyUrl(id){var a=document.getElementById(id);var url=a.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){alert('URLをコピーしました: '+url)})}else{var t=document.createElement('input');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('URLをコピーしました: '+url)}}
-</script>
+  <!-- スプラッシュ -->
+  <div id="splash" class="splash">
+    <div class="splash-content">
+      <div class="sora-icon-large">
+        <svg viewBox="0 0 120 120" width="100" height="100"><defs><radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00d4ff" stop-opacity="0.3"/><stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="60" r="55" fill="url(#glow)"/><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><ellipse cx="60" cy="55" rx="28" ry="18" fill="#0a1628"/><circle cx="47" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><circle cx="73" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <h1 class="splash-title">SORA</h1>
+      <p class="splash-subtitle">Safety Observation Risk Assistant</p>
+      <div class="splash-loading"><div class="loading-bar"><div class="loading-fill"></div></div></div>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <!-- ヘッダー -->
+    <header class="header">
+      <div class="header-left">
+        <div class="sora-icon-small"><svg viewBox="0 0 120 120" width="32" height="32"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><ellipse cx="60" cy="55" rx="28" ry="18" fill="#0a1628"/><circle cx="47" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><circle cx="73" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg></div>
+        <div class="header-text"><h1>SORA</h1><span class="header-status" id="headerStatus">安全支援AI</span></div>
+      </div>
+      <div class="header-right">
+        <button class="btn-icon" id="btnNewChat" title="新しい会話"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="btn-icon" id="btnSettings" title="設定"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      </div>
+    </header>
+
+    <!-- タブ -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="photo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>写真診断</span></button>
+      <button class="tab-btn" data-tab="chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>チャット相談</span></button>
+    </nav>
+
+    <!-- ===== 写真診断タブ ===== -->
+    <div id="tabPhoto" class="tab-content active">
+      <div class="photo-section">
+        <div class="upload-area" id="uploadArea">
+          <div id="uploadPlaceholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <p class="upload-text">現場の写真を撮影またはアップロード</p>
+            <p class="upload-hint">タップで追加・複数枚選択可（最大8枚）</p>
+          </div>
+          <div id="photoPreviewStrip" class="photo-preview-strip" hidden></div>
+        </div>
+        <p class="photo-count-line" id="photoCountLine" hidden><span id="photoCountText">0</span> / 8 枚</p>
+        <div class="photo-actions">
+          <button type="button" class="btn-primary" id="btnCapture">📷 撮影する</button>
+          <button type="button" class="btn-secondary" id="btnGallery">📁 ファイル選択</button>
+        </div>
+        <button type="button" class="btn-clear-photos" id="btnClearPhotos" hidden>🗑 写真をすべて削除</button>
+        <input type="file" id="inputCapture" accept="image/*,.heic,.heif" capture="environment" style="display:none">
+        <input type="file" id="inputGallery" accept="image/*,.heic,.heif" multiple style="display:none">
+
+        <div id="photoMessageArea" class="photo-message-area" style="display:none">
+          <label class="photo-message-label" for="photoMessage">追加の質問・指示（任意）</label>
+          <textarea id="photoMessage" placeholder="例：アスファルト舗装中の車両誘導について重点的に見てほしい、など" rows="5"></textarea>
+          <button type="button" class="btn-analyze" id="btnAnalyze">🔍 安全診断を実行</button>
+        </div>
+        <div class="result-area" id="photoResult" style="display:none">
+          <div class="result-header"><span>SORAの診断結果</span></div>
+          <div class="result-content" id="photoResultContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== チャット相談タブ ===== -->
+    <div id="tabChat" class="tab-content">
+      <div class="chat-section">
+        <div class="chat-messages" id="chatMessages">
+          <div class="message assistant">
+            <div class="message-avatar"><svg viewBox="0 0 120 120" width="32" height="32"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><circle cx="47" cy="53" r="5" fill="#00d4ff"/><circle cx="73" cy="53" r="5" fill="#00d4ff"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg></div>
+            <div class="message-bubble"><div class="message-name">SORA</div><div class="message-text">よう！SORAだよ。<br>建設現場の安全に関する法令のこと、何でも聞いてくれ。<br><br>関係法令集（72法令）を読み込み済みだから、条文を引用しながら回答するよ。<br><br><small style="color:#ff9f43">※初回は右上の⚙からAPIキーの設定が必要です</small></div></div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="chat-input-wrapper">
+            <textarea id="chatInput" placeholder="安全に関する質問を入力..." rows="1"></textarea>
+            <button class="btn-send" id="btnSend"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </div>
+          <div class="chat-suggestions" id="chatSuggestions">
+            <button class="suggestion-chip" data-message="足場の安全基準を教えて">足場の安全基準</button>
+            <button class="suggestion-chip" data-message="高所作業時の墜落防止対策は？">墜落防止対策</button>
+            <button class="suggestion-chip" data-message="KY活動の効果的な進め方を教えて">KY活動の進め方</button>
+            <button class="suggestion-chip" data-message="熱中症対策について教えて">熱中症対策</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ローディング -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none">
+      <div class="loading-spinner">
+        <div class="sora-thinking"><svg viewBox="0 0 120 120" width="60" height="60"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><circle cx="47" cy="53" r="5" fill="#00d4ff" class="eye-blink"/><circle cx="73" cy="53" r="5" fill="#00d4ff" class="eye-blink"/><path d="M 50 63 Q 60 66 70 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg></div>
+        <p class="loading-text" id="loadingText">SORAが分析中...</p>
+      </div>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div class="modal" id="settingsModal" style="display:none">
+      <div class="modal-backdrop" id="settingsBackdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header"><h2>設定</h2><button class="btn-close" id="btnCloseSettings">&times;</button></div>
+        <div class="modal-body">
+          <div class="setting-group">
+            <label>Gemini APIキー</label>
+            <div class="api-key-input">
+              <input type="password" id="apiKeyInput" placeholder="APIキーを入力...">
+              <button class="btn-save-key" id="btnSaveKey">保存</button>
+            </div>
+            <p class="setting-hint"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> から無料で取得できます</p>
+            <div id="testResult" style="margin-top:8px"></div>
+          </div>
+          <div class="setting-group">
+            <label>法令データベース</label>
+            <p class="setting-value" id="lawsStatus">読み込み中...</p>
+          </div>
+          <hr class="setting-divider">
+          <div class="setting-group"><label>バージョン</label><p class="setting-value">SORA v1.4.0</p></div>
+          <div class="setting-group"><label>開発</label><p class="setting-value">日新興業株式会社 安全管理室</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 初期設定 -->
+    <div class="modal" id="setupModal" style="display:none">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content setup-modal">
+        <div class="setup-header">
+          <svg viewBox="0 0 120 120" width="60" height="60"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><ellipse cx="60" cy="55" rx="28" ry="18" fill="#0a1628"/><circle cx="47" cy="53" r="5" fill="#00d4ff"/><circle cx="73" cy="53" r="5" fill="#00d4ff"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg>
+          <h2>SORAへようこそ！</h2>
+          <p>AI機能を使うには、Gemini APIキーが必要だよ。</p>
+        </div>
+        <div class="setup-body">
+          <div class="setup-step"><span class="step-number">1</span><div><a href="https://aistudio.google.com/" target="_blank" class="setup-link">Google AI Studio</a> にアクセスしてログイン</div></div>
+          <div class="setup-step"><span class="step-number">2</span><div>左上で「新しいプロジェクトを作成」を選択</div></div>
+          <div class="setup-step"><span class="step-number">3</span><div>新プロジェクト内で「Get API key」→「APIキーを作成」</div></div>
+          <div class="setup-step"><span class="step-number">4</span><div>コピーしたキーを下に貼り付け</div></div>
+          <div class="setup-input">
+            <input type="password" id="setupApiKey" placeholder="APIキーを貼り付け...">
+            <button class="btn-analyze" id="btnSetupSave">設定して始める</button>
+          </div>
+          <div id="setupTestResult" style="margin-top:8px"></div>
+          <button class="btn-skip" id="btnSetupSkip">あとで設定する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="laws-db.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
