@@ -170,7 +170,24 @@ function friendlyError(msg) {
   return '⚠️ エラーが発生しました。\n詳細: ' + msg.substring(0, 200);
 }
 
-var SORA_AVATAR = '<svg viewBox="0 0 120 120" width="32" height="32"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><circle cx="47" cy="53" r="5" fill="#00d4ff"/><circle cx="73" cy="53" r="5" fill="#00d4ff"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg>';
+function soraAvatarHtml(sizeClass) {
+  sizeClass = sizeClass || 'sora-avatar-mood--chat';
+  return '<div class="sora-avatar-mood ' + sizeClass + '">'
+    + '<img class="sora-avatar-img sora-avatar-img--smile" src="images/sora-avatar-smile.png" alt="">'
+    + '<img class="sora-avatar-img sora-avatar-img--serious" src="images/sora-avatar-serious.png" alt="">'
+    + '</div>';
+}
+
+function startSoraAvatarMoodLoop() {
+  function tick() {
+    document.querySelectorAll('.sora-avatar-mood').forEach(function(el) {
+      var serious = Math.random() < 0.36;
+      el.classList.toggle('sora-avatar-mood--serious', serious);
+    });
+  }
+  setTimeout(tick, 800);
+  setInterval(tick, 4200);
+}
 
 /* ========== メイン ========== */
 document.addEventListener('DOMContentLoaded', function() {
@@ -460,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var d = document.createElement('div');
     d.className = 'message ' + role;
     if (role === 'assistant') {
-      d.innerHTML = '<div class="message-avatar">' + SORA_AVATAR + '</div>'
+      d.innerHTML = '<div class="message-avatar">' + soraAvatarHtml('sora-avatar-mood--chat') + '</div>'
         + '<div class="message-bubble"><div class="message-name">SORA</div><div class="message-text">' + renderMd(text) + '</div></div>';
     } else {
       d.innerHTML = '<div class="message-bubble"><div class="message-text">' + escapeHtml(text) + '</div></div>';
@@ -472,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function showTyping() {
     var d = document.createElement('div');
     d.className = 'message assistant';
-    d.innerHTML = '<div class="message-avatar">' + SORA_AVATAR + '</div>'
+    d.innerHTML = '<div class="message-avatar">' + soraAvatarHtml('sora-avatar-mood--chat') + '</div>'
       + '<div class="message-bubble"><div class="message-name">SORA</div><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
     $('chatMessages').appendChild(d);
     requestAnimationFrame(function() { $('chatMessages').scrollTop = $('chatMessages').scrollHeight; });
@@ -543,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // --- 起動 ---
   updateHeader();
+  startSoraAvatarMoodLoop();
   if (!getApiKey()) {
     setTimeout(openSetup, 2500);
   }

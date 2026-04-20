@@ -10,20 +10,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="preload" href="images/sora-scene.png" as="image">
 </head>
 <body>
-  <!-- 背景画像: public/images/sora-scene.png（添付1枚目・全景） / sora-mascot.png（添付2枚目・キャラ）を配置してください -->
   <div class="background-overlay">
   <div class="sora-bg-layers" aria-hidden="true">
     <div class="sora-bg-scene"></div>
     <div class="sora-bg-scrim"></div>
-    <img class="sora-bg-mascot-img" src="images/sora-mascot.png" alt="" decoding="async" onerror="this.style.display='none'">
   </div>
   <!-- スプラッシュ -->
   <div id="splash" class="splash">
     <div class="splash-content">
       <div class="sora-icon-large">
-        <svg viewBox="0 0 120 120" width="100" height="100"><defs><radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00d4ff" stop-opacity="0.3"/><stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="60" r="55" fill="url(#glow)"/><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><ellipse cx="60" cy="55" rx="28" ry="18" fill="#0a1628"/><circle cx="47" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><circle cx="73" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        <div class="sora-avatar-mood sora-avatar-mood--splash">
+          <img class="sora-avatar-img sora-avatar-img--smile" src="images/sora-avatar-smile.png" alt="">
+          <img class="sora-avatar-img sora-avatar-img--serious" src="images/sora-avatar-serious.png" alt="">
+        </div>
       </div>
       <h1 class="splash-title">SORA</h1>
       <p class="splash-subtitle">Safety Observation Risk Assistant</p>
@@ -35,7 +37,12 @@
     <!-- ヘッダー -->
     <header class="header">
       <div class="header-left">
-        <div class="sora-icon-small"><svg viewBox="0 0 120 120" width="32" height="32"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><ellipse cx="60" cy="55" rx="28" ry="18" fill="#0a1628"/><circle cx="47" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><circle cx="73" cy="53" r="5" fill="#00d4ff" class="eye-glow"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg></div>
+        <div class="sora-icon-small">
+          <div class="sora-avatar-mood sora-avatar-mood--header">
+            <img class="sora-avatar-img sora-avatar-img--smile" src="images/sora-avatar-smile.png" alt="">
+            <img class="sora-avatar-img sora-avatar-img--serious" src="images/sora-avatar-serious.png" alt="">
+          </div>
+        </div>
         <div class="header-text"><h1>SORA</h1><span class="header-status" id="headerStatus">安全支援AI</span></div>
       </div>
       <div class="header-right">
@@ -87,7 +94,12 @@
       <div class="chat-section">
         <div class="chat-messages" id="chatMessages">
           <div class="message assistant">
-            <div class="message-avatar"><svg viewBox="0 0 120 120" width="32" height="32"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><circle cx="47" cy="53" r="5" fill="#00d4ff"/><circle cx="73" cy="53" r="5" fill="#00d4ff"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg></div>
+            <div class="message-avatar">
+              <div class="sora-avatar-mood sora-avatar-mood--chat">
+                <img class="sora-avatar-img sora-avatar-img--smile" src="images/sora-avatar-smile.png" alt="">
+                <img class="sora-avatar-img sora-avatar-img--serious" src="images/sora-avatar-serious.png" alt="">
+              </div>
+            </div>
             <div class="message-bubble"><div class="message-name">SORA</div><div class="message-text">よう！SORAだよ。<br>建設現場の安全に関する法令のこと、何でも聞いてくれ。<br><br>関係法令集（72法令）を読み込み済みだから、条文を引用しながら回答するよ。<br><br><small style="color:#ff9f43">※初回は右上の⚙からAPIキーの設定が必要です</small></div></div>
           </div>
         </div>
@@ -109,7 +121,12 @@
     <!-- ローディング -->
     <div class="loading-overlay" id="loadingOverlay" style="display:none">
       <div class="loading-spinner">
-        <div class="sora-thinking"><svg viewBox="0 0 120 120" width="60" height="60"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><circle cx="47" cy="53" r="5" fill="#00d4ff" class="eye-blink"/><circle cx="73" cy="53" r="5" fill="#00d4ff" class="eye-blink"/><path d="M 50 63 Q 60 66 70 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg></div>
+        <div class="sora-thinking">
+          <div class="sora-avatar-mood sora-avatar-mood--loading">
+            <img class="sora-avatar-img sora-avatar-img--smile" src="images/sora-avatar-smile.png" alt="">
+            <img class="sora-avatar-img sora-avatar-img--serious" src="images/sora-avatar-serious.png" alt="">
+          </div>
+        </div>
         <p class="loading-text" id="loadingText">SORAが分析中...</p>
       </div>
     </div>
@@ -145,7 +162,10 @@
       <div class="modal-backdrop"></div>
       <div class="modal-content setup-modal">
         <div class="setup-header">
-          <svg viewBox="0 0 120 120" width="60" height="60"><circle cx="60" cy="60" r="40" fill="#1a2a4a" stroke="#00d4ff" stroke-width="2"/><ellipse cx="60" cy="55" rx="28" ry="18" fill="#0a1628"/><circle cx="47" cy="53" r="5" fill="#00d4ff"/><circle cx="73" cy="53" r="5" fill="#00d4ff"/><path d="M 48 63 Q 60 70 72 63" stroke="#00d4ff" stroke-width="2" fill="none"/></svg>
+          <div class="sora-avatar-mood sora-avatar-mood--setup">
+            <img class="sora-avatar-img sora-avatar-img--smile" src="images/sora-avatar-smile.png" alt="">
+            <img class="sora-avatar-img sora-avatar-img--serious" src="images/sora-avatar-serious.png" alt="">
+          </div>
           <h2>SORAへようこそ！</h2>
           <p>AI機能を使うには、Gemini APIキーが必要だよ。</p>
         </div>
