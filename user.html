@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260428-4" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260428-5" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2537,14 +2537,14 @@ async function processFile(file){
       '・出力はJSONのみ。説明・コードフェンス（```）禁止。\n'+
       '・キーは英語のまま変更しない。値は日本語可。\n'+
       '・配列キーは下記の「許可値」のいずれかのみを入れる。許可値外は入れない。読み取れなければ空配列[]。\n'+
-      '・自由記述欄に記入が無ければ空文字。document_text には用紙全文（手書き含む）を必ず入れる。\n'+
+      '・自由記述欄に記入が無ければ空文字。document_text は不要なら省略してよい（出力を短くするため）。\n'+
       '・description には「ヒヤリの内容」「何が起きたか」欄に書かれた本文だけを入れる。他の欄（いつ・どこで／作業／対策／チェック／ストレス等）の文言は description に含めないこと。\n'+
       '・description には見出し（例: 「内容:」「いつ・どこで:」「対策:」など）を付けないこと。本文のみ。\n'+
       '・stress_* の各値は1〜4の整数（1=そうだ／2=まぁそうだ／3=ややちがう／4=ちがう）。記入が無い項目はキーごと省略。\n'+
       '・danger_level は丸印やチェックがある災害レベル数字（1〜10）。なければ空文字。\n\n'+
       '【出力JSON】\n'+
       '{\n'+
-      '  "document_text": "用紙の本文全体",\n'+
+      '  "document_text": "（任意）必要であれば用紙の本文全体。長文は要点のみで可。",\n'+
       '  "when_where": "「いつ・どこで」欄の内容",\n'+
       '  "work": "「どのような作業で」欄の内容",\n'+
       '  "description": "「ヒヤリの内容」「何が起きたか」欄の内容（自由記述）",\n'+
@@ -2567,11 +2567,13 @@ async function processFile(file){
 
     var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
-    // 1.5系は引退で404になることがあるため除外
-    var models=['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash'];
+    // クォータ節約: 主モデル1個で1回だけ呼ぶ。失敗時のみフォールバック。
+    var primaryModel='gemini-2.0-flash';
+    var fallbackModel='gemini-2.5-flash';
     var json=null;
     var lastErr='';
     var usedJsonMode=true;
+    var usedModel=primaryModel;
 
     function candidateText(j){
       if(!j||!j.candidates||!j.candidates[0])return'';
@@ -2580,50 +2582,48 @@ async function processFile(file){
       return'';
     }
 
-    for(var pass=0;pass<2;pass++){
-      json=null;
-      var useJson=pass===0;
-      var prompt=useJson?jsonPrompt:plainPrompt;
+    async function callGemini(modelName){
       var body={
-        contents:[{parts:[{text:prompt}].concat(fileParts)}],
-        generationConfig:{temperature:0.05,maxOutputTokens:8192}
+        contents:[{parts:[{text:jsonPrompt}].concat(fileParts)}],
+        generationConfig:{temperature:0.05,maxOutputTokens:4096,responseMimeType:'application/json'}
       };
-      if(useJson)body.generationConfig.responseMimeType='application/json';
-
-      for(var mi=0;mi<models.length;mi++){
-        var url='https://generativelanguage.googleapis.com/v1beta/models/'+models[mi]+':generateContent?key='+encodeURIComponent(geminiKey);
-        setProgress(42+mi*5+(pass?10:0),models[mi]+(useJson?'（構造化）':'（全文）')+' で認識中...');
-        try{
-          var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-          if(resp.ok){
-            var jj=await resp.json();
-            if(candidateText(jj).trim()){json=jj;usedJsonMode=useJson;break}
-            lastErr='空の応答またはブロック ('+models[mi]+')';
-            json=null;
-            continue;
-          }
-          var errBody=await resp.text();
-          if(resp.status===429){
-            throw new Error('QUOTA_EXCEEDED: '+errBody.substring(0,280));
-          }
-          lastErr='Gemini API エラー ('+resp.status+'): '+errBody.substring(0,280);
-          if((resp.status===400||resp.status===413)&&isPdf&&fileParts[0]&&fileParts[0].inline_data){
-            try{
-              setProgress(25,'インライン送信に失敗。ファイルアップロード方式に切替...');
-              fileParts=await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(28,m)});
-              mi--;
-              continue;
-            }catch(upE){lastErr+=(' / 再試行: '+upE.message)}
-          }
-          if(mi<models.length-1)continue;
-        }catch(fetchErr){
-          lastErr=fetchErr.message;
-          if(mi<models.length-1)continue;
-        }
+      var url='https://generativelanguage.googleapis.com/v1beta/models/'+modelName+':generateContent?key='+encodeURIComponent(geminiKey);
+      var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(resp.ok){return await resp.json()}
+      var errBody=await resp.text();
+      if(resp.status===429)throw new Error('QUOTA_EXCEEDED: '+errBody.substring(0,280));
+      if((resp.status===400||resp.status===413)&&isPdf&&fileParts[0]&&fileParts[0].inline_data){
+        setProgress(25,'インライン送信に失敗。アップロード方式に切替...');
+        fileParts=await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(28,m)});
+        var body2={
+          contents:[{parts:[{text:jsonPrompt}].concat(fileParts)}],
+          generationConfig:{temperature:0.05,maxOutputTokens:4096,responseMimeType:'application/json'}
+        };
+        var resp2=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body2)});
+        if(resp2.ok)return await resp2.json();
+        var err2=await resp2.text();
+        if(resp2.status===429)throw new Error('QUOTA_EXCEEDED: '+err2.substring(0,280));
+        throw new Error('Gemini API エラー ('+resp2.status+'): '+err2.substring(0,280));
       }
-      if(json&&json.candidates&&json.candidates[0]&&candidateText(json).trim())break;
+      throw new Error('Gemini API エラー ('+resp.status+'): '+errBody.substring(0,280));
     }
-    if(!json||!json.candidates||!json.candidates[0])throw new Error(lastErr||'全てのモデルで読み取りに失敗しました');
+
+    setProgress(50,primaryModel+' で認識中...');
+    try{
+      json=await callGemini(primaryModel);
+      usedModel=primaryModel;
+    }catch(e1){
+      lastErr=e1.message||String(e1);
+      if(/QUOTA_EXCEEDED/.test(lastErr))throw e1;
+      try{
+        setProgress(70,fallbackModel+' で再試行中...');
+        json=await callGemini(fallbackModel);
+        usedModel=fallbackModel;
+      }catch(e2){
+        throw new Error(lastErr+' / 再試行: '+(e2.message||String(e2)));
+      }
+    }
+    if(!json||!json.candidates||!json.candidates[0])throw new Error(lastErr||'読み取りに失敗しました');
 
     var text=candidateText(json);
     if(!text&&json.promptFeedback&&json.promptFeedback.blockReason)throw new Error('コンテンツがブロックされました: '+json.promptFeedback.blockReason);
