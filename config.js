@@ -18,7 +18,7 @@ window.HH_FIREBASE_CONFIG = {
 };
 
 // Gemini Vision API キー（OCR用）
-window.HH_GEMINI_API_KEY = "AIzaSyC4dGqIjPibkYxra4rNI2vKkPMFdMYWoz8";
+window.HH_GEMINI_API_KEY = "AIzaSyCI9BNmM-qnMJv-00t5rb9jaNIGiTezCLc";
 
 // 災害承認メール（HH_EMAILJS）
 // ■ 送信元は社用 Microsoft 365（下記）。EmailJS の Outlook 接続と同じアカウントにすること。
