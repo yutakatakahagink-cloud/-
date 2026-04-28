@@ -2577,8 +2577,10 @@ async function processFile(file){
             json=null;
             continue;
           }
-          if(resp.status===429&&mi<models.length-1){lastErr='レート制限 ('+models[mi]+')';continue}
           var errBody=await resp.text();
+          if(resp.status===429){
+            throw new Error('QUOTA_EXCEEDED: '+errBody.substring(0,280));
+          }
           lastErr='Gemini API エラー ('+resp.status+'): '+errBody.substring(0,280);
           if((resp.status===400||resp.status===413)&&isPdf&&fileParts[0]&&fileParts[0].inline_data){
             try{
@@ -2638,8 +2640,11 @@ async function processFile(file){
     dropZone.style.display='';
     var msg=String(err.message||'');
     var keyExpired=/API key expired|Please renew the API key/i.test(msg);
-    var invalidKey=keyExpired||msg.indexOf('403')>=0||msg.indexOf('401')>=0||msg.indexOf('leaked')>=0||msg.indexOf('PERMISSION_DENIED')>=0;
-    if(invalidKey){
+    var quotaExceeded=msg.indexOf('QUOTA_EXCEEDED')>=0||/exceeded your current quota|RATE_LIMIT_EXCEEDED|RESOURCE_EXHAUSTED|429/i.test(msg);
+    var invalidKey=keyExpired||(!quotaExceeded&&(msg.indexOf('403')>=0||msg.indexOf('401')>=0||msg.indexOf('leaked')>=0||msg.indexOf('PERMISSION_DENIED')>=0));
+    if(quotaExceeded){
+      alert('Gemini APIの利用上限（クォータ）に達しています。\n\n【対処】\n・数分〜1日ほど待つと自動でリセットされます（無料枠は1分/1日の上限あり）\n・別のGoogleプロジェクトのAPIキーを発行して config.js の HH_GEMINI_API_KEY を差し替える\n・AI Studio で課金（Paid tier）を有効化すると上限が大幅に上がります\n\n詳細: https://ai.google.dev/gemini-api/docs/rate-limits');
+    }else if(invalidKey){
       localStorage.removeItem('hh_gemini_key');
       if(keyExpired){
         alert('Gemini APIキーの有効期限が切れているか、無効です。\n\n【対処】\n1. Google AI Studio で新しいキーを発行\n   https://aistudio.google.com/apikey\n2. config.js の window.HH_GEMINI_API_KEY を新キーに差し替え\n3. GitHub Pages を使っている場合は config.js をコミット・プッシュ\n4. ページを再読み込みしてから再度「報告用紙を読み取る」\n\nブラウザに保存されていた hh_gemini_key は削除済みです。');
