@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Gemini キー保存のクリア</title>
+</head>
+<body>
+  <p id="msg">処理中…</p>
+  <script>
+    (function () {
+      var k = 'hh_gemini_key';
+      var had = localStorage.getItem(k) !== null;
+      localStorage.removeItem(k);
+      document.getElementById('msg').textContent = had
+        ? 'Local Storage の「' + k + '」を削除しました。このタブを閉じて user.html を開き直してください。'
+        : '「' + k + '」はもともと保存されていませんでした。';
+    })();
+  </script>
+</body>
+</html>
