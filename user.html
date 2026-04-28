@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260428-2" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260428-3" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2527,18 +2527,36 @@ async function processFile(file){
 
     setProgress(40,'Gemini AIで文字認識中...');
 
-    var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）のOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく読み、手書き・印刷・薄い文字も文脈から推定して正確に転記してください。\n\n'+
+    var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく解析し、用紙の各欄・チェック・選択（○印・レ・塗りつぶし・太字化・下線・丸囲い等）を見て、次のJSONに整理して出力してください。\n\n'+
       '【厳守】\n'+
-      '・'+(isPdf?'全ページ':'画像全体')+'を対象にすること。見出し・欄外・脚注も含める。\n'+
-      '・チェック欄は「チェックあり/なし」が分かるように項目名と状態を書く。\n'+
-      '・表は「項目名: 値」の行で並べる。\n'+
-      '・推測した文字は誤読しにくい表記にする（例: 0とO、1とlの区別）。\n\n'+
-      '次のJSONのみを出力すること（説明文やコードフェンスは付けない）。キーは必ず英語のまま。値は日本語でよい。\n'+
-      '{"document_text":"用紙から読み取った本文全体（ページ順・見出し付きで可能な限り忠実に）",'+
-      '"when_where":"いつ・どこで欄があればその内容。なければ空文字",'+
-      '"work":"どのような作業で欄があればその内容。なければ空文字",'+
-      '"description":"出来事・ヒヤリの内容欄があればその内容。なければdocument_textの要約",'+
-      '"measures":"対策・再発防止欄があればその内容。なければ空文字"}';
+      '・出力はJSONのみ。説明・コードフェンス（```）禁止。\n'+
+      '・キーは英語のまま変更しない。値は日本語可。\n'+
+      '・配列キーは下記の「許可値」のいずれかのみを入れる。許可値外は入れない。読み取れなければ空配列[]。\n'+
+      '・自由記述欄に記入が無ければ空文字。document_text には用紙全文（手書き含む）を必ず入れる。\n'+
+      '・stress_* の各値は1〜4の整数（1=そうだ／2=まぁそうだ／3=ややちがう／4=ちがう）。記入が無い項目はキーごと省略。\n'+
+      '・danger_level は丸印やチェックがある災害レベル数字（1〜10）。なければ空文字。\n\n'+
+      '【出力JSON】\n'+
+      '{\n'+
+      '  "document_text": "用紙の本文全体",\n'+
+      '  "when_where": "「いつ・どこで」欄の内容",\n'+
+      '  "work": "「どのような作業で」欄の内容",\n'+
+      '  "description": "「ヒヤリの内容」「何が起きたか」欄の内容（自由記述）",\n'+
+      '  "measures": "「対策」「再発防止」欄の内容",\n'+
+      '  "experience_types": ["許可値: 墜落しそうになった|転倒しそうになった|機械等に激突されそうになった|ものが落下してきた|ものが倒れかかってきた|自分からぶつかりそうになった|はさまれそうになった|切られそうになった|やけどしそうになった|感電しそうになった|交通事故になりそうだった|その他"],\n'+
+      '  "causes": ["許可値: 設備・機械|工具・保護具|作業環境|作業方法|連絡・連携ミス|確認不足|不注意行動|考え事|視界不良"],\n'+
+      '  "avoidance_reasons": ["許可値: 注意不足|経験不足|知識不足|焦り|慣れ・油断|疲労|連携不足|設備確認不足|判断の遅れ|周囲確認不足|体力低下|過信"],\n'+
+      '  "avoidance_activities": ["許可値: HH体験|同僚の話|安全教育|朝礼夕礼|現地MT|KY活動|KYT|RA|災害事例|パトロール|危険体感|見える化|安全標識|4S|避難訓練|作業監視|状況把握|目配り|設備点検|手順書|コミュニケーション|懇親会|体操|安全表彰|休憩|食事|悩み相談|睡眠"],\n'+
+      '  "danger_level": "1〜10の整数（文字列） または 空文字",\n'+
+      '  "stress_state": {"workload":1-4,"overtime":1-4,"hardwork":1-4,"fatigue":1-4,"exhausted":1-4,"sluggish":1-4,"tense":1-4,"anxiety":1-4,"restless":1-4,"depressed":1-4,"bothered":1-4,"gloomy":1-4,"appetite":1-4,"sleep":1-4},\n'+
+      '  "stress_work": {"pace":1-4,"autonomy":1-4,"voice":1-4,"boss_talk":1-4,"peer_talk":1-4,"boss_help":1-4,"peer_help":1-4,"boss_consult":1-4,"peer_consult":1-4,"vigor":1-4,"pride":1-4,"happiness":1-4},\n'+
+      '  "name": "氏名欄（あれば）",\n'+
+      '  "date": "記入日（YYYY-MM-DD推奨。なければ空文字）"\n'+
+      '}\n\n'+
+      '【欄の対応ヒント】\n'+
+      '・体験種類: 用紙の「どのような体験か」「ヒヤリ・ハット体験」枠の選択肢に○がついた項目→experience_types。\n'+
+      '・原因: 「発生原因」「ヒヤリの原因」「物・人・管理」等にチェック→causes。\n'+
+      '・回避できなかった理由: 「回避できなかった理由」枠→avoidance_reasons。\n'+
+      '・回避活動: 「回避に役立つ活動」「日頃の安全活動」枠→avoidance_activities。';
 
     var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
@@ -2609,13 +2627,18 @@ async function processFile(file){
         var parsed=JSON.parse(text);
         if(parsed&&typeof parsed==='object'){
           _hhOcrParsed=parsed;
-          var parts=[];
-          if(parsed.document_text)parts.push(parsed.document_text);
-          if(parsed.when_where)parts.push('いつ・どこで: '+parsed.when_where);
-          if(parsed.work)parts.push('作業: '+parsed.work);
-          if(parsed.description)parts.push('内容: '+parsed.description);
-          if(parsed.measures)parts.push('対策: '+parsed.measures);
-          _ocrText=parts.join('\n\n').trim()||text.trim();
+          var preview=[];
+          if(parsed.document_text)preview.push(String(parsed.document_text));
+          if(parsed.when_where)preview.push('【いつ・どこで】 '+parsed.when_where);
+          if(parsed.work)preview.push('【作業】 '+parsed.work);
+          if(parsed.description)preview.push('【内容】 '+parsed.description);
+          if(parsed.measures)preview.push('【対策】 '+parsed.measures);
+          if(Array.isArray(parsed.experience_types)&&parsed.experience_types.length)preview.push('【体験種類】 '+parsed.experience_types.join('、'));
+          if(Array.isArray(parsed.causes)&&parsed.causes.length)preview.push('【発生原因】 '+parsed.causes.join('、'));
+          if(Array.isArray(parsed.avoidance_reasons)&&parsed.avoidance_reasons.length)preview.push('【回避できなかった理由】 '+parsed.avoidance_reasons.join('、'));
+          if(Array.isArray(parsed.avoidance_activities)&&parsed.avoidance_activities.length)preview.push('【回避に役立つ活動】 '+parsed.avoidance_activities.join('、'));
+          if(parsed.danger_level)preview.push('【災害レベル】 '+parsed.danger_level);
+          _ocrText=preview.join('\n\n').trim()||text.trim();
         }else _ocrText=text.trim();
       }catch(parseErr){
         _ocrText=text.trim();
@@ -2673,6 +2696,41 @@ function fillDescription(){
   var filled=[];
   var pv=_hhOcrParsed;
 
+  function setChips(containerSel,values,allowed){
+    if(!values||!values.length)return false;
+    var set={};
+    values.forEach(function(v){
+      var s=String(v||'').trim();
+      if(!s)return;
+      if(!allowed||allowed.indexOf(s)>=0){set[s]=true;return}
+      // 緩いマッチ（部分一致や別表記の救済）
+      for(var i=0;i<allowed.length;i++){
+        if(allowed[i].indexOf(s)>=0||s.indexOf(allowed[i])>=0){set[allowed[i]]=true;break}
+      }
+    });
+    var hit=false;
+    document.querySelectorAll(containerSel).forEach(function(el){
+      if(set[el.dataset.v]){el.classList.add('on');hit=true}
+    });
+    return hit;
+  }
+
+  function setStress(map){
+    if(!map||typeof map!=='object')return false;
+    var hit=false;
+    Object.keys(map).forEach(function(field){
+      var v=parseInt(map[field],10);
+      if(!(v>=1&&v<=4))return;
+      var grp=document.querySelector('.lkd[data-f="'+field+'"]');
+      if(!grp)return;
+      grp.querySelectorAll('.lkdt').forEach(function(d){
+        d.classList.toggle('on',parseInt(d.dataset.v,10)<=v);
+      });
+      hit=true;
+    });
+    return hit;
+  }
+
   if(pv){
     var wwEl=document.getElementById('f_ww');
     if(wwEl&&pv.when_where){wwEl.value=String(pv.when_where);filled.push('いつ・どこで');}
@@ -2680,6 +2738,34 @@ function fillDescription(){
     if(wkEl&&pv.work){wkEl.value=String(pv.work);filled.push('作業内容');}
     var msrEl=document.getElementById('f_msr');
     if(msrEl&&pv.measures){msrEl.value=String(pv.measures);filled.push('対策');}
+
+    var allowedExp=['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'];
+    if(setChips('#cExp .ch',pv.experience_types,allowedExp))filled.push('体験種類');
+
+    var allowedCause=['設備・機械','工具・保護具','作業環境','作業方法','連絡・連携ミス','確認不足','不注意行動','考え事','視界不良'];
+    if(setChips('#cC .ch',pv.causes,allowedCause))filled.push('発生原因');
+
+    var allowedAv=['注意不足','経験不足','知識不足','焦り','慣れ・油断','疲労','連携不足','設備確認不足','判断の遅れ','周囲確認不足','体力低下','過信'];
+    if(setChips('#cAv .ch',pv.avoidance_reasons,allowedAv))filled.push('回避理由');
+
+    var allowedAc=['HH体験','同僚の話','安全教育','朝礼夕礼','現地MT','KY活動','KYT','RA','災害事例','パトロール','危険体感','見える化','安全標識','4S','避難訓練','作業監視','状況把握','目配り','設備点検','手順書','コミュニケーション','懇親会','体操','安全表彰','休憩','食事','悩み相談','睡眠'];
+    if(setChips('#cAc .ck',pv.avoidance_activities,allowedAc))filled.push('回避活動');
+
+    var lvVal=parseInt(pv.danger_level,10);
+    if(lvVal>=1&&lvVal<=10){
+      document.querySelectorAll('.lb').forEach(function(el){
+        el.classList.toggle('on',parseInt(el.dataset.v,10)===lvVal);
+      });
+      filled.push('災害レベル');
+    }
+
+    if(setStress(pv.stress_state))filled.push('ストレス状態');
+    if(setStress(pv.stress_work))filled.push('職場環境');
+
+    var nameEl=document.getElementById('f_name');
+    if(nameEl&&!nameEl.value&&pv.name)nameEl.value=String(pv.name);
+    var dateEl=document.getElementById('f_date');
+    if(dateEl&&pv.date&&/^\d{4}-\d{2}-\d{2}$/.test(String(pv.date)))dateEl.value=String(pv.date);
   }
 
   // --- 体験の種類を検出してチップをON ---
@@ -2778,8 +2864,13 @@ function fillDescription(){
   // --- 「内容」欄（構造化JSONの description を優先） ---
   var desc=document.getElementById('f_desc');
   if(desc){
-    if(pv&&pv.description)desc.value=String(pv.description);
-    else desc.value=txt;
+    if(pv&&pv.description){
+      desc.value=String(pv.description);
+    }else if(pv&&pv.document_text){
+      desc.value=String(pv.document_text);
+    }else{
+      desc.value=txt;
+    }
     filled.push('内容');
   }
 
