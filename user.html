@@ -2542,7 +2542,8 @@ async function processFile(file){
 
     var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
-    var models=['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro'];
+    // 1.5系は引退で404になることがあるため除外
+    var models=['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash'];
     var json=null;
     var lastErr='';
     var usedJsonMode=true;
