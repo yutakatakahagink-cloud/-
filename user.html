@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260428-3" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260428-4" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2527,12 +2527,19 @@ async function processFile(file){
 
     setProgress(40,'Gemini AIで文字認識中...');
 
-    var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく解析し、用紙の各欄・チェック・選択（○印・レ・塗りつぶし・太字化・下線・丸囲い等）を見て、次のJSONに整理して出力してください。\n\n'+
+    var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく解析し、用紙の各欄・チェック・選択を見て、次のJSONに整理して出力してください。\n\n'+
+      '【チェック印の認識（最重要）】\n'+
+      '・チェック欄では次の印を「チェックあり」とみなす：レ点（✓・✔・☑・「レ」のような形）、●、■、★、太い斜線、塗りつぶし、丸囲い、四角囲い、下線が引かれた項目。\n'+
+      '・チェックの無い項目は配列に入れないこと（決して全項目を入れない）。\n'+
+      '・複数の選択肢のうち「チェックされた項目だけ」を配列に追加する。文字が印刷されているだけで未チェックの項目は除外する。\n'+
+      '・チェック印が小さく薄い場合でも、左横や項目枠内の小さなマークを見落とさないこと。\n\n'+
       '【厳守】\n'+
       '・出力はJSONのみ。説明・コードフェンス（```）禁止。\n'+
       '・キーは英語のまま変更しない。値は日本語可。\n'+
       '・配列キーは下記の「許可値」のいずれかのみを入れる。許可値外は入れない。読み取れなければ空配列[]。\n'+
       '・自由記述欄に記入が無ければ空文字。document_text には用紙全文（手書き含む）を必ず入れる。\n'+
+      '・description には「ヒヤリの内容」「何が起きたか」欄に書かれた本文だけを入れる。他の欄（いつ・どこで／作業／対策／チェック／ストレス等）の文言は description に含めないこと。\n'+
+      '・description には見出し（例: 「内容:」「いつ・どこで:」「対策:」など）を付けないこと。本文のみ。\n'+
       '・stress_* の各値は1〜4の整数（1=そうだ／2=まぁそうだ／3=ややちがう／4=ちがう）。記入が無い項目はキーごと省略。\n'+
       '・danger_level は丸印やチェックがある災害レベル数字（1〜10）。なければ空文字。\n\n'+
       '【出力JSON】\n'+
@@ -2861,17 +2868,15 @@ function fillDescription(){
     }
   }
 
-  // --- 「内容」欄（構造化JSONの description を優先） ---
+  // --- 「内容」欄（descriptionのみ厳密に反映。他の欄の情報は混ぜない） ---
   var desc=document.getElementById('f_desc');
   if(desc){
-    if(pv&&pv.description){
-      desc.value=String(pv.description);
-    }else if(pv&&pv.document_text){
-      desc.value=String(pv.document_text);
+    if(pv){
+      desc.value=pv.description?String(pv.description):'';
     }else{
       desc.value=txt;
     }
-    filled.push('内容');
+    if(desc.value)filled.push('内容');
   }
 
   // トースト
