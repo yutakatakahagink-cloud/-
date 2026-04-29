@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260428-5" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260430-1" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2673,7 +2673,12 @@ async function processFile(file){
     var quotaExceeded=msg.indexOf('QUOTA_EXCEEDED')>=0||/exceeded your current quota|RATE_LIMIT_EXCEEDED|RESOURCE_EXHAUSTED|429/i.test(msg);
     var invalidKey=keyExpired||(!quotaExceeded&&(msg.indexOf('403')>=0||msg.indexOf('401')>=0||msg.indexOf('leaked')>=0||msg.indexOf('PERMISSION_DENIED')>=0));
     if(quotaExceeded){
-      alert('Gemini APIの利用上限（クォータ）に達しています。\n\n【対処】\n・数分〜1日ほど待つと自動でリセットされます（無料枠は1分/1日の上限あり）\n・別のGoogleプロジェクトのAPIキーを発行して config.js の HH_GEMINI_API_KEY を差し替える\n・AI Studio で課金（Paid tier）を有効化すると上限が大幅に上がります\n\n詳細: https://ai.google.dev/gemini-api/docs/rate-limits');
+      var detail=msg.replace(/^QUOTA_EXCEEDED:\s*/,'').substring(0,800);
+      var hint='';
+      if(/PerDay|RequestsPerDay|TokensPerDay/i.test(detail))hint='\n→ 1日の上限（RPD/TPD）に達しています。リセットは翌日。';
+      else if(/PerMinute|RequestsPerMinute|TokensPerMinute/i.test(detail))hint='\n→ 1分間の上限（RPM/TPM）に達しています。1〜数分待って再試行してください。';
+      else if(/Free|FreeTier/i.test(detail))hint='\n→ 無料枠の上限です。新規プロジェクトでは枠が小さい場合があります。';
+      alert('Gemini APIの利用上限（クォータ）に達しています。'+hint+'\n\n【生エラー】\n'+detail+'\n\n【対処】\n・数分〜1日待つと自動でリセット\n・別プロジェクトの新しいAPIキーに差し替え\n・AI Studio の Billing で課金有効化（Paid tier）\n\n詳細: https://ai.google.dev/gemini-api/docs/rate-limits');
     }else if(invalidKey){
       localStorage.removeItem('hh_gemini_key');
       if(keyExpired){
