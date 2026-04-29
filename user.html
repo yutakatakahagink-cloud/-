@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260430-1" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260430-2" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2441,6 +2441,29 @@ async function buildPdfPartsForGemini(file,buf,apiKey,onStatus){
   return[{file_data:{mime_type:act.mime,file_uri:act.uri}}];
 }
 
+async function pdfToImageParts(buf,maxPages,onStatus){
+  if(!pdfjsLib)return null;
+  var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  var n=Math.min(maxPages||pdf.numPages,pdf.numPages);
+  var parts=[];
+  var firstDataUrl=null;
+  for(var i=1;i<=n;i++){
+    if(onStatus)onStatus('PDFページ'+i+'/'+n+'を画像化中...');
+    var pg=await pdf.getPage(i);
+    var vp1=pg.getViewport({scale:1});
+    var maxDim=1500;
+    var scale=Math.min(2.0,maxDim/Math.max(vp1.width,vp1.height));
+    if(scale<0.5)scale=0.5;
+    var vp=pg.getViewport({scale:scale});
+    var cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
+    await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    var dataUrl=cv.toDataURL('image/jpeg',0.82);
+    if(i===1)firstDataUrl=dataUrl;
+    parts.push({inline_data:{mime_type:'image/jpeg',data:dataUrl.split(',')[1]||''}});
+  }
+  return{parts:parts,previewUrl:firstDataUrl};
+}
+
 if(btnFileBtn)btnFileBtn.addEventListener('click',function(e){e.stopPropagation();fileInput.click()});
 dropZone.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.add('dragover')});
 dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('dragover')});
@@ -2498,17 +2521,14 @@ async function processFile(file){
     if(isPdf){
       setProgress(10,'PDFを読み込み中...');
       var buf=await file.arrayBuffer();
-      fileParts=fileParts.concat(await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(12,m)}));
-
-      if(pdfjsLib){
-        try{
-          var pdf=await pdfjsLib.getDocument({data:buf}).promise;
-          var pg=await pdf.getPage(1);
-          var vp=pg.getViewport({scale:1.5});
-          var cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
-          await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-          previewUrl=cv.toDataURL('image/png');
-        }catch(e){}
+      // クォータ節約: PDFをJPEG画像（最大2ページ）に変換して送る
+      var imgPack=null;
+      try{imgPack=await pdfToImageParts(buf,2,function(m){setProgress(15,m)})}catch(e){imgPack=null}
+      if(imgPack&&imgPack.parts&&imgPack.parts.length){
+        fileParts=imgPack.parts;
+        if(imgPack.previewUrl)previewUrl=imgPack.previewUrl;
+      }else{
+        fileParts=fileParts.concat(await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(12,m)}));
       }
     }else{
       setProgress(15,'画像を読み込み中...');
@@ -2567,8 +2587,8 @@ async function processFile(file){
 
     var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
-    // クォータ節約: 主モデル1個で1回だけ呼ぶ。失敗時のみフォールバック。
-    var primaryModel='gemini-2.0-flash';
+    // クォータ節約: 主モデルは無料枠RPDが大きい flash-lite。失敗時のみフォールバック。
+    var primaryModel='gemini-2.5-flash-lite';
     var fallbackModel='gemini-2.5-flash';
     var json=null;
     var lastErr='';
@@ -2591,7 +2611,7 @@ async function processFile(file){
       var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       if(resp.ok){return await resp.json()}
       var errBody=await resp.text();
-      if(resp.status===429)throw new Error('QUOTA_EXCEEDED: '+errBody.substring(0,280));
+      if(resp.status===429)throw new Error('QUOTA_EXCEEDED: ['+modelName+'] '+errBody.substring(0,1500));
       if((resp.status===400||resp.status===413)&&isPdf&&fileParts[0]&&fileParts[0].inline_data){
         setProgress(25,'インライン送信に失敗。アップロード方式に切替...');
         fileParts=await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(28,m)});
@@ -2602,10 +2622,10 @@ async function processFile(file){
         var resp2=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body2)});
         if(resp2.ok)return await resp2.json();
         var err2=await resp2.text();
-        if(resp2.status===429)throw new Error('QUOTA_EXCEEDED: '+err2.substring(0,280));
-        throw new Error('Gemini API エラー ('+resp2.status+'): '+err2.substring(0,280));
+        if(resp2.status===429)throw new Error('QUOTA_EXCEEDED: ['+modelName+'] '+err2.substring(0,1500));
+        throw new Error('Gemini API エラー ('+resp2.status+'): '+err2.substring(0,800));
       }
-      throw new Error('Gemini API エラー ('+resp.status+'): '+errBody.substring(0,280));
+      throw new Error('Gemini API エラー ('+resp.status+'): '+errBody.substring(0,800));
     }
 
     setProgress(50,primaryModel+' で認識中...');
@@ -2673,12 +2693,12 @@ async function processFile(file){
     var quotaExceeded=msg.indexOf('QUOTA_EXCEEDED')>=0||/exceeded your current quota|RATE_LIMIT_EXCEEDED|RESOURCE_EXHAUSTED|429/i.test(msg);
     var invalidKey=keyExpired||(!quotaExceeded&&(msg.indexOf('403')>=0||msg.indexOf('401')>=0||msg.indexOf('leaked')>=0||msg.indexOf('PERMISSION_DENIED')>=0));
     if(quotaExceeded){
-      var detail=msg.replace(/^QUOTA_EXCEEDED:\s*/,'').substring(0,800);
+      var detail=msg.replace(/^QUOTA_EXCEEDED:\s*/,'').substring(0,1500);
       var hint='';
-      if(/PerDay|RequestsPerDay|TokensPerDay/i.test(detail))hint='\n→ 1日の上限（RPD/TPD）に達しています。リセットは翌日。';
-      else if(/PerMinute|RequestsPerMinute|TokensPerMinute/i.test(detail))hint='\n→ 1分間の上限（RPM/TPM）に達しています。1〜数分待って再試行してください。';
-      else if(/Free|FreeTier/i.test(detail))hint='\n→ 無料枠の上限です。新規プロジェクトでは枠が小さい場合があります。';
-      alert('Gemini APIの利用上限（クォータ）に達しています。'+hint+'\n\n【生エラー】\n'+detail+'\n\n【対処】\n・数分〜1日待つと自動でリセット\n・別プロジェクトの新しいAPIキーに差し替え\n・AI Studio の Billing で課金有効化（Paid tier）\n\n詳細: https://ai.google.dev/gemini-api/docs/rate-limits');
+      if(/PerDay|RequestsPerDay|TokensPerDay/i.test(detail))hint='\n→ 1日の上限（RPD/TPD）。日本時間 朝9時頃にリセット（PT 0時）。';
+      else if(/PerMinute|RequestsPerMinute|TokensPerMinute/i.test(detail))hint='\n→ 1分間の上限（RPM/TPM）。1〜数分待って再試行してください。';
+      else if(/Free|FreeTier/i.test(detail))hint='\n→ 無料枠の上限。新規プロジェクトはRPDが小さい場合があります。';
+      alert('Gemini APIの利用上限（クォータ）に達しています。'+hint+'\n\n【生エラー】\n'+detail+'\n\n【対処】\n・数分〜1日待つと自動でリセット（PT 0時 = JST 朝9時頃）\n・別プロジェクトの新しいAPIキーに差し替え\n・AI Studio の Billing で課金有効化（Paid tier）にする\n\n詳細: https://ai.google.dev/gemini-api/docs/rate-limits');
     }else if(invalidKey){
       localStorage.removeItem('hh_gemini_key');
       if(keyExpired){
