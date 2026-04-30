@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260430-6" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260430-7" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2451,13 +2451,14 @@ async function pdfToImageParts(buf,maxPages,onStatus){
     if(onStatus)onStatus('PDFページ'+i+'/'+n+'を画像化中...');
     var pg=await pdf.getPage(i);
     var vp1=pg.getViewport({scale:1});
-    var maxDim=1500;
-    var scale=Math.min(2.0,maxDim/Math.max(vp1.width,vp1.height));
-    if(scale<0.5)scale=0.5;
+    // 手書き文字認識のため解像度を大きめに
+    var maxDim=2000;
+    var scale=Math.min(2.5,maxDim/Math.max(vp1.width,vp1.height));
+    if(scale<0.8)scale=0.8;
     var vp=pg.getViewport({scale:scale});
     var cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
     await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    var dataUrl=cv.toDataURL('image/jpeg',0.82);
+    var dataUrl=cv.toDataURL('image/jpeg',0.92);
     if(i===1)firstDataUrl=dataUrl;
     parts.push({inline_data:{mime_type:'image/jpeg',data:dataUrl.split(',')[1]||''}});
   }
@@ -2548,11 +2549,21 @@ async function processFile(file){
     setProgress(40,'Gemini AIで文字認識中...');
 
     var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく解析し、用紙の各欄・チェック・選択を見て、次のJSONに整理して出力してください。\n\n'+
+      '【最重要・項目分離の厳守】\n'+
+      '・「いつ・どこで」「どのような作業で」「内容（ヒヤリの内容）」「対策（再発防止）」は別の欄である。**絶対に混同しない**。\n'+
+      '・各欄の枠（罫線）の中に書かれている文字だけを、その欄の値として抽出する。隣の欄や他の場所の文字を絶対に拾わない。\n'+
+      '・欄が空白なら必ず空文字 "" を返す。隣の欄や対策欄の内容で埋めてはならない。\n'+
+      '・「対策」欄は「資材おき場の整理」のような具体的措置の文言が書かれていれば、それを measures に入れる。何も書かれていなければ空文字。プレースホルダ（例: 「再発防止策」）は絶対に出力しない。\n\n'+
       '【チェック印の認識（最重要）】\n'+
-      '・チェック欄では次の印を「チェックあり」とみなす：レ点（✓・✔・☑・「レ」のような形）、●、■、★、太い斜線、塗りつぶし、丸囲い、四角囲い、下線が引かれた項目。\n'+
-      '・チェックの無い項目は配列に入れないこと（決して全項目を入れない）。\n'+
-      '・複数の選択肢のうち「チェックされた項目だけ」を配列に追加する。文字が印刷されているだけで未チェックの項目は除外する。\n'+
-      '・チェック印が小さく薄い場合でも、左横や項目枠内の小さなマークを見落とさないこと。\n\n'+
+      '・チェック欄では次の印を「チェックあり」とみなす：レ点（✓・✔・☑・「レ」のような形）、●、■、★、太い斜線、塗りつぶし、丸囲い、四角囲い、下線。\n'+
+      '・印刷されているだけで何も印がついていない選択肢は、絶対に配列へ入れない（最大の誤り）。\n'+
+      '・各選択肢の左の□（チェックボックス）を1つずつ確認して、印が確認できるものだけを配列に入れる。\n'+
+      '・チェック印が小さく薄い場合でも見落とさないこと。一方、印の無い項目を「想像」で追加してはならない。\n'+
+      '・「どのような体験か」は通常1〜2項目しかチェックされない。3項目以上選ぶ前に必ず印の有無を再確認する。\n\n'+
+      '【手書き文字の読取り】\n'+
+      '・手書きの日付（例：3/19）、現場名、自由記述は1文字ずつ慎重に読む。**推測で書き換えない**。\n'+
+      '・読み取れない文字は「？」を入れず、可能性が高い文字を選ぶ。判別不能なら空欄でもよい。\n'+
+      '・他の文書の例文や一般的な表現で穴埋めしない。書かれている文字だけを忠実に転記する。\n\n'+
       '【厳守】\n'+
       '・出力はJSONのみ。説明・コードフェンス（```）禁止。\n'+
       '・キーは英語のまま変更しない。値は日本語可。\n'+
@@ -2587,9 +2598,9 @@ async function processFile(file){
 
     var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
-    // クォータ節約: 主モデルは無料枠RPDが大きい flash-lite。失敗時のみフォールバック。
-    var primaryModel='gemini-2.5-flash-lite';
-    var fallbackModel='gemini-2.5-flash';
+    // 手書き文字精度のため標準flashを主に。失敗時はlite（精度↓だがRPD大）。
+    var primaryModel='gemini-2.5-flash';
+    var fallbackModel='gemini-2.5-flash-lite';
     var json=null;
     var lastErr='';
     var usedJsonMode=true;
