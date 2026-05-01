@@ -203,6 +203,39 @@ input[type="file"].photo-input{display:none}
 .ocr-btn-fill{background:linear-gradient(135deg,#2E7D32,#43A047);color:#fff;box-shadow:0 2px 8px rgba(46,125,50,.2)}
 .ocr-btn-fill:disabled{opacity:.4;cursor:not-allowed}
 .ocr-btn-clear{background:#fff;border:1px solid #81C784;color:var(--ac)}
+/* === OCR 確認パネル === */
+.ocr-cf{margin-top:10px;display:none;background:#fffef5;border:2px solid #FBC02D;border-radius:var(--r);padding:12px}
+.ocr-cf.show{display:block}
+.ocr-cf-banner{background:#FFF8E1;border:1px solid #FBC02D;border-radius:var(--rs);padding:8px 10px;margin-bottom:8px;font-size:11px;color:#5D4037;line-height:1.5}
+.ocr-cf-banner strong{font-size:12px;color:#E65100}
+.ocr-cf-stat{font-size:10px;color:var(--t2);margin-bottom:8px;padding:6px 8px;background:#fff;border-radius:6px;border:1px solid var(--bd)}
+.ocr-cf-section{margin-bottom:10px;padding:8px;background:#fff;border:1px solid var(--bd);border-radius:6px}
+.ocr-cf-h{font-size:11px;font-weight:700;color:var(--ac);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.ocr-cf-h::before{content:'';width:3px;height:11px;background:var(--ac);border-radius:2px}
+.ocr-cf-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.ocr-cf-fld{display:flex;flex-direction:column;margin-bottom:6px}
+.ocr-cf-fld label{font-size:10px;color:var(--t2);margin-bottom:2px;font-weight:600}
+.ocr-cf-fld input,.ocr-cf-fld textarea{padding:6px 8px;border:1px solid #C8E6C9;border-radius:6px;font-size:12px;font-family:inherit;background:#fafffa}
+.ocr-cf-fld input:focus,.ocr-cf-fld textarea:focus{outline:none;border-color:var(--ac);background:#fff}
+.ocr-cf-fld textarea{min-height:50px;resize:vertical}
+.ocr-cf-chips{display:flex;flex-wrap:wrap;gap:4px}
+.ocr-cf-chip{display:inline-flex;align-items:center;padding:4px 10px;border:1px solid #81C784;border-radius:14px;background:#fff;font-size:10px;cursor:pointer;color:var(--t1);user-select:none;transition:all .12s}
+.ocr-cf-chip.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.ocr-cf-likert{display:grid;grid-template-columns:1fr auto auto auto auto;gap:2px 4px;font-size:10px;align-items:center}
+.ocr-cf-likert-h{font-size:9px;color:var(--t3);text-align:center;font-weight:600;padding:2px}
+.ocr-cf-likert-row{display:contents}
+.ocr-cf-likert-q{padding:3px 4px;color:var(--t1)}
+.ocr-cf-likert-c{display:flex;align-items:center;justify-content:center}
+.ocr-cf-likert-c input[type=radio]{margin:0;cursor:pointer;accent-color:var(--ac);width:16px;height:16px}
+.ocr-cf-likert-clr{font-size:9px;color:var(--t3);text-decoration:underline;cursor:pointer;background:none;border:none;padding:2px 4px;justify-self:start}
+.ocr-cf-actions{display:flex;gap:8px;margin-top:10px}
+.ocr-cf-actions button{flex:1;padding:11px;border-radius:var(--rs);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;border:none}
+#cfBtnApply{background:linear-gradient(135deg,#E65100,#FB8C00);color:#fff;box-shadow:0 2px 8px rgba(230,81,0,.25)}
+#cfBtnCancel{background:#fff;border:1px solid #BDBDBD;color:var(--t2)}
+.ocr-cf-warn{background:#fff3e0;border:1px solid #FFCC80;color:#E65100;padding:6px 10px;border-radius:6px;font-size:10px;margin-top:6px}
+/* メインフォーム側のハイライト（OCRで反映された項目） */
+.ocr-filled{background:#FFF8E1!important;border-color:#FBC02D!important;box-shadow:0 0 0 2px rgba(251,192,45,.25)}
+.ocr-filled-chip{box-shadow:0 0 0 2px rgba(251,192,45,.5)}
 .photo-count{font-size:10px;color:var(--t3);margin-top:4px}
 .modal-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .modal-photos img{width:100%;max-width:280px;border-radius:8px;border:1px solid var(--bd);cursor:pointer}
@@ -742,11 +775,79 @@ input[type="file"].photo-input{display:none}
     <div class="ocr-prog" id="ocrProg" style="display:none"><div class="ocr-prog-bar" id="ocrProgBar"></div></div>
     <div class="ocr-status" id="ocrStatus" style="display:none"></div>
     <div class="ocr-result" id="ocrResult" style="display:none">
-      <div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:4px">読み取り結果：</div>
+      <div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:4px">読み取り結果（生テキスト）：</div>
       <div class="ocr-result-text" id="ocrResultText"></div>
       <div class="ocr-actions">
-        <button class="ocr-btn ocr-btn-fill" id="ocrBtnFill" disabled>各項目に自動入力</button>
         <button class="ocr-btn ocr-btn-clear" id="ocrBtnClear">やり直す</button>
+      </div>
+    </div>
+
+    <!-- 確認パネル：編集可能な構造化UI -->
+    <div class="ocr-cf" id="ocrConfirm">
+      <div class="ocr-cf-banner">
+        <strong>📝 内容を確認してください</strong><br>
+        AIの読み取りは100%正確ではありません。間違いがあればここで修正してから「フォームに反映」を押してください。
+      </div>
+      <div class="ocr-cf-stat" id="ocrCfStat"></div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">属性</div>
+        <div class="ocr-cf-row">
+          <div class="ocr-cf-fld"><label>記入日</label><input type="date" id="cf_date"></div>
+          <div class="ocr-cf-fld"><label>会社名</label><input type="text" id="cf_company" placeholder="例: 日新興業"></div>
+        </div>
+        <div class="ocr-cf-row">
+          <div class="ocr-cf-fld"><label>部署</label><input type="text" id="cf_dept" placeholder="例: 土木部"></div>
+          <div class="ocr-cf-fld"><label>年齢</label><input type="text" id="cf_age" placeholder="例: 34" inputmode="numeric"></div>
+        </div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">どのような体験か</div>
+        <div class="ocr-cf-chips" id="cf_exp"></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">自由記述</div>
+        <div class="ocr-cf-fld"><label>いつ・どこで</label><input type="text" id="cf_ww"></div>
+        <div class="ocr-cf-fld"><label>どのような作業で</label><input type="text" id="cf_wk"></div>
+        <div class="ocr-cf-fld"><label>内容</label><textarea id="cf_desc" rows="3"></textarea></div>
+        <div class="ocr-cf-fld"><label>対策</label><textarea id="cf_msr" rows="2"></textarea></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">発生原因</div>
+        <div class="ocr-cf-chips" id="cf_cause"></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">災害レベル（1〜10）</div>
+        <div class="ocr-cf-chips" id="cf_lv"></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">回避できなかった理由</div>
+        <div class="ocr-cf-chips" id="cf_av"></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">回避に役立つ活動</div>
+        <div class="ocr-cf-chips" id="cf_ac"></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">背後要因：あなたの状態（1=そうだ〜4=ちがう）</div>
+        <div class="ocr-cf-likert" id="cf_ss"></div>
+      </div>
+
+      <div class="ocr-cf-section">
+        <div class="ocr-cf-h">仕事・職場環境（1=そうだ〜4=ちがう）</div>
+        <div class="ocr-cf-likert" id="cf_sw"></div>
+      </div>
+
+      <div class="ocr-cf-actions">
+        <button id="cfBtnApply">この内容でフォームに反映</button>
+        <button id="cfBtnCancel">やり直す</button>
       </div>
     </div>
   </div>
@@ -960,7 +1061,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260501-7" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-8" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2363,12 +2464,183 @@ var progBar=document.getElementById('ocrProgBar');
 var statusEl=document.getElementById('ocrStatus');
 var resultEl=document.getElementById('ocrResult');
 var resultText=document.getElementById('ocrResultText');
-var btnFill=document.getElementById('ocrBtnFill');
 var btnClear=document.getElementById('ocrBtnClear');
+var cfPanel=document.getElementById('ocrConfirm');
+var cfBtnApply=document.getElementById('cfBtnApply');
+var cfBtnCancel=document.getElementById('cfBtnCancel');
+var cfStat=document.getElementById('ocrCfStat');
 if(!dropZone||!fileInput)return;
 
 var _ocrText='';
 var _hhOcrParsed=null;
+
+// 確認パネルの選択肢定義
+var CF_OPT={
+  exp:['墜落しそうになった','転倒しそうになった','機械等に激突されそうになった','ものが落下してきた','ものが倒れかかってきた','自分からぶつかりそうになった','はさまれそうになった','切られそうになった','やけどしそうになった','感電しそうになった','交通事故になりそうだった','その他'],
+  cause:['設備・機械','工具・保護具','作業環境','作業方法','連絡・連携ミス','確認不足','不注意行動','考え事','視界不良'],
+  av:['注意不足','経験不足','知識不足','焦り','慣れ・油断','疲労','連携不足','設備確認不足','判断の遅れ','周囲確認不足','体力低下','過信'],
+  ac:['HH体験','同僚の話','安全教育','朝礼夕礼','現地MT','KY活動','KYT','RA','災害事例','パトロール','危険体感','見える化','安全標識','4S','避難訓練','作業監視','状況把握','目配り','設備点検','手順書','コミュニケーション','懇親会','体操','安全表彰','休憩','食事','悩み相談','睡眠'],
+  lv:['1','2','3','4','5','6','7','8','9','10']
+};
+var CF_SS=[['workload','仕事量が多かった'],['overtime','時間内に処理しきれなかった'],['hardwork','一生懸命働く必要があった'],['fatigue','ひどく疲れた'],['exhausted','へとへとだ'],['sluggish','だるい'],['tense','気がはりつめている'],['anxiety','不安だ'],['restless','落ち着かない'],['depressed','ゆううつだ'],['bothered','何をするのも面倒だ'],['gloomy','気分が晴れない'],['appetite','食欲がない'],['sleep','よく眠れない']];
+var CF_SW=[['pace','自分のペースで仕事ができた'],['autonomy','仕事の順番・やり方を決められた'],['voice','方針に意見を反映できた'],['boss_talk','上司と気軽に話ができる'],['peer_talk','同僚と気軽に話ができる'],['boss_help','困ったとき上司は頼りになる'],['peer_help','困ったとき同僚は頼りになる'],['boss_consult','上司に個人的な相談ができる'],['peer_consult','同僚に個人的な相談ができる'],['vigor','気持ちがはつらつとしている'],['pride','仕事に誇りを感じる'],['happiness','集中しているとき幸せだ']];
+
+function buildCfChips(containerId,options,selectedArr){
+  var c=document.getElementById(containerId);if(!c)return;
+  c.innerHTML='';
+  var sel={};(selectedArr||[]).forEach(function(v){sel[String(v)]=true});
+  options.forEach(function(opt){
+    var chip=document.createElement('div');
+    chip.className='ocr-cf-chip'+(sel[opt]?' on':'');
+    chip.textContent=opt;
+    chip.dataset.v=opt;
+    chip.addEventListener('click',function(){chip.classList.toggle('on')});
+    c.appendChild(chip);
+  });
+}
+
+function buildCfLikertSingle(containerId,rows,values){
+  var c=document.getElementById(containerId);if(!c)return;
+  c.innerHTML='';
+  // ヘッダー
+  c.appendChild(makeDiv('ocr-cf-likert-h',''));
+  ['そうだ','まぁそうだ','ややちがう','ちがう'].forEach(function(lb){c.appendChild(makeDiv('ocr-cf-likert-h',lb))});
+  rows.forEach(function(row){
+    var key=row[0],label=row[1];
+    var v=values&&parseInt(values[key],10);
+    var q=makeDiv('ocr-cf-likert-q',label);
+    c.appendChild(q);
+    [1,2,3,4].forEach(function(num){
+      var cell=document.createElement('div');cell.className='ocr-cf-likert-c';
+      var radio=document.createElement('input');radio.type='radio';radio.name='cf_'+containerId+'_'+key;radio.value=String(num);
+      if(v===num)radio.checked=true;
+      cell.appendChild(radio);
+      c.appendChild(cell);
+    });
+  });
+}
+function makeDiv(cls,text){var d=document.createElement('div');d.className=cls;d.textContent=text;return d}
+
+function buildOcrConfirmUI(parsed){
+  if(!cfPanel)return;
+  parsed=parsed||{};
+  // 属性
+  document.getElementById('cf_date').value=(parsed.date&&/^\d{4}-\d{2}-\d{2}$/.test(parsed.date))?parsed.date:'';
+  document.getElementById('cf_company').value=parsed.company||'';
+  document.getElementById('cf_dept').value=parsed.dept||'';
+  document.getElementById('cf_age').value=parsed.age!=null?String(parsed.age):'';
+  // 自由記述
+  document.getElementById('cf_ww').value=parsed.when_where||'';
+  document.getElementById('cf_wk').value=parsed.work||'';
+  document.getElementById('cf_desc').value=parsed.description||'';
+  document.getElementById('cf_msr').value=parsed.measures||'';
+  // チップ群
+  buildCfChips('cf_exp',CF_OPT.exp,parsed.experience_types||[]);
+  buildCfChips('cf_cause',CF_OPT.cause,parsed.causes||[]);
+  buildCfChips('cf_av',CF_OPT.av,parsed.avoidance_reasons||[]);
+  buildCfChips('cf_ac',CF_OPT.ac,parsed.avoidance_activities||[]);
+  // 災害レベル（単一選択）
+  var lvSel=parsed.danger_level?[String(parsed.danger_level)]:[];
+  buildCfChips('cf_lv',CF_OPT.lv,lvSel);
+  // 災害レベルだけは単一選択にする（クリック時に他を解除）
+  var lvCnt=document.getElementById('cf_lv');
+  if(lvCnt){
+    lvCnt.querySelectorAll('.ocr-cf-chip').forEach(function(ch){
+      ch.addEventListener('click',function(e){
+        var wasOn=ch.classList.contains('on');
+        lvCnt.querySelectorAll('.ocr-cf-chip').forEach(function(x){x.classList.remove('on')});
+        // 連続クリック時の取消挙動: 既にONだったらOFF、そうでなければON
+        if(!wasOn)ch.classList.add('on');
+        e.stopPropagation();
+      },true);
+    });
+  }
+  // Likert
+  buildCfLikertSingle('cf_ss',CF_SS,parsed.stress_state||{});
+  buildCfLikertSingle('cf_sw',CF_SW,parsed.stress_work||{});
+  // 統計
+  var got=0,total=0;
+  ['date','company','dept','age','when_where','work','description','measures'].forEach(function(k){total++;if(parsed[k])got++});
+  ['experience_types','causes','avoidance_reasons','avoidance_activities'].forEach(function(k){total++;if(Array.isArray(parsed[k])&&parsed[k].length)got++});
+  total++;if(parsed.danger_level)got++;
+  var ssCnt=parsed.stress_state?Object.keys(parsed.stress_state).filter(function(k){return parsed.stress_state[k]}).length:0;
+  var swCnt=parsed.stress_work?Object.keys(parsed.stress_work).filter(function(k){return parsed.stress_work[k]}).length:0;
+  cfStat.innerHTML='AI読取: <b>'+got+'/'+total+'</b> 項目 ／ 背後要因 <b>'+ssCnt+'/14</b> ／ 仕事・職場環境 <b>'+swCnt+'/12</b><div class="ocr-cf-warn">⚠ 内容は必ずPDF原本と見比べてから「フォームに反映」してください</div>';
+  cfPanel.classList.add('show');
+}
+
+function readOcrConfirmValues(){
+  function getChips(id){
+    var c=document.getElementById(id);if(!c)return[];
+    return Array.prototype.map.call(c.querySelectorAll('.ocr-cf-chip.on'),function(el){return el.dataset.v});
+  }
+  function getLikert(containerId,rows){
+    var o={};
+    rows.forEach(function(row){
+      var key=row[0];
+      var checked=document.querySelector('input[name="cf_'+containerId+'_'+key+'"]:checked');
+      if(checked)o[key]=parseInt(checked.value,10);
+    });
+    return o;
+  }
+  var lvArr=getChips('cf_lv');
+  return{
+    date:document.getElementById('cf_date').value||'',
+    company:document.getElementById('cf_company').value||'',
+    dept:document.getElementById('cf_dept').value||'',
+    age:document.getElementById('cf_age').value||'',
+    when_where:document.getElementById('cf_ww').value||'',
+    work:document.getElementById('cf_wk').value||'',
+    description:document.getElementById('cf_desc').value||'',
+    measures:document.getElementById('cf_msr').value||'',
+    experience_types:getChips('cf_exp'),
+    causes:getChips('cf_cause'),
+    avoidance_reasons:getChips('cf_av'),
+    avoidance_activities:getChips('cf_ac'),
+    danger_level:lvArr.length?lvArr[0]:'',
+    stress_state:getLikert('cf_ss',CF_SS),
+    stress_work:getLikert('cf_sw',CF_SW),
+    name:''
+  };
+}
+
+function applyOcrConfirm(){
+  // ユーザー編集後の値で _hhOcrParsed を上書き → 既存の fillDescription を流用
+  var edited=readOcrConfirmValues();
+  _hhOcrParsed=edited;
+  if(typeof fillDescription==='function'){
+    fillDescription();
+    highlightFilledFields(edited);
+  }
+  // 確認パネル・結果表示は閉じる
+  cfPanel.classList.remove('show');
+  resultEl.classList.remove('show');
+  // 反映完了の通知（軽め）
+  alert('フォームに反映しました。\n黄色く光っている項目は OCR で入力された箇所です。\n登録前に内容を必ず確認してください。');
+}
+
+function highlightFilledFields(v){
+  // 既存ハイライトをクリア（同じフォーム内の前回の OCR 反映分のみ）
+  document.querySelectorAll('.ocr-filled,.ocr-filled-chip').forEach(function(el){
+    el.classList.remove('ocr-filled');el.classList.remove('ocr-filled-chip');
+  });
+  // 自由記述系
+  if(v.when_where)addHL('f_ww');
+  if(v.work)addHL('f_wk');
+  if(v.description)addHL('f_desc');
+  if(v.measures)addHL('f_msr');
+  if(v.dept)addHL('f_dept');
+  if(v.date)addHL('f_date');
+  // チップ系（既に on になっているはず）
+  ['#cExp .ch','#cC .ch','#cAv .ch','#cAc .ck'].forEach(function(sel){
+    document.querySelectorAll(sel+'.on').forEach(function(el){el.classList.add('ocr-filled-chip')});
+  });
+  // 災害レベル
+  document.querySelectorAll('.lb.on').forEach(function(el){el.classList.add('ocr-filled-chip')});
+  // Likert（点灯円のみ）
+  document.querySelectorAll('.lkdt.on').forEach(function(el){el.classList.add('ocr-filled-chip')});
+}
+function addHL(id){var el=document.getElementById(id);if(el)el.classList.add('ocr-filled')}
 
 function uint8ToBase64(buf){
   var u8=buf instanceof Uint8Array?buf:new Uint8Array(buf);
@@ -2471,7 +2743,8 @@ dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('drag
 dropZone.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.remove('dragover');if(e.dataTransfer&&e.dataTransfer.files.length)processFile(e.dataTransfer.files[0])});
 fileInput.addEventListener('change',function(){if(fileInput.files.length)processFile(fileInput.files[0]);fileInput.value=''});
 if(btnClear)btnClear.addEventListener('click',resetOcr);
-if(btnFill)btnFill.addEventListener('click',fillDescription);
+if(cfBtnApply)cfBtnApply.addEventListener('click',applyOcrConfirm);
+if(cfBtnCancel)cfBtnCancel.addEventListener('click',resetOcr);
 
 function setProgress(pct,msg){
   if(progBar)progBar.style.width=Math.min(100,Math.round(pct))+'%';
@@ -2483,9 +2756,9 @@ function hideProgress(){progEl.classList.remove('show');statusEl.classList.remov
 function resetOcr(){
   previewEl.classList.remove('show');
   resultEl.classList.remove('show');
+  if(cfPanel)cfPanel.classList.remove('show');
   hideProgress();
   dropZone.style.display='';
-  btnFill.disabled=true;
   _ocrText='';
   _hhOcrParsed=null;
   setProgress(0,'');
@@ -2768,7 +3041,8 @@ async function processFile(file){
       if(_ocrText){
         resultText.textContent=_ocrText;
         resultEl.classList.add('show');
-        btnFill.disabled=false;
+        // 確認パネルを構築して表示（編集→反映フロー）
+        try{buildOcrConfirmUI(_hhOcrParsed||{})}catch(e){console.warn('buildOcrConfirmUI error',e)}
       }else{
         alert('文字を読み取れませんでした。画像の品質を確認してください。');
         dropZone.style.display='';
