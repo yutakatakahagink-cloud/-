@@ -1087,7 +1087,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260501-11" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-12" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2057,6 +2057,12 @@ function doSubmit(){
   document.querySelectorAll('.ch.on,.ck.on,.lb.on,.lkdt.on').forEach(el=>el.classList.remove('on'));
   document.getElementById('otherInp').classList.remove('show');
   renderPhotoPreview();
+  // OCR 関連UI（プレビュー/バッファ/確認パネル）も初期化
+  try{if(typeof window.resetOcr==='function')window.resetOcr()}catch(e){console.warn('resetOcr failed',e)}
+  // 自動入力でハイライトされたフィールドの色も解除
+  document.querySelectorAll('.ocr-filled,.ocr-filled-chip').forEach(el=>el.classList.remove('ocr-filled','ocr-filled-chip'));
+  // ページ上部にスクロール
+  try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}
 }
 window.doSubmit=doSubmit;
 
@@ -2873,16 +2879,21 @@ function showProgress(){progEl.classList.add('show');statusEl.classList.add('sho
 function hideProgress(){progEl.classList.remove('show');statusEl.classList.remove('show')}
 
 function resetOcr(){
-  previewEl.classList.remove('show');
-  resultEl.classList.remove('show');
+  if(previewEl)previewEl.classList.remove('show');
+  if(previewImg)previewImg.src='';
+  if(resultEl)resultEl.classList.remove('show');
+  if(resultText)resultText.textContent='';
   if(cfPanel)cfPanel.classList.remove('show');
   hideProgress();
   _ocrText='';
   _hhOcrParsed=null;
   _ocrBuffer=[];
+  if(fileInput)try{fileInput.value=''}catch(e){}
   renderOcrBuffer();
   setProgress(0,'');
+  if(dropZone)dropZone.style.display='';
 }
+window.resetOcr=resetOcr;
 
 // Gemini APIキー取得（優先度: メモリキャッシュ → Firebase RTDB → localStorage → ユーザー入力）
 // config.js には APIキーを置かない（GitHub漏洩→Google検出による無効化を回避）
