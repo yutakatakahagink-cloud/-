@@ -768,8 +768,8 @@ input[type="file"].photo-input{display:none}
   <div class="sd">報告用紙を読み取る（任意）</div>
   <div id="ocrBox" style="margin-bottom:10px">
     <div id="ocrDropZone">
-      <button type="button" class="ocr-pick-btn" id="ocrBtnFile">📷 カメラ/画像/PDFを選択</button>
-      <input type="file" id="ocrFileInput" accept=".pdf,image/*" style="display:none">
+      <button type="button" class="ocr-pick-btn" id="ocrBtnFile">📷 カメラ/画像/PDFを選択（最大2枚まで）</button>
+      <input type="file" id="ocrFileInput" accept=".pdf,image/*" multiple style="display:none">
     </div>
     <div class="ocr-preview" id="ocrPreview" style="display:none"><img id="ocrPreviewImg"></div>
     <div class="ocr-prog" id="ocrProg" style="display:none"><div class="ocr-prog-bar" id="ocrProgBar"></div></div>
@@ -1061,7 +1061,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260501-8" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-9" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2740,8 +2740,8 @@ async function pdfToImageParts(buf,maxPages,onStatus){
 if(btnFileBtn)btnFileBtn.addEventListener('click',function(e){e.stopPropagation();fileInput.click()});
 dropZone.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.add('dragover')});
 dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('dragover')});
-dropZone.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.remove('dragover');if(e.dataTransfer&&e.dataTransfer.files.length)processFile(e.dataTransfer.files[0])});
-fileInput.addEventListener('change',function(){if(fileInput.files.length)processFile(fileInput.files[0]);fileInput.value=''});
+dropZone.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();dropZone.classList.remove('dragover');if(e.dataTransfer&&e.dataTransfer.files.length)processFiles(e.dataTransfer.files)});
+fileInput.addEventListener('change',function(){if(fileInput.files.length)processFiles(fileInput.files);fileInput.value=''});
 if(btnClear)btnClear.addEventListener('click',resetOcr);
 if(cfBtnApply)cfBtnApply.addEventListener('click',applyOcrConfirm);
 if(cfBtnCancel)cfBtnCancel.addEventListener('click',resetOcr);
@@ -2798,18 +2798,24 @@ async function getGeminiKey(){
   return null;
 }
 
-async function processFile(file){
-  if(!file)return;
-  var name=file.name.toLowerCase();
-  var isPdf=name.endsWith('.pdf');
-  var isImage=/\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(name);
+async function processFiles(filesIn){
+  if(!filesIn||!filesIn.length)return;
+  // FileList → Array に正規化、最大2枚に制限
+  var arr=[];for(var i=0;i<filesIn.length&&i<2;i++)arr.push(filesIn[i]);
+  if(filesIn.length>2)alert('PDF/画像は最大2枚まで読み取れます。先頭の2枚のみ使用します。');
 
-  if(!isPdf&&!isImage){alert('PDF または 画像ファイル（PNG/JPG等）を選択してください。');return}
+  // 拡張子チェック
+  for(var k=0;k<arr.length;k++){
+    var nm=arr[k].name.toLowerCase();
+    var ok=nm.endsWith('.pdf')||/\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(nm);
+    if(!ok){alert('PDF または 画像ファイル（PNG/JPG等）を選択してください。\n（'+arr[k].name+' は対象外）');return}
+  }
 
   dropZone.style.display='none';
   resultEl.classList.remove('show');
+  if(cfPanel)cfPanel.classList.remove('show');
   showProgress();
-  setProgress(5,'ファイルを読み込み中...');
+  setProgress(5,'ファイルを読み込み中...（'+arr.length+'枚）');
 
   setProgress(7,'APIキーを取得中...');
   var geminiKey=await getGeminiKey();
@@ -2820,30 +2826,43 @@ async function processFile(file){
     return;
   }
 
+  // PDF が混ざっていれば isPdf=true（プロンプト用）
+  var isPdf=arr.some(function(f){return f.name.toLowerCase().endsWith('.pdf')});
+
   try{
     var fileParts=[];
     var previewUrl=null;
+    var basePct=10;
+    var stepPct=Math.max(5,Math.floor(20/arr.length));
 
-    if(isPdf){
-      setProgress(10,'PDFを読み込み中...');
-      var buf=await file.arrayBuffer();
-      // クォータ節約: PDFをJPEG画像（最大2ページ）に変換して送る
-      var imgPack=null;
-      try{imgPack=await pdfToImageParts(buf,2,function(m){setProgress(15,m)})}catch(e){imgPack=null}
-      if(imgPack&&imgPack.parts&&imgPack.parts.length){
-        fileParts=imgPack.parts;
-        if(imgPack.previewUrl)previewUrl=imgPack.previewUrl;
+    for(var fi=0;fi<arr.length;fi++){
+      var file=arr[fi];
+      var nm=file.name.toLowerCase();
+      var fIsPdf=nm.endsWith('.pdf');
+      var label='ファイル'+(fi+1)+'/'+arr.length;
+      if(fIsPdf){
+        setProgress(basePct,label+' PDFを読み込み中...');
+        var buf=await file.arrayBuffer();
+        // 2枚アップロード時は各PDFから最大2ページ → 最大4ページ送る
+        var maxPages=arr.length===1?2:2;
+        var imgPack=null;
+        try{imgPack=await pdfToImageParts(buf,maxPages,function(m){setProgress(basePct+2,label+' '+m)})}catch(e){imgPack=null}
+        if(imgPack&&imgPack.parts&&imgPack.parts.length){
+          fileParts=fileParts.concat(imgPack.parts);
+          if(!previewUrl&&imgPack.previewUrl)previewUrl=imgPack.previewUrl;
+        }else{
+          fileParts=fileParts.concat(await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(basePct+1,label+' '+m)}));
+        }
       }else{
-        fileParts=fileParts.concat(await buildPdfPartsForGemini(file,buf,geminiKey,function(m){setProgress(12,m)}));
+        setProgress(basePct,label+' 画像を読み込み中...');
+        var dataUrl=await readFileAsDataUrl(file);
+        if(!previewUrl)previewUrl=dataUrl;
+        var base64Img=dataUrl.replace(/^data:[^;]+;base64,/,'');
+        var mimeMatch=dataUrl.match(/^data:([^;]+);/);
+        var mimeType=mimeMatch?mimeMatch[1]:'image/png';
+        fileParts.push({inline_data:{mime_type:mimeType,data:base64Img}});
       }
-    }else{
-      setProgress(15,'画像を読み込み中...');
-      var dataUrl=await readFileAsDataUrl(file);
-      previewUrl=dataUrl;
-      var base64Img=dataUrl.replace(/^data:[^;]+;base64,/,'');
-      var mimeMatch=dataUrl.match(/^data:([^;]+);/);
-      var mimeType=mimeMatch?mimeMatch[1]:'image/png';
-      fileParts.push({inline_data:{mime_type:mimeType,data:base64Img}});
+      basePct+=stepPct;
     }
 
     if(previewUrl){
@@ -2851,9 +2870,10 @@ async function processFile(file){
       previewEl.classList.add('show');
     }
 
-    setProgress(40,'Gemini AIで文字認識中...');
+    setProgress(40,'Gemini AIで文字認識中...（合計'+fileParts.length+'画像）');
 
-    var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく解析し、用紙の各欄・チェック・選択を見て、次のJSONに整理して出力してください。\n\n'+
+    var pageDesc=arr.length>1?'提供された'+arr.length+'枚の用紙画像（複数ページ）':(isPdf?'このPDFの全ページ':'この画像');
+    var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+pageDesc+'を漏れなく解析し、用紙の各欄・チェック・選択を見て、次のJSONに整理して出力してください。**複数ページにまたがる場合は全ページを総合して1つのJSONにまとめる**。\n\n'+
       '【フィールドコード（v2様式: FORM-HH-2026.05 以降の用紙）】\n'+
       '・印刷ラベルに [W][K][N][T][CS][LV][RV][AC][EX][SS][SW][DT][CO][DP][AG] が見える場合は、必ずそれをアンカー（目印）として使うこと。\n'+
       '・[コード] の **右側に書かれている手書き文字** だけが、そのフィールドの値である。それ以外の場所の文字を絶対に拾わない。\n'+
@@ -2937,7 +2957,7 @@ async function processFile(file){
       '・回避できなかった理由: 「回避できなかった理由」枠→avoidance_reasons。\n'+
       '・回避活動: 「回避に役立つ活動」「日頃の安全活動」枠→avoidance_activities。';
 
-    var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
+    var plainPrompt='あなたはOCR専門です。'+pageDesc+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
     // 手書き文字精度のため標準flashを主に。失敗時はlite（精度↓だがRPD大）。
     // 手書き・チェック印・○囲み数字の精度向上のため pro を主に使う。
