@@ -163,23 +163,17 @@
     return '災害事故発生報告_' + id + (d ? '_' + d : '');
   };
 
-  global.disasterExportDownloadExcel = function (r) {
-    if (!r) return;
+  /** テンプレ取得失敗時: 2列シート＋案内（.xlsx） */
+  function disasterExportDownloadFallbackTwoColumn(r, base) {
     var rows = global.disasterExportTwoColumnRows(r);
-    var base = global.disasterExportSafeFileBase(r);
     if (typeof global.XLSX !== 'undefined' && global.XLSX.utils && global.XLSX.utils.aoa_to_sheet) {
       var wb = global.XLSX.utils.book_new();
       var ws = global.XLSX.utils.aoa_to_sheet(rows);
       ws['!cols'] = [{ wch: 28 }, { wch: 80 }];
       global.XLSX.utils.book_append_sheet(wb, ws, '報告書');
       var noteRows = [
-        ['紙様式（.xlsm）との関係'],
-        [
-          '社内の「4_災害事故発生報告書.xlsm」（例: 安全管理室/07_災害関係 配下）がレイアウトの参考です。本ファイルはブラウザから出力した「全項目（項目名・値）」です。マクロやセル結合は含みません。',
-        ],
-        [''],
-        ['Excel と PDF'],
-        ['PDF は「印刷→PDFに保存」により、画面の帳票レイアウトに近い形で画像含む出力が可能です。'],
+        ['補足'],
+        ['公式様式（4_災害事故発生報告書.xlsm）のコピーを templates/ に置けない場合は、このシートが出力されます。'],
       ];
       var wsNote = global.XLSX.utils.aoa_to_sheet(noteRows);
       wsNote['!cols'] = [{ wch: 96 }];
@@ -205,8 +199,51 @@
       URL.revokeObjectURL(a.href);
     }, 4000);
     if (typeof global.XLSX === 'undefined') {
-      alert('Excel用ライブラリを読み込めなかったため、CSVでダウンロードしました。Excelで開けます。\n（.xlsx が必要な場合はネット接続を確認し、再読み込みしてください）');
+      alert('Excel用ライブラリを読み込めなかったため、CSVでダウンロードしました。');
     }
+  }
+
+  global.disasterExportDownloadExcel = function (r) {
+    if (!r) return;
+    var base = global.disasterExportSafeFileBase(r);
+    if (typeof global.XLSX === 'undefined' || !global.XLSX.read || !global.XLSX.writeFile) {
+      disasterExportDownloadFallbackTwoColumn(r, base);
+      return;
+    }
+    var urls =
+      typeof global.disasterOfficialTemplateUrls === 'function'
+        ? global.disasterOfficialTemplateUrls()
+        : ['templates/4_災害事故発生報告書.xlsm'];
+
+    function fallback(msg) {
+      if (msg) alert(msg);
+      disasterExportDownloadFallbackTwoColumn(r, base);
+    }
+
+    function tryUrl(i) {
+      if (i >= urls.length) {
+        fallback(
+          '公式様式（templates/4_災害事故発生報告書.xlsm）を読み込めませんでした。\nWebサーバーと同じ階層に templates フォルダを置いてください。'
+        );
+        return;
+      }
+      fetch(urls[i], { credentials: 'same-origin' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('http');
+          return res.arrayBuffer();
+        })
+        .then(function (buf) {
+          var wb = global.XLSX.read(buf, { type: 'array', cellStyles: true, bookVBA: true });
+          if (typeof global.disasterFillOfficialTemplate !== 'function' || !global.disasterFillOfficialTemplate(wb, r)) {
+            throw new Error('fill');
+          }
+          global.XLSX.writeFile(wb, base + '.xlsm', { bookType: 'xlsm', bookVBA: true });
+        })
+        .catch(function () {
+          tryUrl(i + 1);
+        });
+    }
+    tryUrl(0);
   };
 
   global.disasterExportOpenPrintPdf = function (r) {
@@ -222,14 +259,42 @@
     if (typeof global.disasterWfStatusBanner === 'function') ex += global.disasterWfStatusBanner(r);
     if (typeof global.disasterWfHistoryHtml === 'function') ex += global.disasterWfHistoryHtml(r);
     var title = '災害事故発生報告_' + (r.id != null ? r.id : '');
+    var pdfCss =
+      'html,body{margin:0;padding:0;color:#111;font-family:Meiryo,MS PGothic,sans-serif}' +
+      '#dis-pdf-viewport{width:420mm;min-height:297mm;box-sizing:border-box;padding:4mm;margin:0 auto;background:#fff}' +
+      '#dis-pdf-root{transform-origin:top left;box-sizing:border-box}' +
+      '#dis-pdf-root img{max-height:38mm!important;max-width:48mm!important;object-fit:contain;vertical-align:top}' +
+      '@media print{@page{size:A3 landscape;margin:6mm}body,html{width:100%;height:100%}' +
+      '.no-print{display:none!important}#dis-pdf-viewport{padding:0;width:auto;min-height:0}' +
+      'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+    var pdfJs =
+      'function disPdfScale(){' +
+      "var vp=document.getElementById('dis-pdf-viewport');" +
+      "var root=document.getElementById('dis-pdf-root');" +
+      'if(!vp||!root){window.print();return}' +
+      'root.style.transform="";' +
+      'var sw=root.scrollWidth,sh=root.scrollHeight;' +
+      'var bw=vp.clientWidth,bh=vp.clientHeight;' +
+      'if(bw<10||bh<10){bw=window.innerWidth;bh=window.innerHeight}' +
+      'var sc=Math.min((bw-4)/sw,(bh-4)/sh,1);' +
+      'if(sc<1){root.style.transform="scale("+sc+")";}' +
+      'setTimeout(function(){window.print()},200);' +
+      '}' +
+      'window.onload=function(){setTimeout(disPdfScale,80)};';
     var doc =
       '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>' +
       title +
-      '</title><style>body{font-family:Meiryo,MS PGothic,sans-serif;padding:16px;color:#111} @media print{body{padding:8px} .no-print{display:none!important}}</style></head><body>' +
+      '</title><style>' +
+      pdfCss +
+      '</style></head><body>' +
+      '<div id="dis-pdf-viewport"><div id="dis-pdf-root">' +
       h +
       ex +
-      '<p class="no-print" style="margin-top:16px;font-size:12px;color:#555">印刷ダイアログで「PDFに保存」を選ぶとPDF化できます。終わったらこのタブを閉じてください。</p>' +
-      '<script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script></body></html>';
+      '</div></div>' +
+      '<p class="no-print" style="margin:12px;font-size:12px;color:#555">用紙サイズは A3 横・1枚に収まるよう縮小しています。印刷ダイアログで「PDFに保存」を選び、用紙が A3 横になっているか確認してください。</p>' +
+      '<script>' +
+      pdfJs +
+      '<\/script></body></html>';
     var w = window.open('', '_blank');
     if (!w) {
       alert('ポップアップがブロックされました。ブラウザで許可してから再度お試しください。');
