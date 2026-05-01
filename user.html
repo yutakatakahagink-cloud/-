@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260501-6" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-7" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2451,14 +2451,14 @@ async function pdfToImageParts(buf,maxPages,onStatus){
     if(onStatus)onStatus('PDFページ'+i+'/'+n+'を画像化中...');
     var pg=await pdf.getPage(i);
     var vp1=pg.getViewport({scale:1});
-    // 手書き文字認識のため解像度を大きめに
-    var maxDim=2000;
-    var scale=Math.min(2.5,maxDim/Math.max(vp1.width,vp1.height));
+    // 手書きチェック印・○囲み数字の認識のため解像度を高めに（小さなマークの判別には2500px以上必要）
+    var maxDim=2800;
+    var scale=Math.min(3.5,maxDim/Math.max(vp1.width,vp1.height));
     if(scale<0.8)scale=0.8;
     var vp=pg.getViewport({scale:scale});
     var cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
     await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    var dataUrl=cv.toDataURL('image/jpeg',0.92);
+    var dataUrl=cv.toDataURL('image/jpeg',0.94);
     if(i===1)firstDataUrl=dataUrl;
     parts.push({inline_data:{mime_type:'image/jpeg',data:dataUrl.split(',')[1]||''}});
   }
@@ -2614,7 +2614,16 @@ async function processFile(file){
       '  - 3列目（ややちがう）に☑ → 3\n'+
       '  - 4列目（ちがう）に☑ → 4\n'+
       '・行ごとに値は1つ。4列のうち1列だけが☑である。複数選ばない。\n'+
-      '・☑が無い行はキー自体を省略してよい（出力に入れない）。\n\n'+
+      '・**[SS]は14行（仕事量が多かった／時間内に処理しきれなかった／一生懸命働く必要があった／ひどく疲れた／へとへとだ／だるい／気がはりつめている／不安だ／落ち着かない／ゆううつだ／何をするのも面倒だ／気分が晴れない／食欲がない／よく眠れない）すべてを必ず確認する**。\n'+
+      '・**[SW]は12行（自分のペースで仕事ができた／仕事の順番・やり方を決められた／方針に意見を反映できた／上司と気軽に話ができる／同僚と気軽に話ができる／困ったとき上司は頼りになる／困ったとき同僚は頼りになる／上司に個人的な相談ができる／同僚に個人的な相談ができる／気持ちがはつらつとしている／仕事に誇りを感じる／集中しているとき幸せだ）すべてを必ず確認する**。\n'+
+      '・薄い・小さい・斜めなレ点も見落とさない。**1行で4列のどれかには必ず☑がある**前提で、最も濃い列を選ぶ。\n'+
+      '・行が見えにくい場合でも、表のレイアウトから行の位置を推定し、その行の4セルを左から右へスキャンして☑を探す。\n'+
+      '・読み取れた行は必ず stress_state または stress_work の対応キーに値を入れる。読み取れなかった行のみキー省略可。\n\n'+
+      '【○囲み数字（災害レベル [LV]）】\n'+
+      '・災害レベル欄は「1・2・3・4・5・6・7・8・9・10」の10個の数字が一列に並んでいる。\n'+
+      '・**いずれか1つの数字に手書きの○（丸）が描かれている**。○は数字を囲うように描かれた円・楕円・カッコ等の閉じた線を含む。\n'+
+      '・○で囲まれた数字を danger_level に文字列として入れる（例: 2 → "2"）。○が見当たらなければ空文字 ""。\n'+
+      '・○の認識のヒント：印刷された数字の上に手書きで重ねて書かれた閉じた曲線を探す。多少歪んでいても○とみなす。\n\n'+
       '【手書き文字の読取り】\n'+
       '・手書きの日付（例：3/19）、現場名、自由記述は1文字ずつ慎重に読む。**推測で書き換えない**。\n'+
       '・読み取れない文字は「？」を入れず、可能性が高い文字を選ぶ。判別不能なら空欄でもよい。\n'+
@@ -2658,8 +2667,11 @@ async function processFile(file){
     var plainPrompt='あなたはOCR専門です。'+(isPdf?'このPDFの全ページ':'この画像')+'の文字を正確に読み取り、日本語で全文を出力してください。表は「項目名: 値」。チェック済み項目は明記。説明は不要。';
 
     // 手書き文字精度のため標準flashを主に。失敗時はlite（精度↓だがRPD大）。
-    var primaryModel='gemini-2.5-flash';
-    var fallbackModel='gemini-2.5-flash-lite';
+    // 手書き・チェック印・○囲み数字の精度向上のため pro を主に使う。
+    // 429 (rate limit / quota) が出たら自動で flash → flash-lite に切替。
+    var primaryModel='gemini-2.5-pro';
+    var fallbackModel='gemini-2.5-flash';
+    var fallbackModel2='gemini-2.5-flash-lite';
     var json=null;
     var lastErr='';
     var usedJsonMode=true;
@@ -2704,13 +2716,21 @@ async function processFile(file){
       usedModel=primaryModel;
     }catch(e1){
       lastErr=e1.message||String(e1);
-      if(/QUOTA_EXCEEDED/.test(lastErr))throw e1;
+      // クォータ超過（429）なら次のモデルを試す（pro→flash→flash-lite）
+      var quotaHit=/QUOTA_EXCEEDED/.test(lastErr);
       try{
         setProgress(70,fallbackModel+' で再試行中...');
         json=await callGemini(fallbackModel);
         usedModel=fallbackModel;
       }catch(e2){
-        throw new Error(lastErr+' / 再試行: '+(e2.message||String(e2)));
+        var lastErr2=e2.message||String(e2);
+        try{
+          setProgress(80,fallbackModel2+' で再試行中...');
+          json=await callGemini(fallbackModel2);
+          usedModel=fallbackModel2;
+        }catch(e3){
+          throw new Error(lastErr+' / '+lastErr2+' / 再試行: '+(e3.message||String(e3)));
+        }
       }
     }
     if(!json||!json.candidates||!json.candidates[0])throw new Error(lastErr||'読み取りに失敗しました');
