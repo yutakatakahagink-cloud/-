@@ -24,127 +24,6 @@
     return i === -1 ? t : t.slice(0, i);
   }
 
-  // ===== 承認者追記 (r.wf.report_addenda) を Excel セルに反映するヘルパー =====
-  function formatAddendaAtForExcel(raw) {
-    if (raw == null || raw === '') return '';
-    var d = new Date(raw);
-    if (isNaN(d.getTime())) {
-      var s = String(raw);
-      return s.length >= 19 ? s.slice(0, 19).replace('T', ' ') : s;
-    }
-    try {
-      var fmt = new Intl.DateTimeFormat('ja-JP', {
-        timeZone: 'Asia/Tokyo',
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-      });
-      var p = {};
-      fmt.formatToParts(d).forEach(function (x) { if (x.type !== 'literal') p[x.type] = x.value; });
-      return p.year + '-' + p.month + '-' + p.day + ' ' + p.hour + ':' + p.minute + ':' + p.second;
-    } catch (err) {
-      return d.toISOString().slice(0, 19).replace('T', ' ');
-    }
-  }
-
-  function adminNameForApproverEmail(em) {
-    var need = String(em || '').trim().toLowerCase();
-    if (!need) return '';
-    try {
-      var raw = (typeof localStorage !== 'undefined') ? localStorage.getItem('hh_admins') : null;
-      if (!raw) return '';
-      var arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return '';
-      for (var i = 0; i < arr.length; i++) {
-        var a = arr[i];
-        if (!a) continue;
-        var em1 = String(a.email || '').trim().toLowerCase();
-        var idEm = String(a.id || '').trim().toLowerCase();
-        if (em1 === need || (!em1 && idEm === need)) {
-          var nm = String(a.name || '').trim();
-          if (nm) return nm;
-        }
-      }
-    } catch (err) {}
-    return '';
-  }
-
-  function getApproverDisplayNameSimple(r, e) {
-    if (!e) return '承認者';
-    var saved = String(e.approver_display_name || '').trim();
-    if (saved) return saved;
-    var b0 = String(e.by || '').trim();
-    if (b0.indexOf('メールリンク') !== -1) {
-      b0 = b0.replace(/\s*[\(（]承認者追記[\)）]\s*$/g, '').trim();
-    }
-    var candEm = String(e.approver_email || '').trim();
-    if (!candEm && b0.indexOf('@') !== -1) candEm = b0;
-    var adm = adminNameForApproverEmail(candEm);
-    if (!adm && r && r.wf && Array.isArray(r.wf.steps)) {
-      for (var si = 0; si < r.wf.steps.length; si++) {
-        var sem = (r.wf.steps[si] && r.wf.steps[si].email) || '';
-        adm = adminNameForApproverEmail(sem);
-        if (adm) break;
-      }
-    }
-    if (adm) return adm;
-    if (b0 && b0.indexOf('@') === -1) return b0;
-    var fromRoleM = String(e.role || '').match(/承認者追記[（(]([^）)]+)[）)]/);
-    if (fromRoleM) return fromRoleM[1].trim();
-    return '承認者';
-  }
-
-  function isApproverAddendum(e) {
-    return e && String(e.role || '').indexOf('承認者') !== -1;
-  }
-
-  function getAddendaForField(r, fieldKey) {
-    if (!r || !r.wf || !Array.isArray(r.wf.report_addenda)) return [];
-    var seen = Object.create(null);
-    var out = [];
-    r.wf.report_addenda.forEach(function (e) {
-      if (!e || String(e.field || '') !== String(fieldKey)) return;
-      if (!isApproverAddendum(e)) return;
-      var key = String(e.at || '') + '\t' + String(e.by || '') + '\t' + String(e.text || '').trim();
-      if (seen[key]) return;
-      seen[key] = true;
-      out.push(e);
-    });
-    return out;
-  }
-
-  function getLooseAddenda(r) {
-    if (!r || !r.wf || !Array.isArray(r.wf.report_addenda)) return [];
-    var seen = Object.create(null);
-    var out = [];
-    r.wf.report_addenda.forEach(function (e) {
-      if (!e || e.field) return;
-      if (!isApproverAddendum(e)) return;
-      var key = String(e.at || '') + '\t' + String(e.by || '') + '\t' + String(e.text || '').trim();
-      if (seen[key]) return;
-      seen[key] = true;
-      out.push(e);
-    });
-    return out;
-  }
-
-  function formatAddendaBlocks(r, list) {
-    if (!list || !list.length) return '';
-    return list.map(function (e) {
-      var at = formatAddendaAtForExcel(e.at);
-      var who = getApproverDisplayNameSimple(r, e);
-      var txt = String(e.text || '').trim();
-      return '──── 【承認者追記】 ────\n' + txt + '\n  — ' + who + '  ' + at;
-    }).join('\n\n');
-  }
-
-  /** 元の値に承認者追記を結合して返す。stripMerge も実行。 */
-  function valueWithAddenda(r, fieldKey, baseText) {
-    var base = stripMerge(String(baseText != null ? baseText : ''));
-    var addsTxt = formatAddendaBlocks(r, getAddendaForField(r, fieldKey));
-    if (!addsTxt) return base;
-    return base + (base ? '\n\n' : '') + addsTxt;
-  }
-
   function parseDateLike(r) {
     var raw = (r && (r.datetime || r.date)) || '';
     var d = null;
@@ -259,7 +138,7 @@
     // 工事件名・場所・住所
     setStr(ref, 'H9', r.keigen);
     setStr(ref, 'H13', r.basho || r.place);
-    setStr(ref, 'V13', valueWithAddenda(r, 'basho_jusho', r.basho_jusho));
+    setStr(ref, 'V13', r.basho_jusho);
     setStr(ref, 'I15', r.jusho);
 
     // 被災者
@@ -281,7 +160,7 @@
     if (ex.m) setNum(ref, 'AC21', ex.m);
 
     // 傷病・病院・後遺症・休業
-    setStr(ref, 'I23', valueWithAddenda(r, 'shobyomei', r.shobyomei));
+    setStr(ref, 'I23', r.shobyomei);
     setStr(ref, 'I25', r.byoin);
     setStr(ref, 'T25', r.koui);
     if (r.kyugyo_days != null && r.kyugyo_days !== '') setNum(ref, 'R27', r.kyugyo_days);
@@ -291,27 +170,22 @@
     setStr(ref, 'Q29', r.shokumei);
     setStr(ref, 'X29', r.gennin_name);
 
-    // 災害発生状況（承認者追記を結合）
-    setStr(ref, 'AI12', valueWithAddenda(r, 'basho_detail', r.basho_detail));
-    setStr(ref, 'AI19', valueWithAddenda(r, 'sagyo', r.sagyo));
-    setStr(ref, 'AI26', valueWithAddenda(r, 'genin_busshi', r.genin_busshi));
-    setStr(ref, 'AI36', valueWithAddenda(r, 'genin_jin', r.genin_jin));
-    setStr(ref, 'AI42', valueWithAddenda(r, 'kekka', r.kekka));
+    // 災害発生状況
+    setStr(ref, 'AI12', r.basho_detail);
+    setStr(ref, 'AI19', r.sagyo);
+    setStr(ref, 'AI26', r.genin_busshi);
+    setStr(ref, 'AI36', r.genin_jin);
+    setStr(ref, 'AI42', r.kekka);
 
-    // 教訓 (人・設備・管理) — 左欄（承認者追記を結合）
-    setStr(ref, 'D32', valueWithAddenda(r, 'kyukun_person', r.kyukun_person));
-    setStr(ref, 'D40', valueWithAddenda(r, 'kyukun_equip', r.kyukun_equip));
-    setStr(ref, 'D47', valueWithAddenda(r, 'kyukun_mgmt', r.kyukun_mgmt));
+    // 教訓 (人・設備・管理) — 左欄
+    setStr(ref, 'D32', r.kyukun_person);
+    setStr(ref, 'D40', r.kyukun_equip);
+    setStr(ref, 'D47', r.kyukun_mgmt);
 
-    // こうすればよかった・対策（承認者追記を結合 + 欄未指定の追記は対策に集約）
-    setStr(ref, 'AG48', valueWithAddenda(r, 'kaizen_honin', r.kaizen_honin));
-    setStr(ref, 'AV48', valueWithAddenda(r, 'kaizen_kantoku', r.kaizen_kantoku));
-    var taisakuVal = valueWithAddenda(r, 'taisaku', r.taisaku);
-    var looseAdds = formatAddendaBlocks(r, getLooseAddenda(r));
-    if (looseAdds) {
-      taisakuVal = (taisakuVal ? taisakuVal + '\n\n' : '') + looseAdds;
-    }
-    setStr(ref, 'BL47', taisakuVal);
+    // こうすればよかった・対策
+    setStr(ref, 'AG48', r.kaizen_honin);
+    setStr(ref, 'AV48', r.kaizen_kantoku);
+    setStr(ref, 'BL47', r.taisaku);
 
     // 労災原因分類
     setStr(ref, 'C55', r.kiinbutsu);
