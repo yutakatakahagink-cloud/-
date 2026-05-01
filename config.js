@@ -18,7 +18,12 @@ window.HH_FIREBASE_CONFIG = {
 };
 
 // Gemini Vision API キー（OCR用）
-window.HH_GEMINI_API_KEY = "AIzaSyBusEb38J2MuyPIB3nJRrI4SJGVlIzOPg0";
+// ★★★ ここには絶対にキーを書かないこと ★★★
+// GitHub の公開リポジトリにキーが入ると、Google のスキャナーが
+// 数分以内に「漏洩」判定してキーを自動無効化する。
+// キーは Firebase Realtime Database → config/gemini_api_key に保存し、
+// ブラウザは起動時にそこから取得する（user.html の getGeminiKey()）。
+window.HH_GEMINI_API_KEY = "";
 
 // 災害承認メール（HH_EMAILJS）
 // ■ 送信元は社用 Microsoft 365（下記）。EmailJS の Outlook 接続と同じアカウントにすること。

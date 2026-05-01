@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260501-2" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-3" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2491,6 +2491,40 @@ function resetOcr(){
   setProgress(0,'');
 }
 
+// Gemini APIキー取得（優先度: メモリキャッシュ → Firebase RTDB → localStorage → ユーザー入力）
+// config.js には APIキーを置かない（GitHub漏洩→Google検出による無効化を回避）
+var _hhGeminiKeyCache=null;
+async function getGeminiKey(){
+  if(_hhGeminiKeyCache)return _hhGeminiKeyCache;
+  // 後方互換: 旧config.jsのwindow.HH_GEMINI_API_KEY（推奨されない）
+  if(typeof window.HH_GEMINI_API_KEY==='string'&&window.HH_GEMINI_API_KEY.trim()){
+    _hhGeminiKeyCache=window.HH_GEMINI_API_KEY.trim();
+    return _hhGeminiKeyCache;
+  }
+  // Firebase Realtime Database から取得（config/gemini_api_key）
+  try{
+    if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
+      var snap=await firebase.database().ref('config/gemini_api_key').once('value');
+      var rtdbKey=snap&&snap.val&&snap.val();
+      if(rtdbKey&&typeof rtdbKey==='string'&&rtdbKey.trim()){
+        _hhGeminiKeyCache=rtdbKey.trim();
+        return _hhGeminiKeyCache;
+      }
+    }
+  }catch(e){console.warn('[OCR] Firebase RTDB key fetch failed:',e&&e.message)}
+  // localStorage（前回ユーザー入力した一時キー）
+  var storedKey=localStorage.getItem('hh_gemini_key')||'';
+  if(storedKey){_hhGeminiKeyCache=storedKey;return storedKey}
+  // 最終フォールバック: ユーザーに入力させる（一時利用）
+  var promptKey=prompt('Gemini APIキーを入力してください（一時保存。\n本番運用は Firebase Console → Realtime Database → config/gemini_api_key に保存推奨）:','');
+  if(promptKey&&promptKey.trim()){
+    _hhGeminiKeyCache=promptKey.trim();
+    localStorage.setItem('hh_gemini_key',_hhGeminiKeyCache);
+    return _hhGeminiKeyCache;
+  }
+  return null;
+}
+
 async function processFile(file){
   if(!file)return;
   var name=file.name.toLowerCase();
@@ -2504,16 +2538,14 @@ async function processFile(file){
   showProgress();
   setProgress(5,'ファイルを読み込み中...');
 
-  var cfgKey=(typeof window.HH_GEMINI_API_KEY==='string'&&window.HH_GEMINI_API_KEY.trim())?window.HH_GEMINI_API_KEY.trim():'';
-  var storedKey=localStorage.getItem('hh_gemini_key')||'';
-  var geminiKey=cfgKey||storedKey;
-  var keyFromPrompt=false;
+  setProgress(7,'APIキーを取得中...');
+  var geminiKey=await getGeminiKey();
   if(!geminiKey){
-    geminiKey=prompt('Gemini APIキーを入力してください（初回のみ）:','');
-    if(!geminiKey){dropZone.style.display='';hideProgress();return}
-    keyFromPrompt=true;
+    alert('Gemini APIキーが取得できませんでした。\n\n【対処】Firebase Console → Realtime Database で\nconfig/gemini_api_key にキーを保存してください。');
+    dropZone.style.display='';
+    hideProgress();
+    return;
   }
-  if(keyFromPrompt)localStorage.setItem('hh_gemini_key',geminiKey);
 
   try{
     var fileParts=[];
@@ -2729,9 +2761,14 @@ async function processFile(file){
       }else if(isApiNotEnabled){
         alert('Gemini API がプロジェクトで有効化されていません。\n\n【対処】\nGoogle Cloud Console で「APIとサービス」→「ライブラリ」→「Gemini API」を検索し、「有効にする」をクリック。\n\n【生エラー】\n'+rawBody);
       }else{
+        // 漏洩判定 / 期限切れ / 無効キー
+        var isLeaked=/reported as leaked/i.test(rawBody);
         localStorage.removeItem('hh_gemini_key');
-        if(keyExpired){
-          alert('Gemini APIキーの有効期限が切れているか、無効です。\n\n【対処】\n1. Google AI Studio で新しいキーを発行\n   https://aistudio.google.com/apikey\n2. config.js の window.HH_GEMINI_API_KEY を新キーに差し替え\n3. GitHub Pages を使っている場合は config.js をコミット・プッシュ\n4. ページを再読み込みしてから再度「報告用紙を読み取る」\n\n【生エラー】\n'+rawBody);
+        _hhGeminiKeyCache=null;
+        if(isLeaked){
+          alert('Gemini APIキーが Google により漏洩判定で無効化されました。\n\n【対処】\n1. AI Studio で新しいキーを発行\n2. Firebase Console → Realtime Database → config/gemini_api_key の値を新キーに更新\n3. ブラウザでページ再読み込み（強制リロード Ctrl+Shift+R）\n\n※ config.js や GitHub には絶対にキーを置かないでください。\n   置くと数分〜数時間で再び漏洩判定されます。\n\n【生エラー】\n'+rawBody);
+        }else if(keyExpired){
+          alert('Gemini APIキーの有効期限が切れているか、無効です。\n\n【対処】\n1. AI Studio で新しいキーを発行\n2. Firebase Console → Realtime Database → config/gemini_api_key を新キーに更新\n3. ページ再読み込みして再試行\n\n【生エラー】\n'+rawBody);
         }else{
           alert('APIキーが無効か、アクセス拒否されました。\n\n【生エラー】\n'+rawBody+'\n\nリファラ制限を最近設定した場合、5〜10分待ってから再試行してください。');
         }
