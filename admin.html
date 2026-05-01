@@ -400,7 +400,8 @@ var DEMO_DATA=[
 ];
 function loadDB(){
   try{var s=localStorage.getItem('hh_reports');if(s){DB=JSON.parse(s);idc=DB.reduce(function(m,r){return Math.max(m,r.id||0)},0);return}}catch(e){}
-  DEMO_DATA.forEach(function(r,i){r.id=++idc;r.date='2026-02-0'+(8-i);DB.push(r)});saveDB();
+  // 第三者テスト準備（2026-05-01）以降、デモデータの自動シードは行わない。
+  DB=[];idc=0;
 }
 function saveDB(){
   if(typeof HHDB!=='undefined'&&HHDB.useFirebase()){HHDB.saveReports(DB);HHDB.savePhotos(DB);try{var data=DB.map(function(r){var c=Object.assign({},r);delete c.photos;return c});localStorage.setItem('hh_reports',JSON.stringify(data));if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});localStorage.setItem('hh_photos',JSON.stringify(ph))}}catch(e){}return}

@@ -214,19 +214,21 @@
       }
     },
     loadReports:function(demoData,onLoaded){
+      // 第三者テスト準備のためデモデータへのフォールバックを停止（2026-05-01）。
+      // Firebase / localStorage が空のときは空配列を返す（過去データ初期化後に
+      // デモ8件が復活しないようにするため）。Firebase 接続自体が失敗した場合のみ
+      // 従来通りデモデータを返す（オフライン環境での体験用）。
       if(!useFirebase||!db){
         var s=localStorage.getItem('hh_reports');
         var arr=s?JSON.parse(s):null;
-        if(arr&&arr.length){onLoaded(arr);return}
-        demoData.forEach(function(r,i){r.id=i+1;r.date='2026-02-0'+(8-i)});
-        onLoaded(demoData);
+        if(arr){onLoaded(arr);return}
+        onLoaded([]);
         return;
       }
       getReportsRef().once('value',function(snap){
         var v=snap.val();
         var arr=Array.isArray(v)?v:(v?Object.values(v):[]);
-        if(!arr||arr.length===0){onLoaded(demoData);return}
-        onLoaded(arr);
+        onLoaded(arr||[]);
       },function(){onLoaded(demoData);});
     },
     saveReports:function(arr){
