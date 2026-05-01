@@ -239,37 +239,10 @@
       );
     };
 
+    // PDF出力時 (exportMode) も画面の詳細プレビューと同じレイアウトに揃える。
+    // 旧版で先頭に挿入していた追加項目（報告ID/フォーム種別/被災者氏名/現認者/携帯フォーム…）は
+    // ユーザーの要望により非表示。必要があれば末尾の補足セクションのみ表示する。
     var exportExtra = '';
-    if (exportMode) {
-      exportExtra += row('報告ID', V(r.id != null ? r.id : ''));
-      exportExtra += row('フォーム種別', V(r.form || ''));
-      exportExtra += row('記録ステータス', V(r.status || ''));
-      exportExtra += row('工事件名', V(r.keigen || ''));
-      exportExtra += row('災害場所', V(r.basho || r.place || ''));
-      exportExtra += row('被災者住所', V(r.jusho || ''));
-      exportExtra += row('被災者氏名', V(r.victim || ''));
-      exportExtra += row('年齢', V(r.age != null && r.age !== '' ? r.age : ''));
-      exportExtra += row('生年月日', V(r.birth || ''));
-      exportExtra += row('職種・所属', V(r.victim_dept || ''));
-      exportExtra += row('雇入年月日', V(r.hire_date || ''));
-      exportExtra += row('経験年数(年-カ月)', V(r.exp || ''));
-      exportExtra += row('病院名', V(r.byoin || ''));
-      exportExtra += row('現認者 有無', V(r.gennin_aru || r.gennin || ''));
-      exportExtra += row('現認者 職名', V(r.shokumei || ''));
-      exportExtra += row('現認者 氏名', V(r.gennin_name || ''));
-      exportExtra += row('（携帯）事業の種類', V(r.gyoshu || ''));
-      exportExtra += row('（携帯）事業場名', V(r.jigyosho || ''));
-      exportExtra += row('（携帯）事業場所在地', V(r.address || ''));
-      exportExtra += row('（携帯）労働者数', V(r.workers != null && r.workers !== '' ? r.workers : ''));
-      exportExtra += row('（携帯）機器等の種類', V(r.machine || ''));
-      exportExtra += row('（携帯）事故の種類', V(r.type || ''));
-      exportExtra += row('（携帯）人的被害', V(r.human_damage || ''));
-      exportExtra += row('（携帯）物的被害', V(r.material_damage || ''));
-      exportExtra += row('（携帯）発生状況', V(r.situation || ''));
-      exportExtra += row('（携帯）発生原因', V(r.cause || ''));
-      exportExtra += row('（携帯）再発防止措置', V(r.measure || ''));
-      exportExtra += row('ワークフロー送信者メール', V(r.wf_sender_email || ''));
-    }
 
     var h =
       '<div style="border:1px solid #333;border-radius:6px;overflow:hidden;background:#fff;font-family:Meiryo,sans-serif;font-size:10.5pt">';
