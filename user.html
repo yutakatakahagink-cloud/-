@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260430-8" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-1" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2550,13 +2550,14 @@ async function processFile(file){
 
     var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+(isPdf?'このPDFの全ページ':'この画像')+'を漏れなく解析し、用紙の各欄・チェック・選択を見て、次のJSONに整理して出力してください。\n\n'+
       '【フィールドコード（v2様式: FORM-HH-2026.05 以降の用紙）】\n'+
-      '・印刷ラベルに [W][K][N][T][CS][LV][RV][AC][EX][DT][NM][GN][DP][AG] が見える場合は、必ずそれをアンカー（目印）として使うこと。\n'+
+      '・印刷ラベルに [W][K][N][T][CS][LV][RV][AC][EX][SS][SW][DT][GN][DP][AG] が見える場合は、必ずそれをアンカー（目印）として使うこと。\n'+
       '・[コード] の **右側に書かれている手書き文字** だけが、そのフィールドの値である。それ以外の場所の文字を絶対に拾わない。\n'+
       '・対応関係:\n'+
       '  [W]→when_where, [K]→work, [N]→description, [T]→measures,\n'+
       '  [CS]→causes, [LV]→danger_level, [RV]→avoidance_reasons, [AC]→avoidance_activities,\n'+
-      '  [EX]→experience_types, [DT]→date, [NM]→name, [GN]→（区分。出力JSONには含めなくてよい）,\n'+
-      '  [DP]→（部署。出力JSONには含めなくてよい）, [AG]→（年齢。同上）\n'+
+      '  [EX]→experience_types, [SS]→stress_state, [SW]→stress_work, [DT]→date,\n'+
+      '  [GN]→（区分。出力JSONには含めなくてよい）, [DP]→（部署。出力JSONには含めなくてよい）, [AG]→（年齢。同上）\n'+
+      '・v2様式に氏名欄は無い（プライバシー配慮）。name は出力しなくてよい。\n'+
       '・コードが見当たらない旧様式の場合は、欄の見出し文字列（「いつ・どこで」など）を手がかりに同様に処理する。\n\n'+
       '【最重要・項目分離の厳守】\n'+
       '・「いつ・どこで」「どのような作業で」「内容（ヒヤリの内容）」「対策（再発防止）」は別の欄である。**絶対に混同しない**。\n'+
