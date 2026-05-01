@@ -488,6 +488,30 @@ select,input,textarea,button{color:var(--t1)}
     <b>管理者</b>：一覧・分析（背後要因以外）・委員会ページを閲覧可能です。<br>
     <b>使用者</b>：報告ページと該当部署の分析（背後要因以外）を閲覧可能です。
   </div>
+
+  <!-- テスト準備：データ初期化（所有者のみ） -->
+  <div class="sd" style="margin-top:24px;color:#B71C1C">⚠ テスト準備：データ初期化</div>
+  <div class="cb" style="border:2px solid #B71C1C;background:#FFEBEE">
+    <div class="cht"><span class="chd" style="background:#B71C1C"></span>過去データの削除（取り消し不可）</div>
+    <p style="font-size:11px;color:#5D4037;line-height:1.6;margin:0 0 10px">
+      第三者テストの前に、これまで蓄積された <b>ヒヤリハット報告／要望／災害発生報告</b> をすべて削除します。
+      Firebase Realtime Database と各端末の localStorage の両方から消去します。<br>
+      <b style="color:#B71C1C">この操作は取り消しできません。</b> 削除を行うには下のボックスに
+      <code style="background:#fff;border:1px solid #ccc;padding:1px 5px;border-radius:3px">DELETE</code>
+      を入力してから対象ボタンを押してください。
+    </p>
+    <div class="fg">
+      <label class="fl">確認フレーズ（DELETE と入力）</label>
+      <input class="fi" type="text" id="resetConfirmInput" placeholder="DELETE" autocomplete="off" style="margin-bottom:10px;letter-spacing:2px;font-weight:700">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="sub" type="button" style="margin-top:0;padding:10px;font-size:12px;background:#fff;color:#B71C1C;border:2px solid #B71C1C;flex:1;min-width:140px" onclick="ownerResetData('hh')">🗑 ヒヤリハット報告を削除</button>
+        <button class="sub" type="button" style="margin-top:0;padding:10px;font-size:12px;background:#fff;color:#B71C1C;border:2px solid #B71C1C;flex:1;min-width:140px" onclick="ownerResetData('req')">🗑 要望を削除</button>
+        <button class="sub" type="button" style="margin-top:0;padding:10px;font-size:12px;background:#fff;color:#B71C1C;border:2px solid #B71C1C;flex:1;min-width:140px" onclick="ownerResetData('dis')">🗑 災害発生報告を削除</button>
+      </div>
+      <button class="sub" type="button" style="margin-top:10px;padding:12px;font-size:13px;font-weight:700;background:#B71C1C;color:#fff;border:none" onclick="ownerResetData('all')">⚠ すべて一括削除（ヒヤリハット＋要望＋災害）</button>
+      <p id="resetStatus" style="font-size:11px;color:#1B5E20;margin:8px 0 0;display:none;font-weight:600"></p>
+    </div>
+  </div>
 </div></div>
 
 <!-- MODAL -->
@@ -871,6 +895,66 @@ function changeOwnerPass(){
   document.getElementById('ownerPassCurrent').value='';document.getElementById('ownerPassNew').value='';document.getElementById('ownerPassNew2').value='';
   if(document.getElementById('ownerRemember').checked){localStorage.setItem('hh_owner_login',n1)}
   var t=document.getElementById('toast');t.textContent='✓ 所有者パスワードを変更しました';t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='✓ 操作が完了しました'},3000);
+}
+
+// ===== OWNER: データ初期化（テスト準備）=====
+// 第三者テストの前に、これまで蓄積された ヒヤリハット報告/要望/災害発生報告 を全削除する
+// Firebase Realtime Database と localStorage の両方から消去する
+// 安全策: 確認フレーズ "DELETE" 入力 + 所有者ログイン中 + 二重 confirm
+function ownerResetData(kind){
+  if(typeof ROLE==='undefined'||ROLE!=='owner'){alert('所有者のみ実行できます');return}
+  var phrase=(document.getElementById('resetConfirmInput').value||'').trim();
+  if(phrase!=='DELETE'){alert('確認フレーズに DELETE と入力してください');return}
+  var label={hh:'ヒヤリハット報告',req:'要望',dis:'災害発生報告',all:'全データ（ヒヤリハット報告＋要望＋災害発生報告）'}[kind]||'';
+  if(!label){return}
+  if(!confirm(label+' をすべて削除します。\n\nこの操作は取り消しできません。本当に削除しますか？')){return}
+  if(kind==='all'&&!confirm('もう一度確認します。\n\n本当にすべての過去データを削除しますか？\n（ユーザー・管理者・所有者パスワード・QR設定は保持されます）')){return}
+
+  var statusEl=document.getElementById('resetStatus');
+  function showStatus(msg,color){if(!statusEl)return;statusEl.style.display='block';statusEl.style.color=color||'#1B5E20';statusEl.textContent=msg}
+  showStatus('削除中…','#0D47A1');
+
+  var hasFb=(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&typeof firebase!=='undefined'&&firebase.database);
+  var tasks=[];
+  function clearPath(path){
+    if(!hasFb){return Promise.resolve()}
+    return new Promise(function(res){
+      try{firebase.database().ref(path).set(null,function(err){if(err)console.warn('[reset] '+path+' failed',err);res()})}
+      catch(e){console.warn('[reset] '+path+' threw',e);res()}
+    });
+  }
+  function clearLocal(keys){try{keys.forEach(function(k){localStorage.removeItem(k)})}catch(e){}}
+
+  if(kind==='hh'||kind==='all'){
+    tasks.push(clearPath('hh_data/hh_reports'));
+    tasks.push(clearPath('hh_data/hh_photos'));
+    clearLocal(['hh_reports','hh_photos']);
+  }
+  if(kind==='req'||kind==='all'){
+    tasks.push(clearPath('hh_data/hh_requests'));
+    clearLocal(['hh_requests']);
+  }
+  if(kind==='dis'||kind==='all'){
+    tasks.push(clearPath('hh_data/hh_disaster_reports'));
+    clearLocal(['hh_disaster_reports']);
+  }
+
+  Promise.all(tasks).then(function(){
+    if(typeof DB!=='undefined'&&(kind==='hh'||kind==='all'))DB=[];
+    if(typeof REQ_LIST!=='undefined'&&(kind==='req'||kind==='all'))REQ_LIST=[];
+    if(typeof DIS_LIST!=='undefined'&&(kind==='dis'||kind==='all'))DIS_LIST=[];
+    try{rDash&&rDash()}catch(e){}
+    try{rAnl&&rAnl('simple')}catch(e){}
+    try{rReqList&&rReqList()}catch(e){}
+    try{rDisList&&rDisList()}catch(e){}
+
+    document.getElementById('resetConfirmInput').value='';
+    showStatus('✓ '+label+' を削除しました（Firebase / localStorage）。',hasFb?'#1B5E20':'#E65100');
+    var t=document.getElementById('toast');if(t){t.textContent='✓ '+label+' を初期化しました';t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.textContent='✓ 操作が完了しました'},3500)}
+    if(!hasFb){
+      setTimeout(function(){alert('Firebase に接続されていないため、この端末の localStorage のみ削除しました。\n他の端末や Firebase 上のデータは別途、Firebase に接続した状態で再度実行してください。')},200);
+    }
+  });
 }
 
 // ===== QR CODE GENERATION =====
