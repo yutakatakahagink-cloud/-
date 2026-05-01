@@ -1,40 +1,31 @@
 /**
- * 社内様式「4_災害事故発生報告書.xlsm」の「入力用紙」シートへ値を流し込む（SheetJS 利用時）
- * セル位置はテンプレート（入力例シート）から特定。マクロ・別シート（mst）はそのまま保持。
+ * 社内様式「4_災害事故発生報告書.xlsm」の「入力用紙」シートへ値を流し込む。
+ *
+ * 旧版は SheetJS の writeFile を使っていたが、xlsm 内のフォームコントロール
+ * (ctrlProps)・図形 (drawings, vmlDrawings)・印刷設定・VBA を完全に保持できず、
+ * 出力ファイルが「Excelで開けない／壊れている」と判定される問題があった。
+ *
+ * 本実装は JSZip で xlsm を ZIP として開き、xl/worksheets/sheet1.xml の
+ * 該当セル（自己終了タグ <c r="ADDR" s="N"/> 形式）に値を差し込み、
+ * 他のすべての内部ファイルは一切触らずに再パッケージする。
+ *
+ * → マクロ・図形・入力例シート・mst・印刷設定すべて保持される。
  */
 (function (global) {
   'use strict';
 
-  var SHEET_NAME = '入力用紙';
+  var SHEET_PATH = 'xl/worksheets/sheet1.xml';
   var WD_JA = ['日', '月', '火', '水', '木', '金', '土'];
+  var MERGE = '\n\n────────\n【承認者追記】';
 
   function stripMerge(s) {
-    var MERGE = '\n\n────────\n【承認者追記】';
     var t = String(s != null ? s : '');
     var i = t.indexOf(MERGE);
     return i === -1 ? t : t.slice(0, i);
   }
 
-  function setCell(ws, addr, v) {
-    if (v == null || v === '') return;
-    var s = stripMerge(String(v));
-    if (!s) return;
-    if (typeof global.XLSX === 'undefined' || !global.XLSX.utils || !global.XLSX.utils.sheet_add_aoa) return;
-    global.XLSX.utils.sheet_add_aoa(ws, [[s]], { origin: addr });
-  }
-
-  function setNum(ws, addr, v) {
-    if (v == null || v === '') return;
-    var n = Number(v);
-    if (isNaN(n)) {
-      setCell(ws, addr, v);
-      return;
-    }
-    global.XLSX.utils.sheet_add_aoa(ws, [[n]], { origin: addr });
-  }
-
   function parseDateLike(r) {
-    var raw = r.datetime || r.date || '';
+    var raw = (r && (r.datetime || r.date)) || '';
     var d = null;
     if (typeof raw === 'string') {
       var m1 = raw.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{1,2}):(\d{2})/);
@@ -63,79 +54,246 @@
     return { y: p[0] || '', m: p[1] || '' };
   }
 
+  function escXml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
   /**
-   * @param {object} wb - XLSX.read の戻り workbook
-   * @param {object} r - 災害報告1件
-   * @returns {boolean}
+   * sheet1.xml 内の <c r="ADDR" s="N"/> 自己終了セルを、値を持つセルに置換。
+   * type: 'n' = number, 's' = inlineStr
+   * 既存セルが見つからない場合は何もしない（テンプレートに無い座標は無視）。
    */
+  function setCellXml(xml, addr, value, type) {
+    if (value == null || value === '') return xml;
+    var v = type === 'n' ? String(value) : escXml(stripMerge(String(value)));
+    if (v === '') return xml;
+
+    // 自己終了タグ: <c r="K11" s="52"/>  →  値ありセルに置換
+    var selfClose = new RegExp('<c\\s+r="' + addr + '"([^/>]*)\\s*/>');
+    var openClose = new RegExp('<c\\s+r="' + addr + '"([^>]*?)>([^<]*(?:<(?!c\\s)[^<]*)*?)</c>');
+
+    var inner;
+    if (type === 'n') {
+      inner = '<v>' + v + '</v>';
+    } else {
+      inner = '<is><t xml:space="preserve">' + v + '</t></is>';
+    }
+
+    if (selfClose.test(xml)) {
+      return xml.replace(selfClose, function (_m, attrs) {
+        var a = attrs || '';
+        if (type !== 'n' && !/\bt="/.test(a)) a += ' t="inlineStr"';
+        return '<c r="' + addr + '"' + a + '>' + inner + '</c>';
+      });
+    }
+    if (openClose.test(xml)) {
+      return xml.replace(openClose, function (_m, attrs) {
+        var a = (attrs || '').replace(/\s*t="[^"]*"/, '');
+        if (type !== 'n') a += ' t="inlineStr"';
+        return '<c r="' + addr + '"' + a + '>' + inner + '</c>';
+      });
+    }
+    // テンプレートに該当座標が無い → スキップ
+    return xml;
+  }
+
+  function setStr(xmlRef, addr, value) {
+    if (value == null || value === '') return;
+    xmlRef.s = setCellXml(xmlRef.s, addr, value, 's');
+  }
+  function setNum(xmlRef, addr, value) {
+    if (value == null || value === '') return;
+    var n = Number(value);
+    if (isNaN(n)) {
+      setStr(xmlRef, addr, value);
+      return;
+    }
+    xmlRef.s = setCellXml(xmlRef.s, addr, n, 'n');
+  }
+
+  /**
+   * 災害報告 1件 r の値を sheet1.xml の文字列に流し込んで返す。
+   * @param {string} sheetXml - sheet1.xml の元の文字列
+   * @param {object} r - 災害報告レコード
+   * @returns {string} 値を埋め込んだ sheet1.xml
+   */
+  global.disasterFillSheet1Xml = function (sheetXml, r) {
+    if (!sheetXml || !r) return sheetXml;
+    var ref = { s: sheetXml };
+
+    // 災害日時 (row 11)
+    var d = parseDateLike(r);
+    setNum(ref, 'K11', d.getFullYear());
+    setNum(ref, 'P11', d.getMonth() + 1);
+    setNum(ref, 'S11', d.getDate());
+    setStr(ref, 'W11', WD_JA[d.getDay()]);
+    setNum(ref, 'Y11', d.getHours());
+    setNum(ref, 'AB11', d.getMinutes());
+
+    // 工事件名・場所・住所
+    setStr(ref, 'H9', r.keigen);
+    setStr(ref, 'H13', r.basho || r.place);
+    setStr(ref, 'V13', r.basho_jusho);
+    setStr(ref, 'I15', r.jusho);
+
+    // 被災者
+    setStr(ref, 'H17', r.victim);
+    if (r.age != null && r.age !== '') setNum(ref, 'Q17', r.age);
+    var b = splitYmd(r.birth);
+    if (b.y) setNum(ref, 'U17', b.y);
+    if (b.m) setNum(ref, 'Y17', b.m);
+    if (b.d) setNum(ref, 'AB17', b.d);
+
+    // 職種・雇入年月日・経験年数
+    setStr(ref, 'I19', r.victim_dept);
+    var h = splitYmd(r.hire_date);
+    if (h.y) setNum(ref, 'I21', h.y);
+    if (h.m) setNum(ref, 'N21', h.m);
+    if (h.d) setNum(ref, 'Q21', h.d);
+    var ex = splitExp(r.exp);
+    if (ex.y) setNum(ref, 'Z21', ex.y);
+    if (ex.m) setNum(ref, 'AC21', ex.m);
+
+    // 傷病・病院・後遺症・休業
+    setStr(ref, 'I23', r.shobyomei);
+    setStr(ref, 'I25', r.byoin);
+    setStr(ref, 'T25', r.koui);
+    if (r.kyugyo_days != null && r.kyugyo_days !== '') setNum(ref, 'R27', r.kyugyo_days);
+    if (r.kyugyo_yen != null && r.kyugyo_yen !== '') setNum(ref, 'AA27', r.kyugyo_yen);
+
+    // 現認者
+    setStr(ref, 'Q29', r.shokumei);
+    setStr(ref, 'X29', r.gennin_name);
+
+    // 災害発生状況
+    setStr(ref, 'AI12', r.basho_detail);
+    setStr(ref, 'AI19', r.sagyo);
+    setStr(ref, 'AI26', r.genin_busshi);
+    setStr(ref, 'AI36', r.genin_jin);
+    setStr(ref, 'AI42', r.kekka);
+
+    // 教訓 (人・設備・管理) — 左欄
+    setStr(ref, 'D32', r.kyukun_person);
+    setStr(ref, 'D40', r.kyukun_equip);
+    setStr(ref, 'D47', r.kyukun_mgmt);
+
+    // こうすればよかった・対策
+    setStr(ref, 'AG48', r.kaizen_honin);
+    setStr(ref, 'AV48', r.kaizen_kantoku);
+    setStr(ref, 'BL47', r.taisaku);
+
+    // 労災原因分類
+    setStr(ref, 'C55', r.kiinbutsu);
+    setStr(ref, 'I55', r.fuanzen);
+    setStr(ref, 'O55', r.fuanzen_kodo);
+    setStr(ref, 'U55', r.jiko);
+    setStr(ref, 'AA55', r.kanri);
+
+    // 記入日・責任者
+    var rep = splitYmd(r.report_date);
+    if (rep.y) setNum(ref, 'BN61', rep.y);
+    if (rep.m) setNum(ref, 'BS61', rep.m);
+    if (rep.d) setNum(ref, 'BV61', rep.d);
+    setStr(ref, 'BR63', r.sekininsha || r.reporter);
+
+    return ref.s;
+  };
+
+  /**
+   * JSZip で開いた xlsm の sheet1.xml に値を流し込む。
+   * @param {JSZip} zip - JSZip.loadAsync で得たインスタンス
+   * @param {object} r - 災害報告レコード
+   * @returns {Promise<JSZip>}
+   */
+  global.disasterFillOfficialTemplateZip = function (zip, r) {
+    if (!zip || !r) return Promise.reject(new Error('zip or r missing'));
+    var sheetEntry = zip.file(SHEET_PATH);
+    if (!sheetEntry) return Promise.reject(new Error('sheet1.xml not found in template'));
+    return sheetEntry.async('string').then(function (xml) {
+      var filled = global.disasterFillSheet1Xml(xml, r);
+      zip.file(SHEET_PATH, filled);
+      return zip;
+    });
+  };
+
+  /** 旧API互換 (SheetJS 用) — 後方互換のため残すが、推奨は disasterFillOfficialTemplateZip */
   global.disasterFillOfficialTemplate = function (wb, r) {
     if (!wb || !wb.Sheets || !r) return false;
-    var ws = wb.Sheets[SHEET_NAME];
+    var ws = wb.Sheets['入力用紙'];
     if (!ws) return false;
-
+    if (typeof global.XLSX === 'undefined' || !global.XLSX.utils || !global.XLSX.utils.sheet_add_aoa) return false;
+    var addAOA = global.XLSX.utils.sheet_add_aoa;
+    function setCell(addr, v) {
+      if (v == null || v === '') return;
+      addAOA(ws, [[stripMerge(String(v))]], { origin: addr });
+    }
+    function setNumCompat(addr, v) {
+      if (v == null || v === '') return;
+      var n = Number(v);
+      if (isNaN(n)) {
+        setCell(addr, v);
+        return;
+      }
+      addAOA(ws, [[n]], { origin: addr });
+    }
     var d = parseDateLike(r);
-    setNum(ws, 'K11', d.getFullYear());
-    setNum(ws, 'P11', d.getMonth() + 1);
-    setNum(ws, 'S11', d.getDate());
-    setCell(ws, 'W11', WD_JA[d.getDay()]);
-    setNum(ws, 'Y11', d.getHours());
-    setNum(ws, 'AB11', d.getMinutes());
-
-    setCell(ws, 'H9', r.keigen);
-    setCell(ws, 'H13', r.basho || r.place);
-    setCell(ws, 'V13', r.basho_jusho);
-    setCell(ws, 'I15', r.jusho);
-    setCell(ws, 'H17', r.victim);
-    if (r.age != null && r.age !== '') setNum(ws, 'Q17', r.age);
+    setNumCompat('K11', d.getFullYear());
+    setNumCompat('P11', d.getMonth() + 1);
+    setNumCompat('S11', d.getDate());
+    setCell('W11', WD_JA[d.getDay()]);
+    setNumCompat('Y11', d.getHours());
+    setNumCompat('AB11', d.getMinutes());
+    setCell('H9', r.keigen);
+    setCell('H13', r.basho || r.place);
+    setCell('V13', r.basho_jusho);
+    setCell('I15', r.jusho);
+    setCell('H17', r.victim);
+    if (r.age != null && r.age !== '') setNumCompat('Q17', r.age);
     var b = splitYmd(r.birth);
-    if (b.y) setNum(ws, 'U17', b.y);
-    if (b.m) setNum(ws, 'Y17', b.m);
-    if (b.d) setNum(ws, 'AB17', b.d);
-
-    setCell(ws, 'I19', r.victim_dept);
+    if (b.y) setNumCompat('U17', b.y);
+    if (b.m) setNumCompat('Y17', b.m);
+    if (b.d) setNumCompat('AB17', b.d);
+    setCell('I19', r.victim_dept);
     var h = splitYmd(r.hire_date);
-    if (h.y) setNum(ws, 'I21', h.y);
-    if (h.m) setNum(ws, 'N21', h.m);
-    if (h.d) setNum(ws, 'Q21', h.d);
+    if (h.y) setNumCompat('I21', h.y);
+    if (h.m) setNumCompat('N21', h.m);
+    if (h.d) setNumCompat('Q21', h.d);
     var ex = splitExp(r.exp);
-    if (ex.y) setNum(ws, 'Z21', ex.y);
-    if (ex.m) setNum(ws, 'AC21', ex.m);
-
-    setCell(ws, 'I23', r.shobyomei);
-    setCell(ws, 'I25', r.byoin);
-    setCell(ws, 'T25', r.koui);
-    if (r.kyugyo_days != null && r.kyugyo_days !== '') setNum(ws, 'R27', r.kyugyo_days);
-    if (r.kyugyo_yen != null && r.kyugyo_yen !== '') setNum(ws, 'AA27', r.kyugyo_yen);
-
-    setCell(ws, 'Q29', r.shokumei);
-    setCell(ws, 'X29', r.gennin_name);
-
-    setCell(ws, 'AI12', r.basho_detail);
-    setCell(ws, 'AI19', r.sagyo);
-    setCell(ws, 'AI26', r.genin_busshi);
-    setCell(ws, 'AI31', r.kyukun_person);
-    setCell(ws, 'D32', r.kyukun_person);
-    setCell(ws, 'AI36', r.genin_jin);
-    setCell(ws, 'D40', r.kyukun_equip);
-    setCell(ws, 'AI42', r.kekka);
-    setCell(ws, 'D47', r.kyukun_mgmt);
-
-    setCell(ws, 'AG48', r.kaizen_honin);
-    setCell(ws, 'AV48', r.kaizen_kantoku);
-    setCell(ws, 'BL47', r.taisaku);
-
-    setCell(ws, 'C55', r.kiinbutsu);
-    setCell(ws, 'I55', r.fuanzen);
-    setCell(ws, 'O55', r.fuanzen_kodo);
-    setCell(ws, 'U55', r.jiko);
-    setCell(ws, 'AA55', r.kanri);
-
+    if (ex.y) setNumCompat('Z21', ex.y);
+    if (ex.m) setNumCompat('AC21', ex.m);
+    setCell('I23', r.shobyomei);
+    setCell('I25', r.byoin);
+    setCell('T25', r.koui);
+    if (r.kyugyo_days != null && r.kyugyo_days !== '') setNumCompat('R27', r.kyugyo_days);
+    if (r.kyugyo_yen != null && r.kyugyo_yen !== '') setNumCompat('AA27', r.kyugyo_yen);
+    setCell('Q29', r.shokumei);
+    setCell('X29', r.gennin_name);
+    setCell('AI12', r.basho_detail);
+    setCell('AI19', r.sagyo);
+    setCell('AI26', r.genin_busshi);
+    setCell('AI36', r.genin_jin);
+    setCell('AI42', r.kekka);
+    setCell('D32', r.kyukun_person);
+    setCell('D40', r.kyukun_equip);
+    setCell('D47', r.kyukun_mgmt);
+    setCell('AG48', r.kaizen_honin);
+    setCell('AV48', r.kaizen_kantoku);
+    setCell('BL47', r.taisaku);
+    setCell('C55', r.kiinbutsu);
+    setCell('I55', r.fuanzen);
+    setCell('O55', r.fuanzen_kodo);
+    setCell('U55', r.jiko);
+    setCell('AA55', r.kanri);
     var rep = splitYmd(r.report_date);
-    if (rep.y) setNum(ws, 'BN61', rep.y);
-    if (rep.m) setNum(ws, 'BS61', rep.m);
-    if (rep.d) setNum(ws, 'BV61', rep.d);
-    setCell(ws, 'BR63', r.sekininsha || r.reporter);
-
+    if (rep.y) setNumCompat('BN61', rep.y);
+    if (rep.m) setNumCompat('BS61', rep.m);
+    if (rep.d) setNumCompat('BV61', rep.d);
+    setCell('BR63', r.sekininsha || r.reporter);
     return true;
   };
 

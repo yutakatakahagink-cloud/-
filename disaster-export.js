@@ -203,10 +203,18 @@
     }
   }
 
+  /**
+   * 公式 .xlsm を JSZip で開いて sheet1.xml だけ書き換えてダウンロード。
+   * SheetJS の writeFile は xlsm 内のフォームコントロール・図形・印刷設定を
+   * 喪失させるため使わない。JSZip 直接編集なら他要素を 100% 保持できる。
+   */
   global.disasterExportDownloadExcel = function (r) {
     if (!r) return;
     var base = global.disasterExportSafeFileBase(r);
-    if (typeof global.XLSX === 'undefined' || !global.XLSX.read || !global.XLSX.writeFile) {
+    var hasJSZip = typeof global.JSZip !== 'undefined';
+    var hasFiller = typeof global.disasterFillOfficialTemplateZip === 'function';
+    if (!hasJSZip || !hasFiller) {
+      // フォールバック (JSZip 未読込): SheetJS でそれっぽい xlsx を作る
       disasterExportDownloadFallbackTwoColumn(r, base);
       return;
     }
@@ -214,6 +222,20 @@
       typeof global.disasterOfficialTemplateUrls === 'function'
         ? global.disasterOfficialTemplateUrls()
         : ['templates/4_災害事故発生報告書.xlsm'];
+
+    function triggerDownload(blob, filename) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        URL.revokeObjectURL(a.href);
+        try {
+          a.parentNode.removeChild(a);
+        } catch (e) {}
+      }, 4000);
+    }
 
     function fallback(msg) {
       if (msg) alert(msg);
@@ -223,23 +245,35 @@
     function tryUrl(i) {
       if (i >= urls.length) {
         fallback(
-          '公式様式（templates/4_災害事故発生報告書.xlsm）を読み込めませんでした。\nWebサーバーと同じ階層に templates フォルダを置いてください。'
+          '公式様式（templates/4_災害事故発生報告書.xlsm）を読み込めませんでした。\n' +
+          'GitHub Pages 配下に templates フォルダがデプロイされていない可能性があります。'
         );
         return;
       }
-      fetch(urls[i], { credentials: 'same-origin' })
+      fetch(urls[i], { credentials: 'same-origin', cache: 'no-store' })
         .then(function (res) {
-          if (!res.ok) throw new Error('http');
+          if (!res.ok) throw new Error('http ' + res.status);
           return res.arrayBuffer();
         })
         .then(function (buf) {
-          var wb = global.XLSX.read(buf, { type: 'array', cellStyles: true, bookVBA: true });
-          if (typeof global.disasterFillOfficialTemplate !== 'function' || !global.disasterFillOfficialTemplate(wb, r)) {
-            throw new Error('fill');
-          }
-          global.XLSX.writeFile(wb, base + '.xlsm', { bookType: 'xlsm', bookVBA: true });
+          return global.JSZip.loadAsync(buf);
         })
-        .catch(function () {
+        .then(function (zip) {
+          return global.disasterFillOfficialTemplateZip(zip, r);
+        })
+        .then(function (zip) {
+          return zip.generateAsync({
+            type: 'blob',
+            mimeType: 'application/vnd.ms-excel.sheet.macroEnabled.12',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 6 },
+          });
+        })
+        .then(function (blob) {
+          triggerDownload(blob, base + '.xlsm');
+        })
+        .catch(function (err) {
+          console.warn('[disaster-export] template fill failed:', err);
           tryUrl(i + 1);
         });
     }
