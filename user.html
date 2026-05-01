@@ -960,7 +960,7 @@ input[type="file"].photo-input{display:none}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="config.js?v=20260501-3" onerror="console.warn('config.js load failed')"></script>
+<script src="config.js?v=20260501-6" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -1106,7 +1106,7 @@ document.addEventListener('click',function(e){
   var ch=t.closest('.cg .ch');if(ch){ch.classList.toggle('on');if(ch.dataset.v==='その他'&&ch.closest('#cExp')){var oi=document.getElementById('otherInp');if(oi)oi.classList.toggle('show',ch.classList.contains('on'));}return;}
   var ck=t.closest('.cg .ck');if(ck){ck.classList.toggle('on');return;}
   var lb=t.closest('.lb');if(lb){document.querySelectorAll('.lb').forEach(x=>x.classList.remove('on'));lb.classList.add('on');return;}
-  var lkdt=t.closest('.lkdt');if(lkdt){var g=lkdt.parentElement,v=+lkdt.dataset.v;if(g)g.querySelectorAll('.lkdt').forEach(d=>d.classList.toggle('on',+d.dataset.v<=v));return;}
+  var lkdt=t.closest('.lkdt');if(lkdt){var g=lkdt.parentElement,v=+lkdt.dataset.v;if(g){var alreadyOn=lkdt.classList.contains('on');g.querySelectorAll('.lkdt').forEach(d=>d.classList.remove('on'));if(!alreadyOn)lkdt.classList.add('on');}return;}
 });
 }
 (function(){
@@ -1913,7 +1913,7 @@ function doSubmit(){
   const exp=[...document.querySelectorAll('#cExp .ch.on')].map(c=>c.dataset.v);
   if(!CUR){alert('ログインしてください');return}
   if(!ds||!exp.length){alert('必須項目を入力してください');return}
-  const gL=id=>{const o={};document.querySelectorAll('#'+id+' .lkd').forEach(g=>{o[g.dataset.f]=g.querySelectorAll('.lkdt.on').length});return o};
+  const gL=id=>{const o={};document.querySelectorAll('#'+id+' .lkd').forEach(g=>{const sel=g.querySelector('.lkdt.on');o[g.dataset.f]=sel?parseInt(sel.dataset.v,10):0});return o};
   const otherText=document.getElementById('f_other').value;
   if(exp.includes('その他')&&otherText)exp[exp.indexOf('その他')]='その他:'+otherText;
   var newR={id:++idc,date:document.getElementById('f_date').value,n:CUR.name,dept:CUR.dept,ku:CUR.kubun,ar:CUR.ageRange,e:exp,w:document.getElementById('f_ww').value,wk:document.getElementById('f_wk').value,d:ds,m:document.getElementById('f_msr').value,c:[...document.querySelectorAll('#cC .ch.on')].map(c=>c.dataset.v),l:+(document.querySelector('.lb.on')?.dataset.v||0),st:gL('lkS'),we:gL('lkW'),av:[...document.querySelectorAll('#cAv .ch.on')].map(c=>c.dataset.v),ac:[...document.querySelectorAll('#cAc .ck.on')].map(c=>c.dataset.v),ss:'new'};
@@ -2315,7 +2315,7 @@ rDash();
       var ch=t.closest('.cg .ch');if(ch){ch.classList.toggle('on');if(ch.dataset.v==='\u305d\u306e\u4ed6'&&ch.closest('#cExp')){var oi=document.getElementById('otherInp');if(oi)oi.classList.toggle('show',ch.classList.contains('on'));}return;}
       var ck=t.closest('.cg .ck');if(ck){ck.classList.toggle('on');return;}
       var lb=t.closest('.lb');if(lb){document.querySelectorAll('.lb').forEach(function(x){x.classList.remove('on')});lb.classList.add('on');return;}
-      var lkdt=t.closest('.lkdt');if(lkdt){var g=lkdt.parentElement,v=+lkdt.dataset.v;if(g)g.querySelectorAll('.lkdt').forEach(function(d){d.classList.toggle('on',+d.dataset.v<=v)});return;}
+      var lkdt=t.closest('.lkdt');if(lkdt){var g=lkdt.parentElement,v=+lkdt.dataset.v;if(g){var alreadyOn=lkdt.classList.contains('on');g.querySelectorAll('.lkdt').forEach(function(d){d.classList.remove('on')});if(!alreadyOn)lkdt.classList.add('on');}return;}
     });
   }
   function safeInitDropZone(){
@@ -2588,8 +2588,8 @@ async function processFile(file){
       '  [W]→when_where, [K]→work, [N]→description, [T]→measures,\n'+
       '  [CS]→causes, [LV]→danger_level, [RV]→avoidance_reasons, [AC]→avoidance_activities,\n'+
       '  [EX]→experience_types, [SS]→stress_state, [SW]→stress_work, [DT]→date,\n'+
-      '  [CO]→（会社名。出力JSONには含めなくてよい）, [DP]→（部署。出力JSONには含めなくてよい）, [AG]→（年齢。同上）\n'+
-      '・v2様式に氏名欄は無い（プライバシー配慮）。name は出力しなくてよい。\n'+
+      '  [CO]→company（会社名・手書き）, [DP]→dept（部署・手書き）, [AG]→age（年齢・手書きの数字）\n'+
+      '・v2様式に氏名欄は無い（プライバシー配慮）。**name は必ず空文字 "" を返す**。氏名や個人名らしき文字を絶対に推測で入れない。\n'+
       '・コードが見当たらない旧様式の場合は、欄の見出し文字列（「いつ・どこで」など）を手がかりに同様に処理する。\n\n'+
       '【最重要・項目分離の厳守】\n'+
       '・「いつ・どこで」「どのような作業で」「内容（ヒヤリの内容）」「対策（再発防止）」は別の欄である。**絶対に混同しない**。\n'+
@@ -2598,14 +2598,28 @@ async function processFile(file){
       '・「対策」欄は「資材おき場の整理」のような具体的措置の文言が書かれていれば、それを measures に入れる。何も書かれていなければ空文字。プレースホルダ（例: 「再発防止策」）は絶対に出力しない。\n\n'+
       '【チェック印の認識（最重要）】\n'+
       '・チェック欄では次の印を「チェックあり」とみなす：レ点（✓・✔・☑・「レ」のような形）、●、■、★、太い斜線、塗りつぶし、丸囲い、四角囲い、下線。\n'+
-      '・印刷されているだけで何も印がついていない選択肢は、絶対に配列へ入れない（最大の誤り）。\n'+
+      '・**印刷されているだけで何も印がついていない選択肢は、絶対に配列へ入れない（最大の誤り）**。\n'+
       '・各選択肢の左の□（チェックボックス）を1つずつ確認して、印が確認できるものだけを配列に入れる。\n'+
+      '・[CS] 発生原因は「設備・機械／工具・保護具／作業環境／作業方法／連絡・連携ミス／確認不足／不注意行動／考え事／視界不良」の9個の□を1つずつ全て見て、☑が付いている項目だけを causes に入れる。「連絡・連携ミス」「確認不足」は印字ラベルとして必ず存在するが、印が無いなら絶対に入れない。\n'+
+      '・[RV] 回避できなかった理由は「注意不足／経験不足／知識不足／焦り／慣れ・油断／疲労／連携不足/設備確認不足／判断の遅れ／周囲確認不足／体力低下／過信」の12個の□を1つずつ確認して avoidance_reasons に入れる。\n'+
+      '・[AC] 回避に役立つ活動は28個の□を1つずつ確認し、☑が付いた項目のみ avoidance_activities に入れる。\n'+
+      '・[LV] 災害レベルは1〜10の数字のうち丸印で囲まれた数字を danger_level に入れる（文字列）。何も囲われていなければ空文字。\n'+
       '・チェック印が小さく薄い場合でも見落とさないこと。一方、印の無い項目を「想像」で追加してはならない。\n'+
       '・「どのような体験か」は通常1〜2項目しかチェックされない。3項目以上選ぶ前に必ず印の有無を再確認する。\n\n'+
+      '【Likert（[SS][SW]）の列の読み取り】\n'+
+      '・[SS][SW] は表形式：左に質問項目、右に「そうだ／まぁそうだ／ややちがう／ちがう」の4列が並ぶ。\n'+
+      '・各行で☑が付いている**列の位置（左から1〜4列目）** を 1〜4 の整数として返す。\n'+
+      '  - 1列目（そうだ）に☑ → 1\n'+
+      '  - 2列目（まぁそうだ）に☑ → 2\n'+
+      '  - 3列目（ややちがう）に☑ → 3\n'+
+      '  - 4列目（ちがう）に☑ → 4\n'+
+      '・行ごとに値は1つ。4列のうち1列だけが☑である。複数選ばない。\n'+
+      '・☑が無い行はキー自体を省略してよい（出力に入れない）。\n\n'+
       '【手書き文字の読取り】\n'+
       '・手書きの日付（例：3/19）、現場名、自由記述は1文字ずつ慎重に読む。**推測で書き換えない**。\n'+
       '・読み取れない文字は「？」を入れず、可能性が高い文字を選ぶ。判別不能なら空欄でもよい。\n'+
-      '・他の文書の例文や一般的な表現で穴埋めしない。書かれている文字だけを忠実に転記する。\n\n'+
+      '・他の文書の例文や一般的な表現で穴埋めしない。書かれている文字だけを忠実に転記する。\n'+
+      '・「もって」と「少し」、「段差」と「設置」、「資材」と「賞材」など、似た形の文字を混同しない。文脈（建設現場の安全用語）に合致する候補を選ぶ。\n\n'+
       '【厳守】\n'+
       '・出力はJSONのみ。説明・コードフェンス（```）禁止。\n'+
       '・キーは英語のまま変更しない。値は日本語可。\n'+
@@ -2629,7 +2643,10 @@ async function processFile(file){
       '  "danger_level": "1〜10の整数（文字列） または 空文字",\n'+
       '  "stress_state": {"workload":1-4,"overtime":1-4,"hardwork":1-4,"fatigue":1-4,"exhausted":1-4,"sluggish":1-4,"tense":1-4,"anxiety":1-4,"restless":1-4,"depressed":1-4,"bothered":1-4,"gloomy":1-4,"appetite":1-4,"sleep":1-4},\n'+
       '  "stress_work": {"pace":1-4,"autonomy":1-4,"voice":1-4,"boss_talk":1-4,"peer_talk":1-4,"boss_help":1-4,"peer_help":1-4,"boss_consult":1-4,"peer_consult":1-4,"vigor":1-4,"pride":1-4,"happiness":1-4},\n'+
-      '  "name": "氏名欄（あれば）",\n'+
+      '  "company": "[CO]欄に手書きされた会社名（例: 日新興業）。なければ空文字",\n'+
+      '  "dept": "[DP]欄に手書きされた部署名（例: 土木部）。なければ空文字",\n'+
+      '  "age": "[AG]欄に手書きされた年齢の数字（例: 34）。なければ空文字",\n'+
+      '  "name": "v2様式は必ず空文字。旧様式で氏名欄に手書きがある場合のみ氏名",\n'+
       '  "date": "記入日（YYYY-MM-DD推奨。なければ空文字）"\n'+
       '}\n\n'+
       '【欄の対応ヒント】\n'+
@@ -2823,7 +2840,7 @@ function fillDescription(){
       var grp=document.querySelector('.lkd[data-f="'+field+'"]');
       if(!grp)return;
       grp.querySelectorAll('.lkdt').forEach(function(d){
-        d.classList.toggle('on',parseInt(d.dataset.v,10)<=v);
+        d.classList.toggle('on',parseInt(d.dataset.v,10)===v);
       });
       hit=true;
     });
@@ -2861,102 +2878,136 @@ function fillDescription(){
     if(setStress(pv.stress_state))filled.push('ストレス状態');
     if(setStress(pv.stress_work))filled.push('職場環境');
 
+    // v2様式は氏名欄無し。AIが推測で name を返してもプロフィールを上書きしない。
+    // 旧様式（氏名欄あり）で空欄のときだけ補完する。
     var nameEl=document.getElementById('f_name');
-    if(nameEl&&!nameEl.value&&pv.name)nameEl.value=String(pv.name);
+    if(nameEl&&!nameEl.value&&pv.name&&String(pv.name).trim().length>=2&&String(pv.name).trim().length<=10){
+      nameEl.value=String(pv.name).trim();
+    }
     var dateEl=document.getElementById('f_date');
     if(dateEl&&pv.date&&/^\d{4}-\d{2}-\d{2}$/.test(String(pv.date)))dateEl.value=String(pv.date);
+
+    // [DP] 部署: PDFに手書きされた値があればフォームを上書き
+    var deptEl=document.getElementById('f_dept');
+    if(deptEl&&pv.dept&&String(pv.dept).trim()){
+      deptEl.value=String(pv.dept).trim();
+      filled.push('部署');
+    }
+    // [AG] 年齢: hidden inputなので値だけ更新
+    var ageEl=document.getElementById('f_age');
+    if(ageEl&&pv.age!=null&&String(pv.age).trim()){
+      ageEl.value=String(pv.age).trim();
+      filled.push('年齢');
+    }
+    // [CO] 会社名: フォームに専用欄が無いので preview に出すだけ（_ocrText に既に含まれる）
   }
 
-  // --- 体験の種類を検出してチップをON ---
-  var expMap={
-    '墜落':'墜落しそうになった','転倒':'転倒しそうになった','激突':'機械等に激突されそうになった',
-    '落下':'ものが落下してきた','倒壊':'ものが倒れかかってきた','倒れ':'ものが倒れかかってきた',
-    '衝突':'自分からぶつかりそうになった','ぶつか':'自分からぶつかりそうになった',
-    '挟まれ':'はさまれそうになった','はさまれ':'はさまれそうになった',
-    '切られ':'切られそうになった','切傷':'切られそうになった',
-    '火傷':'やけどしそうになった','やけど':'やけどしそうになった',
-    '感電':'感電しそうになった','交通事故':'交通事故になりそうだった'
-  };
-  var expHit=[];
-  Object.keys(expMap).forEach(function(kw){
-    if(txt.indexOf(kw)>=0)expHit.push(expMap[kw]);
-  });
-  if(expHit.length){
-    var unique={};expHit.forEach(function(v){unique[v]=true});
-    document.querySelectorAll('#cExp .ch').forEach(function(el){
-      if(unique[el.dataset.v])el.classList.add('on');
+  // ============================================================
+  // キーワードフォールバック（旧様式 / AI が JSON 構造を返さなかった時のみ実行）
+  //   ※ v2様式の整形済みJSONがある場合、印字ラベル「連絡・連携ミス」「確認不足」等を
+  //     拾って誤点灯するのを防ぐため、フィールド単位で「JSONが空のときだけ」発動する。
+  // ============================================================
+
+  // --- 体験の種類を検出してチップをON（JSONで未取得のときのみ） ---
+  if(!pv||!Array.isArray(pv.experience_types)||pv.experience_types.length===0){
+    var expMap={
+      '墜落':'墜落しそうになった','転倒':'転倒しそうになった','激突':'機械等に激突されそうになった',
+      '落下':'ものが落下してきた','倒壊':'ものが倒れかかってきた','倒れ':'ものが倒れかかってきた',
+      '衝突':'自分からぶつかりそうになった','ぶつか':'自分からぶつかりそうになった',
+      '挟まれ':'はさまれそうになった','はさまれ':'はさまれそうになった',
+      '切られ':'切られそうになった','切傷':'切られそうになった',
+      '火傷':'やけどしそうになった','やけど':'やけどしそうになった',
+      '感電':'感電しそうになった','交通事故':'交通事故になりそうだった'
+    };
+    var expHit=[];
+    Object.keys(expMap).forEach(function(kw){
+      if(txt.indexOf(kw)>=0)expHit.push(expMap[kw]);
     });
-    filled.push('体験種類');
-  }
-
-  // --- 発生原因を検出 ---
-  var causeMap={
-    '設備':'設備・機械','機械':'設備・機械','工具':'工具・保護具','保護具':'工具・保護具',
-    '作業環境':'作業環境','環境':'作業環境','作業方法':'作業方法',
-    '連絡':'連絡・連携ミス','連携':'連絡・連携ミス','確認不足':'確認不足','確認':'確認不足',
-    '不注意':'不注意行動','考え事':'考え事','視界':'視界不良','見えな':'視界不良'
-  };
-  var causeHit={};
-  Object.keys(causeMap).forEach(function(kw){
-    if(txt.indexOf(kw)>=0)causeHit[causeMap[kw]]=true;
-  });
-  if(Object.keys(causeHit).length){
-    document.querySelectorAll('#cC .ch').forEach(function(el){
-      if(causeHit[el.dataset.v])el.classList.add('on');
-    });
-    filled.push('発生原因');
-  }
-
-  // --- 回避理由を検出 ---
-  var avMap={
-    '注意不足':'注意不足','経験不足':'経験不足','知識不足':'知識不足','焦り':'焦り','焦':'焦り',
-    '慣れ':'慣れ・油断','油断':'慣れ・油断','疲労':'疲労','疲れ':'疲労',
-    '連携不足':'連携不足','設備確認':'設備確認不足','判断':'判断の遅れ',
-    '周囲確認':'周囲確認不足','体力':'体力低下','過信':'過信'
-  };
-  var avHit={};
-  Object.keys(avMap).forEach(function(kw){
-    if(txt.indexOf(kw)>=0)avHit[avMap[kw]]=true;
-  });
-  if(Object.keys(avHit).length){
-    document.querySelectorAll('#cAv .ch').forEach(function(el){
-      if(avHit[el.dataset.v])el.classList.add('on');
-    });
-    filled.push('回避理由');
-  }
-
-  // --- 回避活動を検出 ---
-  var acMap={
-    'KY活動':'KY活動','KY':'KY活動','朝礼':'朝礼夕礼','安全教育':'安全教育',
-    'パトロール':'パトロール','RA':'RA','リスクアセスメント':'RA',
-    '4S':'4S','整理整頓':'4S','見える化':'見える化','安全標識':'安全標識',
-    '避難訓練':'避難訓練','設備点検':'設備点検','手順書':'手順書',
-    'コミュニケーション':'コミュニケーション','災害事例':'災害事例',
-    '体操':'体操','睡眠':'睡眠','食事':'食事','休憩':'休憩'
-  };
-  var acHit={};
-  Object.keys(acMap).forEach(function(kw){
-    if(txt.indexOf(kw)>=0)acHit[acMap[kw]]=true;
-  });
-  if(Object.keys(acHit).length){
-    document.querySelectorAll('#cAc .ck').forEach(function(el){
-      if(acHit[el.dataset.v])el.classList.add('on');
-    });
-    filled.push('回避活動');
-  }
-
-  // --- 災害レベルを検出（数字パターン） ---
-  var lvMatch=txt.match(/(?:レベル|災害|危険度)[^\d]{0,5}(\d{1,2})/);
-  if(!lvMatch)lvMatch=txt.match(/(?:休業|死亡)/);
-  if(lvMatch){
-    var lvl=lvMatch[1]?parseInt(lvMatch[1]):null;
-    if(!lvl&&txt.indexOf('死亡')>=0)lvl=10;
-    else if(!lvl&&txt.indexOf('休業')>=0)lvl=7;
-    if(lvl>=1&&lvl<=10){
-      document.querySelectorAll('.lb').forEach(function(el){
-        el.classList.toggle('on',parseInt(el.dataset.v)===lvl);
+    if(expHit.length){
+      var unique={};expHit.forEach(function(v){unique[v]=true});
+      document.querySelectorAll('#cExp .ch').forEach(function(el){
+        if(unique[el.dataset.v])el.classList.add('on');
       });
-      filled.push('災害レベル');
+      filled.push('体験種類(キーワード)');
+    }
+  }
+
+  // --- 発生原因（JSONで未取得のときのみ） ---
+  if(!pv||!Array.isArray(pv.causes)||pv.causes.length===0){
+    var causeMap={
+      '設備':'設備・機械','機械':'設備・機械','工具':'工具・保護具','保護具':'工具・保護具',
+      '作業環境':'作業環境','環境':'作業環境','作業方法':'作業方法',
+      '連絡':'連絡・連携ミス','連携':'連絡・連携ミス','確認不足':'確認不足','確認':'確認不足',
+      '不注意':'不注意行動','考え事':'考え事','視界':'視界不良','見えな':'視界不良'
+    };
+    var causeHit={};
+    Object.keys(causeMap).forEach(function(kw){
+      if(txt.indexOf(kw)>=0)causeHit[causeMap[kw]]=true;
+    });
+    if(Object.keys(causeHit).length){
+      document.querySelectorAll('#cC .ch').forEach(function(el){
+        if(causeHit[el.dataset.v])el.classList.add('on');
+      });
+      filled.push('発生原因(キーワード)');
+    }
+  }
+
+  // --- 回避理由（JSONで未取得のときのみ） ---
+  if(!pv||!Array.isArray(pv.avoidance_reasons)||pv.avoidance_reasons.length===0){
+    var avMap={
+      '注意不足':'注意不足','経験不足':'経験不足','知識不足':'知識不足','焦り':'焦り','焦':'焦り',
+      '慣れ':'慣れ・油断','油断':'慣れ・油断','疲労':'疲労','疲れ':'疲労',
+      '連携不足':'連携不足','設備確認':'設備確認不足','判断':'判断の遅れ',
+      '周囲確認':'周囲確認不足','体力':'体力低下','過信':'過信'
+    };
+    var avHit={};
+    Object.keys(avMap).forEach(function(kw){
+      if(txt.indexOf(kw)>=0)avHit[avMap[kw]]=true;
+    });
+    if(Object.keys(avHit).length){
+      document.querySelectorAll('#cAv .ch').forEach(function(el){
+        if(avHit[el.dataset.v])el.classList.add('on');
+      });
+      filled.push('回避理由(キーワード)');
+    }
+  }
+
+  // --- 回避活動（JSONで未取得のときのみ） ---
+  if(!pv||!Array.isArray(pv.avoidance_activities)||pv.avoidance_activities.length===0){
+    var acMap={
+      'KY活動':'KY活動','KY':'KY活動','朝礼':'朝礼夕礼','安全教育':'安全教育',
+      'パトロール':'パトロール','RA':'RA','リスクアセスメント':'RA',
+      '4S':'4S','整理整頓':'4S','見える化':'見える化','安全標識':'安全標識',
+      '避難訓練':'避難訓練','設備点検':'設備点検','手順書':'手順書',
+      'コミュニケーション':'コミュニケーション','災害事例':'災害事例',
+      '体操':'体操','睡眠':'睡眠','食事':'食事','休憩':'休憩'
+    };
+    var acHit={};
+    Object.keys(acMap).forEach(function(kw){
+      if(txt.indexOf(kw)>=0)acHit[acMap[kw]]=true;
+    });
+    if(Object.keys(acHit).length){
+      document.querySelectorAll('#cAc .ck').forEach(function(el){
+        if(acHit[el.dataset.v])el.classList.add('on');
+      });
+      filled.push('回避活動(キーワード)');
+    }
+  }
+
+  // --- 災害レベル（JSONで未取得のときのみ） ---
+  if(!pv||!parseInt(pv.danger_level,10)){
+    var lvMatch=txt.match(/(?:レベル|災害|危険度)[^\d]{0,5}(\d{1,2})/);
+    if(!lvMatch)lvMatch=txt.match(/(?:休業|死亡)/);
+    if(lvMatch){
+      var lvl=lvMatch[1]?parseInt(lvMatch[1]):null;
+      if(!lvl&&txt.indexOf('死亡')>=0)lvl=10;
+      else if(!lvl&&txt.indexOf('休業')>=0)lvl=7;
+      if(lvl>=1&&lvl<=10){
+        document.querySelectorAll('.lb').forEach(function(el){
+          el.classList.toggle('on',parseInt(el.dataset.v)===lvl);
+        });
+        filled.push('災害レベル(キーワード)');
+      }
     }
   }
 
