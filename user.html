@@ -2825,6 +2825,52 @@ async function buildPdfPartsForGemini(file,buf,apiKey,onStatus){
   return[{file_data:{mime_type:act.mime,file_uri:act.uri}}];
 }
 
+// ☑チェック印・○囲み数字の検出補助用：白地ノイズを純白に飛ばし、薄い手書き痕跡を強調する
+// グレースケール化したうえで S-curve コントラスト（y≤60→0, y≥230→255, 中間は線形拡大）を適用。
+// 手書き文字は中間階調なので潰れず、紙の地ノイズだけが消える。
+function makeEnhancedMarkCanvas(srcCanvas){
+  var out=document.createElement('canvas');
+  out.width=srcCanvas.width;out.height=srcCanvas.height;
+  var ctx=out.getContext('2d');
+  ctx.drawImage(srcCanvas,0,0);
+  var img=ctx.getImageData(0,0,out.width,out.height);
+  var d=img.data;
+  for(var i=0;i<d.length;i+=4){
+    var y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    var v;
+    if(y<=60)v=0;
+    else if(y>=230)v=255;
+    else v=Math.round((y-60)*255/170);
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(img,0,0);
+  return out;
+}
+
+// data URL から「高コントラスト処理画像」の inline_data パートを生成
+function makeEnhancedPartFromDataUrl(dataUrl){
+  return new Promise(function(res,rej){
+    try{
+      var img=new Image();
+      img.onload=function(){
+        try{
+          var maxDim=2800;
+          var w=img.naturalWidth,h=img.naturalHeight;
+          var sc=Math.min(1,maxDim/Math.max(w,h));
+          var cv=document.createElement('canvas');
+          cv.width=Math.max(1,Math.round(w*sc));cv.height=Math.max(1,Math.round(h*sc));
+          cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+          var enh=makeEnhancedMarkCanvas(cv);
+          var u=enh.toDataURL('image/jpeg',0.90);
+          res({inline_data:{mime_type:'image/jpeg',data:(u.split(',')[1]||'')}});
+        }catch(e){rej(e)}
+      };
+      img.onerror=function(){rej(new Error('image load failed'))};
+      img.src=dataUrl;
+    }catch(e){rej(e)}
+  });
+}
+
 async function pdfToImageParts(buf,maxPages,onStatus){
   if(!pdfjsLib)return null;
   var pdf=await pdfjsLib.getDocument({data:buf}).promise;
@@ -2842,9 +2888,16 @@ async function pdfToImageParts(buf,maxPages,onStatus){
     var vp=pg.getViewport({scale:scale});
     var cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
     await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    // 原本（手書き判読用）
     var dataUrl=cv.toDataURL('image/jpeg',0.94);
     if(i===1)firstDataUrl=dataUrl;
     parts.push({inline_data:{mime_type:'image/jpeg',data:dataUrl.split(',')[1]||''}});
+    // 高コントラスト処理画像（☑・○検出用）— 同じページの直後に並べる
+    try{
+      var enhCv=makeEnhancedMarkCanvas(cv);
+      var enhUrl=enhCv.toDataURL('image/jpeg',0.90);
+      parts.push({inline_data:{mime_type:'image/jpeg',data:enhUrl.split(',')[1]||''}});
+    }catch(e){console.warn('[OCR] enhanced canvas (pdf) failed',e)}
   }
   return{parts:parts,previewUrl:firstDataUrl};
 }
@@ -2992,7 +3045,13 @@ async function processFiles(filesIn){
         var base64Img=dataUrl.replace(/^data:[^;]+;base64,/,'');
         var mimeMatch=dataUrl.match(/^data:([^;]+);/);
         var mimeType=mimeMatch?mimeMatch[1]:'image/png';
+        // 原本（手書き判読用）
         fileParts.push({inline_data:{mime_type:mimeType,data:base64Img}});
+        // 高コントラスト処理画像（☑・○検出用）— 同じページの直後に並べる
+        try{
+          var enhPart=await makeEnhancedPartFromDataUrl(dataUrl);
+          if(enhPart)fileParts.push(enhPart);
+        }catch(e){console.warn('[OCR] enhanced canvas (image) failed',e)}
       }
       basePct+=stepPct;
     }
@@ -3002,10 +3061,18 @@ async function processFiles(filesIn){
       previewEl.classList.add('show');
     }
 
-    setProgress(40,'Gemini AIで文字認識中...（合計'+fileParts.length+'画像）');
+    // fileParts は原本＋強調画像の2倍構成。ユーザーには論理ページ数（原本数）を表示する
+    var origPageCount=Math.max(1,Math.ceil(fileParts.length/2));
+    setProgress(40,'Gemini AIで文字認識中...（'+origPageCount+'ページ × 原本+強調処理）');
 
-    var pageDesc=arr.length>1?'提供された'+arr.length+'枚の用紙画像（複数ページ）':(isPdf?'このPDFの全ページ':'この画像');
+    var pageDesc=arr.length>1?'提供された'+arr.length+'ファイル分の用紙（複数ページ）':(isPdf?'このPDFの全ページ':'この用紙');
     var jsonPrompt='あなたは建設業のヒヤリハット報告用紙（建災防方式・会社独自様式を含む）を読み取るアシスタントです。'+pageDesc+'を漏れなく解析し、用紙の各欄・チェック・選択を見て、次のJSONに整理して出力してください。**複数ページにまたがる場合は全ページを総合して1つのJSONにまとめる**。\n\n'+
+      '【画像の構成（必ず最初に確認）】\n'+
+      '・各ページにつき2枚の画像が同じページ番号の順に並んで渡される（page1原本 → page1強調 → page2原本 → page2強調 …）。\n'+
+      '  - **奇数番目（1, 3, 5, ...）= 原本画像**：手書き文字・日付・自由記述の読取に使う。\n'+
+      '  - **偶数番目（2, 4, 6, ...）= 高コントラスト処理画像**：白地ノイズを除去し細い線を強調した画像。**チェック印（☑✓レ点）・○囲み数字の検出は必ずこちらを優先**して走査する。\n'+
+      '・処理画像で線が見え、原本では薄いまたは見えない場合でも、それは紙の汚れではなく実際の手書き痕跡である。チェックとして採用してよい。\n'+
+      '・両方の画像で文字内容（手書き本文・項目ラベル）の位置関係は同一なので、片方で位置を把握し、もう片方で印の濃さを判定するという読み方を行う。\n\n'+
       '【フィールドコード（v2様式: FORM-HH-2026.05 以降の用紙）】\n'+
       '・印刷ラベルに [W][K][N][T][CS][LV][RV][AC][EX][SS][SW][DT][CO][DP][AG] が見える場合は、必ずそれをアンカー（目印）として使うこと。\n'+
       '・[コード] の **右側に書かれている手書き文字** だけが、そのフィールドの値である。それ以外の場所の文字を絶対に拾わない。\n'+
@@ -3021,14 +3088,18 @@ async function processFiles(filesIn){
       '・各欄の枠（罫線）の中に書かれている文字だけを、その欄の値として抽出する。隣の欄や他の場所の文字を絶対に拾わない。\n'+
       '・欄が空白なら必ず空文字 "" を返す。隣の欄や対策欄の内容で埋めてはならない。\n'+
       '・「対策」欄は「資材おき場の整理」のような具体的措置の文言が書かれていれば、それを measures に入れる。何も書かれていなければ空文字。プレースホルダ（例: 「再発防止策」）は絶対に出力しない。\n\n'+
-      '【チェック印の認識（最重要）】\n'+
-      '・チェック欄では次の印を「チェックあり」とみなす：レ点（✓・✔・☑・「レ」のような形）、●、■、★、太い斜線、塗りつぶし、丸囲い、四角囲い、下線。\n'+
-      '・**印刷されているだけで何も印がついていない選択肢は、絶対に配列へ入れない（最大の誤り）**。\n'+
-      '・各選択肢の左の□（チェックボックス）を1つずつ確認して、印が確認できるものだけを配列に入れる。\n'+
-      '・[CS] 発生原因は「設備・機械／工具・保護具／作業環境／作業方法／連絡・連携ミス／確認不足／不注意行動／考え事／視界不良」の9個の□を1つずつ全て見て、☑が付いている項目だけを causes に入れる。「連絡・連携ミス」「確認不足」は印字ラベルとして必ず存在するが、印が無いなら絶対に入れない。\n'+
-      '・[RV] 回避できなかった理由は「注意不足／経験不足／知識不足／焦り／慣れ・油断／疲労／連携不足/設備確認不足／判断の遅れ／周囲確認不足／体力低下／過信」の12個の□を1つずつ確認して avoidance_reasons に入れる。\n'+
-      '・[AC] 回避に役立つ活動は28個の□を1つずつ確認し、☑が付いた項目のみ avoidance_activities に入れる。\n'+
-      '・[LV] 災害レベルは1〜10の数字のうち丸印で囲まれた数字を danger_level に入れる（文字列）。何も囲われていなければ空文字。\n'+
+      '【チェック印の認識（最重要・精度を最優先）】\n'+
+      '・チェックあり とみなす印：レ点（✓ ✔ ☑ ／「レ」のような片仮名様の形）、●、■、★、太い斜線（／・＼）、塗りつぶし、丸囲い、四角囲い、下線、波線、二重線、複数の交差線。\n'+
+      '・**印刷されているだけで何も印が付いていない選択肢は絶対に配列へ入れない（最大の誤り）**。\n'+
+      '・**判定は「偶数番目＝高コントラスト処理画像」で行う**こと。原本だけでは薄い鉛筆・かすれたペンの印を見落とす。両方の画像で形を確認し、片方でも明確な印があればチェックありとみなす。\n'+
+      '・走査手順（各チェック欄ごとに必ず実行）:\n'+
+      '  ① その欄の選択肢一覧（□の総数）を数える。\n'+
+      '  ② 上の□から順に1つずつ「□の内側、□の真上、□の左右3〜5mm以内」に手書き痕跡があるかを確認する。\n'+
+      '  ③ 印があれば配列に追加。無ければスキップ。\n'+
+      '  ④ 全ての□を見終わるまで②③を繰り返す。途中で打ち切らない。\n'+
+      '・[CS] 発生原因は **9個の□**（設備・機械／工具・保護具／作業環境／作業方法／連絡・連携ミス／確認不足／不注意行動／考え事／視界不良）。1つずつ全て見て、☑が付いている項目だけを causes に入れる。「連絡・連携ミス」「確認不足」は印字ラベルとして必ず存在するが、印が無いなら絶対に入れない。\n'+
+      '・[RV] 回避できなかった理由は **12個の□**（注意不足／経験不足／知識不足／焦り／慣れ・油断／疲労／連携不足／設備確認不足／判断の遅れ／周囲確認不足／体力低下／過信）。1つずつ確認して avoidance_reasons に入れる。\n'+
+      '・[AC] 回避に役立つ活動は **28個の□** を1つずつ確認し、☑が付いた項目のみ avoidance_activities に入れる。\n'+
       '・チェック印が小さく薄い場合でも見落とさないこと。一方、印の無い項目を「想像」で追加してはならない。\n'+
       '・「どのような体験か」は通常1〜2項目しかチェックされない。3項目以上選ぶ前に必ず印の有無を再確認する。\n\n'+
       '【Likert（[SS][SW]）の列の読み取り】\n'+
@@ -3042,13 +3113,26 @@ async function processFiles(filesIn){
       '・**[SS]は14行（仕事量が多かった／時間内に処理しきれなかった／一生懸命働く必要があった／ひどく疲れた／へとへとだ／だるい／気がはりつめている／不安だ／落ち着かない／ゆううつだ／何をするのも面倒だ／気分が晴れない／食欲がない／よく眠れない）すべてを必ず確認する**。\n'+
       '・**[SW]は12行（自分のペースで仕事ができた／仕事の順番・やり方を決められた／方針に意見を反映できた／上司と気軽に話ができる／同僚と気軽に話ができる／困ったとき上司は頼りになる／困ったとき同僚は頼りになる／上司に個人的な相談ができる／同僚に個人的な相談ができる／気持ちがはつらつとしている／仕事に誇りを感じる／集中しているとき幸せだ）すべてを必ず確認する**。\n'+
       '・薄い・小さい・斜めなレ点も見落とさない。**1行で4列のどれかには必ず☑がある**前提で、最も濃い列を選ぶ。\n'+
+      '・**判定は「偶数番目＝高コントラスト処理画像」で行う**。薄い鉛筆☑が処理画像では濃く見えるため、原本のみで判断しない。\n'+
+      '・読み取り手順（各行ごとに必ず実行）:\n'+
+      '  ① 行の左端の質問テキストを確認し、何行目かを特定する。\n'+
+      '  ② その行を左から右へ4セル分スキャンし、各セル内に手書き痕跡があるかを1つずつ確認する。\n'+
+      '  ③ 最も濃く明確な☑があるセルの列番号（1〜4）を返す。\n'+
+      '  ④ どのセルも空であれば、印刷の薄れや影と見間違えず、その行は省略する。\n'+
       '・行が見えにくい場合でも、表のレイアウトから行の位置を推定し、その行の4セルを左から右へスキャンして☑を探す。\n'+
       '・読み取れた行は必ず stress_state または stress_work の対応キーに値を入れる。読み取れなかった行のみキー省略可。\n\n'+
-      '【○囲み数字（災害レベル [LV]）】\n'+
+      '【○囲み数字（災害レベル [LV]）— 検出の精密手順】\n'+
       '・災害レベル欄は「1・2・3・4・5・6・7・8・9・10」の10個の数字が一列に並んでいる。\n'+
-      '・**いずれか1つの数字に手書きの○（丸）が描かれている**。○は数字を囲うように描かれた円・楕円・カッコ等の閉じた線を含む。\n'+
-      '・○で囲まれた数字を danger_level に文字列として入れる（例: 2 → "2"）。○が見当たらなければ空文字 ""。\n'+
-      '・○の認識のヒント：印刷された数字の上に手書きで重ねて書かれた閉じた曲線を探す。多少歪んでいても○とみなす。\n\n'+
+      '・**いずれか1つの数字に手書きの○（丸）が描かれている**。○の形は円・楕円・括弧・C字・ハート型・閉じていない曲線も含む（完全な円である必要は無い）。\n'+
+      '・検出手順（必ず順番に実行）:\n'+
+      '  ① **偶数番目＝高コントラスト処理画像**を使う。原本だけでは薄い○を見落とす。\n'+
+      '  ② 1から10まで、各数字の周囲を1つずつ視覚的に走査する（「1の周りに○はあるか？ 2の周りは？ …」と順番に確認）。\n'+
+      '  ③ 印刷された数字の輪郭の外側に、別の手書き線（黒・青・赤・鉛筆色）が「閉じた／半閉じた曲線」を描いていれば○とみなす。\n'+
+      '  ④ 該当した数字を文字列として danger_level に入れる（例: 2 → "2", 7 → "7"）。\n'+
+      '  ⑤ ○が見当たらなければ空文字 ""。**○がついていない数字を「想像」で答えない。**\n'+
+      '・複数候補がある場合は、最も濃く・最も明確に数字を囲んでいるものを選ぶ。\n'+
+      '・○は印刷文字（数字）の太さよりも明らかに細い／粗い／不揃いな手書き線である点で見分ける。印刷の罫線や枠を○と誤認しないこと。\n'+
+      '・走査が1〜10まで全て終わった後、もう一度全体を見直して、見落としや誤検出が無いかを確認すること（二度読み）。\n\n'+
       '【手書き文字の読取り】\n'+
       '・手書きの日付（例：3/19）、現場名、自由記述は1文字ずつ慎重に読む。**推測で書き換えない**。\n'+
       '・読み取れない文字は「？」を入れず、可能性が高い文字を選ぶ。判別不能なら空欄でもよい。\n'+
