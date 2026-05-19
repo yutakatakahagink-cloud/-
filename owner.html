@@ -711,8 +711,10 @@ function rReqList(){
   var el=document.getElementById('reqL');if(!el)return;
   el.innerHTML=list.length?list.map(function(r){
     var st=SL[r.status]||'未対応';var sc='bd2 '+(r.status||'pending');
-    return'<div class="rc" style="margin-bottom:8px"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div><div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
+    var idEsc=String(r.id||'').replace(/'/g,"\\'");
+    return'<div class="rc" style="margin-bottom:8px"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div><div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
       ['pending','in_progress','resolved'].map(s=>'<button class="fp" onclick="setReqStatus(\''+r.id+'\',\''+s+'\')" style="padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #81C784;background:#fff;cursor:pointer'+(r.status===s?';border-color:var(--ac);color:var(--ac)':'')+'">'+SL[s]+'</button>').join('')+
+      '<button type="button" class="fp" onclick="ownerDeleteRequest(\''+idEsc+'\')" style="margin-left:auto;padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:600;cursor:pointer">🗑 削除</button>'+
     '</div></div>';
   }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
   });
@@ -744,7 +746,7 @@ function disListRowOwner(r){
     else if(r.wf.state==='final')badge=' <span class="bd2" style="background:#E8F5E9;color:#2E7D32;font-size:9px">確定</span>';
   }
   var idEsc=String(r.id||'').replace(/'/g,"\\'");
-  return'<div class="rc" style="margin-bottom:8px;display:flex;gap:8px;align-items:stretch;max-width:100%;box-sizing:border-box"><div style="flex:1;min-width:0;cursor:pointer" onclick="showDisDetail(\''+idEsc+'\')"><div class="rt"><span class="bd2 bf">'+typ+'</span>'+badge+'</div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+(r.reporter||'')+'</div></div><div style="display:flex;flex-direction:column;gap:4px;justify-content:center;flex-shrink:0" onclick="event.stopPropagation()"><button type="button" class="fp" style="padding:5px 8px;font-size:10px;border-radius:8px;white-space:nowrap;border:1px solid #2E7D32;background:#fff;color:#2E7D32;font-weight:600;cursor:pointer" onclick="typeof disasterExportExcelFromList===\'function\'&&disasterExportExcelFromList(\''+idEsc+'\')">Excel</button><button type="button" class="fp" style="padding:5px 8px;font-size:10px;border-radius:8px;white-space:nowrap;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:600;cursor:pointer" onclick="typeof disasterExportPdfFromList===\'function\'&&disasterExportPdfFromList(\''+idEsc+'\')">PDF</button></div></div>';
+  return'<div class="rc" style="margin-bottom:8px;display:flex;gap:8px;align-items:stretch;max-width:100%;box-sizing:border-box"><div style="flex:1;min-width:0;cursor:pointer" onclick="showDisDetail(\''+idEsc+'\')"><div class="rt"><span class="bd2 bf">'+typ+'</span>'+badge+'</div><div class="rde">'+plc+' — '+v+'</div><div class="rm">'+dt+' '+(r.reporter||'')+'</div></div><div style="display:flex;flex-direction:column;gap:4px;justify-content:center;flex-shrink:0" onclick="event.stopPropagation()"><button type="button" class="fp" style="padding:5px 8px;font-size:10px;border-radius:8px;white-space:nowrap;border:1px solid #2E7D32;background:#fff;color:#2E7D32;font-weight:600;cursor:pointer" onclick="typeof disasterExportExcelFromList===\'function\'&&disasterExportExcelFromList(\''+idEsc+'\')">Excel</button><button type="button" class="fp" style="padding:5px 8px;font-size:10px;border-radius:8px;white-space:nowrap;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:600;cursor:pointer" onclick="typeof disasterExportPdfFromList===\'function\'&&disasterExportPdfFromList(\''+idEsc+'\')">PDF</button><button type="button" class="fp" style="padding:5px 8px;font-size:10px;border-radius:8px;white-space:nowrap;border:1px solid #B71C1C;background:#B71C1C;color:#fff;font-weight:700;cursor:pointer" onclick="ownerDeleteDisasterReport(\''+idEsc+'\')">🗑 削除</button></div></div>';
 }
 function rDisList(){
   loadReqDis(function(){
@@ -799,8 +801,14 @@ function showDisDetail(id){
   var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r):'';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
+  // 所有者のみ：詳細モーダル下部に削除ボタンを追加
+  var delBtn='';
+  if(typeof ROLE!=='undefined'&&ROLE==='owner'){
+    var idEsc=String(id||'').replace(/'/g,"\\'");
+    delBtn='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #FFCDD2;text-align:right"><button type="button" onclick="ownerDeleteDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #B71C1C;background:#B71C1C;color:#fff;font-weight:700;cursor:pointer">🗑 この災害発生報告を削除（所有者）</button></div>';
+  }
   document.getElementById('mT').textContent='災害発生報告 詳細';
-  document.getElementById('mI').innerHTML=h+ex;
+  document.getElementById('mI').innerHTML=h+ex+delBtn;
   showDisExportToolbar(id);
   var modal=document.getElementById('modal');
   var mbd=modal.querySelector('.mbd');
@@ -959,6 +967,88 @@ function ownerResetData(kind){
   });
 }
 
+// ===== OWNER: 個別削除（所有者のみ）=====
+// 確認 confirm() で内容を表示 → 配列から1件削除 → Firebase/localStorage に保存 → 一覧再描画
+function _ownerToast(msg){
+  var t=document.getElementById('toast');if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');t.textContent='✓ 操作が完了しました'},3000);
+}
+function _ownerAssertOwner(){
+  if(typeof ROLE==='undefined'||ROLE!=='owner'){alert('所有者のみ削除できます');return false}
+  return true;
+}
+
+function ownerDeleteHhReport(id){
+  if(!_ownerAssertOwner())return;
+  var r=DB.find(function(x){return String(x.id)===String(id)});
+  if(!r){alert('対象のヒヤリハット報告が見つかりません');return}
+  var snippet=(r.d||'').substring(0,40);
+  var msg='このヒヤリハット報告を削除します。\n\n日付: '+(r.date||'—')
+    +'\n部署: '+(r.dept||'—')
+    +'\n体験: '+(((r.e||[])[0])||'—')
+    +'\n内容: '+snippet+(snippet.length>=40?'…':'')
+    +'\n\nこの操作は取り消しできません。よろしいですか？';
+  if(!confirm(msg))return;
+  var ix=DB.findIndex(function(x){return String(x.id)===String(id)});
+  if(ix<0)return;
+  DB.splice(ix,1);
+  saveDB();
+  var m=document.getElementById('modal');if(m)m.classList.remove('show');
+  if(typeof rDash==='function')rDash();
+  _ownerToast('✓ ヒヤリハット報告を削除しました');
+}
+
+function ownerDeleteRequest(id){
+  if(!_ownerAssertOwner())return;
+  var r=REQ_LIST.find(function(x){return String(x.id)===String(id)});
+  if(!r){alert('対象の要望が見つかりません');return}
+  var snippet=(r.content||'').substring(0,40);
+  var msg='この要望を削除します。\n\n投稿日: '+(r.date||'—')
+    +'\n投稿者: '+(r.name||'—')
+    +'\n部署: '+(r.dept||'—')
+    +'\n内容: '+snippet+(snippet.length>=40?'…':'')
+    +'\n\nこの操作は取り消しできません。よろしいですか？';
+  if(!confirm(msg))return;
+  var ix=REQ_LIST.findIndex(function(x){return String(x.id)===String(id)});
+  if(ix<0)return;
+  REQ_LIST.splice(ix,1);
+  if(typeof HHDB!=='undefined'&&HHDB.saveRequests)HHDB.saveRequests(REQ_LIST);
+  else try{localStorage.setItem('hh_requests',JSON.stringify(REQ_LIST))}catch(e){}
+  if(typeof rReqList==='function')rReqList();
+  _ownerToast('✓ 要望を削除しました');
+}
+
+function ownerDeleteDisasterReport(id){
+  if(!_ownerAssertOwner())return;
+  var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+  if(!r){alert('対象の災害発生報告が見つかりません');return}
+  var dt=r.datetime||r.date||'—';
+  var plc=r.place||r.basho||r.basho_detail||'—';
+  var v=r.victim||r.victim_name||'—';
+  var wfNote='';
+  if(r.wf&&typeof r.wf==='object'){
+    if(r.wf.state==='pending')wfNote='\n\n※ この報告は現在 承認中（pending）です。削除すると承認履歴も失われます。';
+    else if(r.wf.state==='returned')wfNote='\n\n※ この報告は差戻状態です。削除すると差戻履歴も失われます。';
+    else if(r.wf.state==='final')wfNote='\n\n※ この報告は承認確定済みです。';
+  }
+  var msg='この災害発生報告を削除します。\n\n発生日時: '+dt
+    +'\n場所: '+plc
+    +'\n被災者: '+v
+    +wfNote
+    +'\n\nこの操作は取り消しできません。よろしいですか？';
+  if(!confirm(msg))return;
+  var ix=DIS_LIST.findIndex(function(x){return String(x.id)===String(id)});
+  if(ix<0)return;
+  DIS_LIST.splice(ix,1);
+  if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
+  else try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}
+  var m=document.getElementById('modal');if(m)m.classList.remove('show');
+  hideDisExportToolbar();
+  if(typeof rDisList==='function')rDisList();
+  _ownerToast('✓ 災害発生報告を削除しました');
+}
+
 // ===== QR CODE GENERATION =====
 let qrInstances={};
 var QR_URL_KEYS={user:'hh_qr_url_user',admin:'hh_qr_url_admin',owner:'hh_qr_url_owner'};
@@ -1036,12 +1126,18 @@ function rDash(){
 function rList(){
   const fd=getF();
   const f=cFi==='all'?fd:fd.filter(r=>r.ss===cFi);
+  const isOwner=(typeof ROLE!=='undefined'&&ROLE==='owner');
   document.getElementById('rL').innerHTML=f.map(r=>{
     const e0=(r.e||[])[0]||'';
     const bc=e0.includes('墜落')?'bf':e0.includes('転倒')?'bt2':e0.includes('激突')||e0.includes('機械')?'bm':e0.includes('落下')?'bdr':e0.includes('倒')?'bcl':'bo';
     const dc=r.ss==='new'?'dn':r.ss==='review'?'dr':'dd';
     const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
-    return`<div class="rc" onclick="sDt(${r.id})"><div class="rt"><span class="bd2 ${bc}">${e0.substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div><div class="rde">${r.d||''}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date||''}</span></div></div>`;
+    const lvCol=r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)';
+    const inner=`<div class="rt"><span class="bd2 ${bc}">${e0.substring(0,10)}</span><span style="font-size:10px;font-weight:700;color:${lvCol}">Lv.${r.l||0}</span></div><div class="rde">${r.d||''}</div><div class="rm"><span><span class="ds ${dc}"></span>${sl}</span><span>${(r.dept||'').split('/').pop()}</span><span>${r.date||''}</span></div>`;
+    if(!isOwner){
+      return `<div class="rc" onclick="sDt(${r.id})">${inner}</div>`;
+    }
+    return `<div class="rc" style="display:flex;gap:8px;align-items:stretch"><div style="flex:1;min-width:0;cursor:pointer" onclick="sDt(${r.id})">${inner}</div><div style="display:flex;flex-direction:column;justify-content:center;flex-shrink:0" onclick="event.stopPropagation()"><button type="button" class="fp" style="padding:5px 10px;font-size:10px;border-radius:8px;white-space:nowrap;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:700;cursor:pointer" onclick="ownerDeleteHhReport(${r.id})">🗑 削除</button></div></div>`;
   }).join('')||'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
 }
 function cycF(){
@@ -1083,6 +1179,7 @@ function sDt(id){
   h+=`<div class="dbk"><div class="dbt">背後要因</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${SQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.st||{})[k])}</span>`).join('')}</div></div>`;
   h+=`<div class="dbk"><div class="dbt">職場環境</div><div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--t2)">${WQ.map(([k,l])=>`<span>${l.substring(0,6)}:${dot((r.we||{})[k])}</span>`).join('')}</div></div>`;
   h+=`<div class="abs"><button class="ab abr" onclick="setSS(${r.id},'review')">確認中</button><button class="ab abd" onclick="setSS(${r.id},'done')">対策完了</button></div>`;
+  h+=`<div style="margin-top:12px;padding-top:12px;border-top:1px dashed #FFCDD2;text-align:right"><button type="button" onclick="ownerDeleteHhReport(${r.id})" style="padding:7px 14px;font-size:11px;border-radius:8px;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:700;cursor:pointer">🗑 この報告を削除（所有者）</button></div>`;
   document.getElementById('mI').innerHTML=h;
   document.getElementById('modal').classList.add('show');
 }
