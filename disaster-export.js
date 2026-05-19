@@ -204,17 +204,72 @@
   }
 
   /**
-   * 公式 .xlsm を JSZip で開いて sheet1.xml だけ書き換えてダウンロード。
-   * SheetJS の writeFile は xlsm 内のフォームコントロール・図形・印刷設定を
-   * 喪失させるため使わない。JSZip 直接編集なら他要素を 100% 保持できる。
+   * Excel 出力（PDFと同じ3列レイアウトをそのまま再現）
+   *
+   * 設計変更（2026-05-20）:
+   *   従来の「公式 .xlsm テンプレートを JSZip で埋める方式」は、テンプレート
+   *   配信失敗時に箇条書きフォールバックが発生する／ユーザー要望（PDFと同じ
+   *   見た目）と層も別だったため取りやめた。
+   *   代わりに disasterBuildExcelHtml(r) が生成する <table> ベースの HTML を
+   *   Office HTML 名前空間で包んで application/vnd.ms-excel 形式の .xls として
+   *   保存する。Excel は HTML を読み込めるため、PDF と同じ 3 列レイアウト・
+   *   ボーダー・背景色などがそのまま反映される。
+   *   ※ Excel 起動時に「形式と拡張子が一致しません」と表示されるが「はい」で開ける。
+   *   ※ 旧 .xlsm 方式が必要な場合は disasterExportDownloadExcelOfficialTemplate
+   *     を直接呼ぶことで利用可能（コード上は保持）。
    */
   global.disasterExportDownloadExcel = function (r) {
+    if (!r) return;
+    var base = global.disasterExportSafeFileBase(r);
+    if (typeof global.disasterBuildExcelHtml !== 'function') {
+      // disaster-detail-html.js が古い場合のフォールバック
+      disasterExportDownloadFallbackTwoColumn(r, base);
+      return;
+    }
+    var bodyHtml = global.disasterBuildExcelHtml(r);
+    var title = 'D' + (r.id != null ? r.id : '');
+    var html =
+      '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+      'xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="UTF-8">' +
+      '<meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">' +
+      '<title>' + title + '</title>' +
+      '<!--[if gte mso 9]><xml>' +
+      '<x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>' +
+      '<x:Name>災害発生報告</x:Name>' +
+      '<x:WorksheetOptions>' +
+      '<x:PageSetup><x:Layout x:Orientation="Landscape"/><x:PageMargins x:Bottom="0.3" x:Left="0.3" x:Right="0.3" x:Top="0.3"/></x:PageSetup>' +
+      '<x:Print><x:FitWidth>1</x:FitWidth><x:FitHeight>1</x:FitHeight><x:ValidPrinterInfo/></x:Print>' +
+      '<x:DisplayGridlines/>' +
+      '</x:WorksheetOptions>' +
+      '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook>' +
+      '</xml><![endif]-->' +
+      '<style>td{vertical-align:top;mso-number-format:"\\@"}br{mso-data-placement:same-cell}</style>' +
+      '</head><body>' + bodyHtml + '</body></html>';
+    var blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = base + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      URL.revokeObjectURL(a.href);
+      try { a.parentNode.removeChild(a); } catch (e) {}
+    }, 4000);
+  };
+
+  /**
+   * 旧方式（公式 .xlsm テンプレートを JSZip で埋めてダウンロード）。
+   * 通常は使われない。disasterExportDownloadExcel を上書きしているが、
+   * 「公式様式の Excel が欲しい」という用途で残してある。
+   */
+  global.disasterExportDownloadExcelOfficialTemplate = function (r) {
     if (!r) return;
     var base = global.disasterExportSafeFileBase(r);
     var hasJSZip = typeof global.JSZip !== 'undefined';
     var hasFiller = typeof global.disasterFillOfficialTemplateZip === 'function';
     if (!hasJSZip || !hasFiller) {
-      // フォールバック (JSZip 未読込): SheetJS でそれっぽい xlsx を作る
       disasterExportDownloadFallbackTwoColumn(r, base);
       return;
     }
@@ -231,9 +286,7 @@
       a.click();
       setTimeout(function () {
         URL.revokeObjectURL(a.href);
-        try {
-          a.parentNode.removeChild(a);
-        } catch (e) {}
+        try { a.parentNode.removeChild(a); } catch (e) {}
       }, 4000);
     }
 
@@ -255,12 +308,8 @@
           if (!res.ok) throw new Error('http ' + res.status);
           return res.arrayBuffer();
         })
-        .then(function (buf) {
-          return global.JSZip.loadAsync(buf);
-        })
-        .then(function (zip) {
-          return global.disasterFillOfficialTemplateZip(zip, r);
-        })
+        .then(function (buf) { return global.JSZip.loadAsync(buf); })
+        .then(function (zip) { return global.disasterFillOfficialTemplateZip(zip, r); })
         .then(function (zip) {
           return zip.generateAsync({
             type: 'blob',

@@ -358,4 +358,127 @@
     h += '</div>';
     return h;
   };
+
+  // ===========================================================================
+  // Excel 出力用 HTML（<table>ベース・PDFの3列レイアウトと同等の見た目）
+  //
+  // 設計方針:
+  //  ・Excel は CSS Grid/Flex を解釈しないため、PDF用の disasterBuildDetailHtml の
+  //    DIVグリッドをそのまま渡すと崩れる。Excel HTML は <table> + border + bgcolor +
+  //    インラインstyle で表現すれば視覚的にほぼ再現できる。
+  //  ・全体は外側1テーブル: タイトル行 → 3列のメインTD（左/中/右ブロック） → フッタ行
+  //  ・各ブロックは内側テーブル（ラベル背景=#E8E8E8、本文背景=#FFF、ボーダー=#555）
+  //  ・承認者追記マーカーは PDF と同じく削除（ stripSavedApproverMerges 相当）
+  //  ・disaster-export.js でこの HTML を Office HTML ラッパで包んで .xls として保存する
+  // ===========================================================================
+  global.disasterBuildExcelHtml = function (r) {
+    if (!r) return '';
+    var V = function (v) {
+      var s = v != null ? String(v) : '';
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+    };
+    var stripMerges = function (val) {
+      var s = String(val != null ? val : '');
+      var i = s.indexOf(MERGE_MARKER);
+      return i === -1 ? s : s.slice(0, i);
+    };
+    var txt = function (v) { return V(stripMerges(v)); };
+
+    var disImgs = r.situation_imgs && r.situation_imgs.length ? r.situation_imgs : (r.situation_img ? [r.situation_img] : []);
+    var imgsHtml = disImgs.map(function (src) {
+      return '<img src="' + V(src) + '" width="200" style="margin:2px;display:block">';
+    }).join('') || '<span style="color:#999;font-size:9pt">（画像なし）</span>';
+
+    var LBL = 'border:1px solid #555;background:#E8E8E8;padding:4px 6px;font-size:10pt;width:78px;vertical-align:top;font-weight:bold';
+    var VAL = 'border:1px solid #555;background:#FFFFFF;padding:4px 6px;font-size:10pt;vertical-align:top';
+    var SUB_LBL = 'border:1px solid #999;background:#F0F0F0;padding:3px 5px;font-size:9.5pt;width:90px;vertical-align:top';
+    var SUB_VAL = 'border:1px solid #999;background:#FFFFFF;padding:3px 5px;font-size:10pt;vertical-align:top';
+    var SECT = 'border:1px solid #555;background:#D0D0D0;padding:5px 6px;font-size:10.5pt;font-weight:bold;text-align:center';
+    var BIG = 'border:1px solid #555;background:#FFFFFF;padding:6px 8px;font-size:10pt;vertical-align:top;min-height:60px';
+
+    function row(lbl, val) {
+      return '<tr><td style="' + LBL + '">' + lbl + '</td><td style="' + VAL + '">' + val + '</td></tr>';
+    }
+    function sub(lbl, val) {
+      return '<tr><td style="' + SUB_LBL + '">' + lbl + '</td><td style="' + SUB_VAL + '">' + val + '</td></tr>';
+    }
+    function sect(lbl) {
+      return '<tr><td colspan="2" style="' + SECT + '">' + lbl + '</td></tr>';
+    }
+    function big(val, height) {
+      return '<tr><td colspan="2" style="' + BIG + (height ? ';height:' + height + 'px' : '') + '">' + val + '</td></tr>';
+    }
+
+    // 左ブロック
+    var left = '';
+    left += row('災害日時', txt(r.datetime || ''));
+    left += row('住所', txt(r.basho_jusho || ''));
+    left += sect('被災(事故)の程度');
+    left += sub('傷病名(損害状況)', txt(r.shobyomei || ''));
+    left += sub('後遺症', txt(r.koui || ''));
+    left += sub('休業見込(損害見込額)', txt(r.kyugyo || ''));
+    left += sect('人・設備・管理についての教訓');
+    left += sub('(人)', txt(r.kyukun_person || ''));
+    left += sub('(設備)', txt(r.kyukun_equip || ''));
+    left += sub('(管理)', txt(r.kyukun_mgmt || ''));
+    left += sect('労災原因分類');
+    left += row('起因物', txt(r.kiinbutsu || ''));
+    left += row('不安全状態', txt(r.fuanzen || ''));
+    left += row('不安全行動', txt(r.fuanzen_kodo || ''));
+    left += row('事故の型', txt(r.jiko || ''));
+    left += row('管理の欠陥', txt(r.kanri || ''));
+
+    // 中ブロック
+    var mid = '';
+    mid += sect('災害発生状況');
+    mid += row('●場所', txt(r.basho_detail || ''));
+    mid += row('●作業', txt(r.sagyo || ''));
+    mid += sub('●原因 物・環境', txt(r.genin_busshi || ''));
+    mid += sub('●原因 人的要因', txt(r.genin_jin || ''));
+    mid += row('●結果', txt(r.kekka || ''));
+    mid += sect('こうすればよかったと思うこと');
+    mid += sub('本人', txt(r.kaizen_honin || ''));
+    mid += sub('監督者', txt(r.kaizen_kantoku || ''));
+
+    // 右ブロック
+    var right = '';
+    right += sect('発生状況図');
+    right += big(imgsHtml, 140);
+    right += sect('対策');
+    right += big(txt(r.taisaku || ''), 140);
+
+    function innerTable(rows) {
+      return '<table border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse:collapse">' + rows + '</table>';
+    }
+
+    var h =
+      '<table border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-family:Meiryo,MS PGothic,sans-serif;width:900px;table-layout:fixed">' +
+      '<tr><td colspan="3" style="border:1px solid #333;background:#D9D9D9;padding:10px 8px;font-size:14pt;font-weight:bold;text-align:center">災害事故(人身・物損)発生報告書</td></tr>' +
+      '<tr>' +
+      '<td valign="top" width="300" style="border:1px solid #333;padding:0">' + innerTable(left) + '</td>' +
+      '<td valign="top" width="300" style="border:1px solid #333;padding:0">' + innerTable(mid) + '</td>' +
+      '<td valign="top" width="300" style="border:1px solid #333;padding:0">' + innerTable(right) + '</td>' +
+      '</tr>' +
+      '<tr><td colspan="3" style="border:1px solid #333;padding:10px 12px;background:#F8F8F8;font-size:11pt">' +
+      '上記のとおり相違なく報告いたします。&nbsp;&nbsp;' +
+      V(r.report_date || '') + '&nbsp;&nbsp;責任者：' + V(r.sekininsha || '') + '&nbsp;&nbsp;報告者：' + V(r.reporter || '') +
+      '</td></tr>' +
+      '</table>';
+
+    // 追記・訂正（ワークフロー）があれば下部に追加
+    if (r.wf && Array.isArray(r.wf.report_addenda) && r.wf.report_addenda.length) {
+      var looseRaw = r.wf.report_addenda.filter(function (e) { return e && !e.field; });
+      if (looseRaw.length) {
+        h += '<br><table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-family:Meiryo,sans-serif;width:900px;border-color:#E65100">';
+        h += '<tr><td style="background:#FFF3E0;font-weight:bold;font-size:11pt;color:#E65100">追記・訂正</td></tr>';
+        looseRaw.forEach(function (e) {
+          h += '<tr><td style="background:#FFFDE7;font-size:10pt"><strong>' + V(e.role || '追記') + '</strong>　' +
+            V(e.by || '') + '　<span style="color:#888">' + V(e.at || '') + '</span><br>' +
+            V(e.text || '') + '</td></tr>';
+        });
+        h += '</table>';
+      }
+    }
+    return h;
+  };
 })(window);
