@@ -263,8 +263,8 @@
     function victimMainLine() {
       var p = [];
       if (r.victim) p.push(String(r.victim));
-      if (r.age != null && r.age !== '') p.push(String(r.age) + '才');
       if (r.birth) p.push(String(r.birth));
+      if (r.age != null && r.age !== '') p.push(String(r.age) + '才');
       if (r.victim_dept) p.push(String(r.victim_dept));
       return V(p.join('　'));
     }
@@ -284,8 +284,14 @@
       leftCol += row('住所', cellWithApprovals('basho_jusho', r.basho_jusho || ''));
       leftCol += gs('被災者又は<br>事故者');
       leftCol += sub('住所', V(r.jusho || ''));
-      leftCol += sub('氏名・年齢等', victimMainLine());
-      leftCol += sub('雇入・経験', hireExpLine());
+      leftCol += sub('氏名', V(r.victim || ''));
+      var birthAge = [];
+      if (r.birth) birthAge.push(String(r.birth));
+      if (r.age != null && r.age !== '') birthAge.push(String(r.age) + '才');
+      leftCol += sub('生年月日・年齢', V(birthAge.join('　')));
+      leftCol += sub('職種', V(r.victim_dept || ''));
+      leftCol += sub('雇入年月日', V(r.hire_date || ''));
+      leftCol += sub('経験年数', V(r.exp || ''));
       leftCol += ge;
       leftCol += gs('被災(事故)の<br>程度');
       leftCol += sub('傷病名<br>(損害状況)', cellWithApprovals('shobyomei', r.shobyomei || ''));
