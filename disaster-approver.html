@@ -30,7 +30,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="disaster-workflow.js?v=20260430-wf2"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
-<script src="disaster-detail-html.js?v=20260501-pdf3"></script>
+<script src="disaster-detail-html.js?v=20260520-approver-full"></script>
 <script>
 var DIS_LIST=[];
 var REPORT_ID=null;
@@ -181,7 +181,7 @@ function render(){
     return;
   }
   var h='';
-  if(typeof disasterBuildDetailHtml==='function'){h=disasterBuildDetailHtml(r)}
+  if(typeof disasterBuildDetailHtml==='function'){h=disasterBuildDetailHtml(r,{showAllFields:true})}
   else{
     h='<div class="err" style="margin-bottom:12px">報告書の表示に必要な <code>disaster-detail-html.js</code> が読み込めていません（未配置または通信エラー）。管理者が GitHub に同ファイルをアップロードしたうえで、ページを再読み込みしてください。</div>';
   }

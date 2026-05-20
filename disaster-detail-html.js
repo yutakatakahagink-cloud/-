@@ -10,6 +10,8 @@
     if (!r) return '';
     opts = opts || {};
     var exportMode = !!opts.exportMode;
+    /** 承認画面など：報告の全項目を表示（使用者画面の簡略表示とは別） */
+    var showAllFields = !!opts.showAllFields;
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -239,10 +241,43 @@
       );
     };
 
-    // PDF出力時 (exportMode) も画面の詳細プレビューと同じレイアウトに揃える。
-    // 旧版で先頭に挿入していた追加項目（報告ID/フォーム種別/被災者氏名/現認者/携帯フォーム…）は
-    // ユーザーの要望により非表示。必要があれば末尾の補足セクションのみ表示する。
+    // 管理者・所有者・PDF は簡略表示。承認画面 (showAllFields) のみ全項目を先頭に表示。
     var exportExtra = '';
+    if (showAllFields) {
+      exportExtra += row('報告ID', V(r.id != null ? r.id : ''));
+      exportExtra += row('フォーム種別', V(r.form === 'pc' ? 'PC様式' : r.form || ''));
+      exportExtra += row('記録ステータス', V(r.status || ''));
+      exportExtra += row('登録日(システム)', V(r.date || ''));
+      exportExtra += row('工事件名', V(r.keigen || ''));
+      exportExtra += row('災害場所', V(r.basho || r.place || ''));
+      exportExtra += row('被災者住所', V(r.jusho || ''));
+      exportExtra += row('被災者氏名', V(r.victim || ''));
+      exportExtra += row('年齢', V(r.age != null && r.age !== '' ? r.age : ''));
+      exportExtra += row('生年月日', V(r.birth || ''));
+      exportExtra += row('職種・所属', V(r.victim_dept || ''));
+      exportExtra += row('雇入年月日', V(r.hire_date || ''));
+      exportExtra += row('経験年数', V(r.exp || ''));
+      exportExtra += row('病院名', V(r.byoin || ''));
+      exportExtra += row('休業区分', V(r.kyugyo_type || ''));
+      exportExtra += row('休業日数', V(r.kyugyo_days != null && r.kyugyo_days !== '' ? r.kyugyo_days : ''));
+      exportExtra += row('損害金額(円)', V(r.kyugyo_yen != null && r.kyugyo_yen !== '' ? r.kyugyo_yen : ''));
+      exportExtra += row('現認者 有無', V(r.gennin_aru || r.gennin || ''));
+      exportExtra += row('現認者 職名', V(r.shokumei || ''));
+      exportExtra += row('現認者 氏名', V(r.gennin_name || ''));
+      exportExtra += row('（携帯）事業の種類', V(r.gyoshu || ''));
+      exportExtra += row('（携帯）事業場名', V(r.jigyosho || ''));
+      exportExtra += row('（携帯）事業場所在地', V(r.address || ''));
+      exportExtra += row('（携帯）労働者数', V(r.workers != null && r.workers !== '' ? r.workers : ''));
+      exportExtra += row('（携帯）機器等の種類', V(r.machine || ''));
+      exportExtra += row('（携帯）事故の種類', V(r.type || ''));
+      exportExtra += row('（携帯）人的被害', V(r.human_damage || ''));
+      exportExtra += row('（携帯）物的被害', V(r.material_damage || ''));
+      exportExtra += row('（携帯）発生状況', V(r.situation || ''));
+      exportExtra += row('（携帯）発生原因', V(r.cause || ''));
+      exportExtra += row('（携帯）再発防止措置', V(r.measure || ''));
+      exportExtra += row('報告者', V(r.reporter || ''));
+      exportExtra += row('ワークフロー送信者メール', V(r.wf_sender_email || ''));
+    }
 
     var h =
       '<div style="border:1px solid #333;border-radius:6px;overflow:hidden;background:#fff;font-family:Meiryo,sans-serif;font-size:10.5pt">';
@@ -354,6 +389,7 @@
       V(r.report_date || '') +
       '　責任者：' +
       V(r.sekininsha || '') +
+      (showAllFields && r.reporter ? '　報告者：' + V(r.reporter) : '') +
       '</div></div>';
     h += '</div>';
     return h;
