@@ -534,7 +534,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
-<script src="disaster-detail-html.js?v=20260520-xlshtml"></script>
+<script src="disaster-detail-html.js?v=20260520-formfmt"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="disaster-xlsm-fill.js?v=20260501-revert"></script>
@@ -798,7 +798,7 @@ function disasterDoApproverNote(id){
 }
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
-  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r):'';
+  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r,{formFormat:true}):'';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
   // 所有者のみ：詳細モーダル下部に削除ボタンを追加

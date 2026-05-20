@@ -10,6 +10,8 @@
     if (!r) return '';
     opts = opts || {};
     var exportMode = !!opts.exportMode;
+    /** 所有者・承認画面：入力様式どおりの災害事故発生報告書フォーマット */
+    var formFormat = !!opts.formFormat;
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -239,35 +241,96 @@
       );
     };
 
-    // PDF出力時 (exportMode) も画面の詳細プレビューと同じレイアウトに揃える。
-    // 旧版で先頭に挿入していた追加項目（報告ID/フォーム種別/被災者氏名/現認者/携帯フォーム…）は
-    // ユーザーの要望により非表示。必要があれば末尾の補足セクションのみ表示する。
-    var exportExtra = '';
+    function kyugyoDisplay() {
+      if (r.kyugyo) return cellWithApprovals('kyugyo', r.kyugyo);
+      var p = [];
+      if (r.kyugyo_days != null && r.kyugyo_days !== '') p.push(String(r.kyugyo_days) + '日間');
+      if (r.kyugyo_yen != null && r.kyugyo_yen !== '') p.push(String(r.kyugyo_yen) + '円');
+      if (r.kyugyo_type) p.push(String(r.kyugyo_type));
+      return V(p.join(' '));
+    }
+
+    function genninDisplay() {
+      var p = [];
+      var aru = r.gennin_aru || (r.gennin && String(r.gennin).length <= 4 ? r.gennin : '');
+      if (aru) p.push(String(aru));
+      if (r.shokumei) p.push('職名:' + String(r.shokumei));
+      if (r.gennin_name) p.push('氏名:' + String(r.gennin_name));
+      else if (r.gennin && String(r.gennin).length > 4) p.push('氏名:' + String(r.gennin));
+      return V(p.join('　'));
+    }
+
+    function victimMainLine() {
+      var p = [];
+      if (r.victim) p.push(String(r.victim));
+      if (r.age != null && r.age !== '') p.push(String(r.age) + '才');
+      if (r.birth) p.push(String(r.birth));
+      if (r.victim_dept) p.push(String(r.victim_dept));
+      return V(p.join('　'));
+    }
+
+    function hireExpLine() {
+      var p = [];
+      if (r.hire_date) p.push(String(r.hire_date));
+      if (r.exp) p.push('経験:' + String(r.exp));
+      return V(p.join('　'));
+    }
+
+    var leftCol = '';
+    if (formFormat) {
+      leftCol += row('工事件名', V(r.keigen || ''));
+      leftCol += row('災害日時', V(r.datetime || ''));
+      leftCol += row('災害場所', V(r.basho || r.place || ''));
+      leftCol += row('住所', cellWithApprovals('basho_jusho', r.basho_jusho || ''));
+      leftCol += gs('被災者又は<br>事故者');
+      leftCol += sub('住所', V(r.jusho || ''));
+      leftCol += sub('氏名・年齢等', victimMainLine());
+      leftCol += sub('雇入・経験', hireExpLine());
+      leftCol += ge;
+      leftCol += gs('被災(事故)の<br>程度');
+      leftCol += sub('傷病名<br>(損害状況)', cellWithApprovals('shobyomei', r.shobyomei || ''));
+      leftCol += sub('病院名・後遺症', V([r.byoin, r.koui ? '後遺症:' + r.koui : ''].filter(Boolean).join('　')));
+      leftCol += sub('休業見込<br>(損害見込額)', kyugyoDisplay());
+      leftCol += ge;
+      leftCol += row('現認者', genninDisplay());
+      leftCol += gs('人・設備・管理に<br>ついての教訓');
+      leftCol += sub('(人)', cellWithApprovals('kyukun_person', r.kyukun_person || ''));
+      leftCol += sub('(設備)', cellWithApprovals('kyukun_equip', r.kyukun_equip || ''));
+      leftCol += sub('(管理)', cellWithApprovals('kyukun_mgmt', r.kyukun_mgmt || ''));
+      leftCol += ge;
+      leftCol += '<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">労災原因分類</div>';
+      leftCol += row('起因物', V(r.kiinbutsu || ''));
+      leftCol += row('不安全状態', V(r.fuanzen || ''));
+      leftCol += row('不安全行動', V(r.fuanzen_kodo || ''));
+      leftCol += row('事故の型', V(r.jiko || ''));
+      leftCol += row('管理の欠陥', V(r.kanri || ''));
+    } else {
+      leftCol += row('災害日時', V(r.datetime || ''));
+      leftCol += row('住所', cellWithApprovals('basho_jusho', r.basho_jusho || ''));
+      leftCol += gs('被災(事故)の<br>程度');
+      leftCol += sub('傷病名<br>(損害状況)', cellWithApprovals('shobyomei', r.shobyomei || ''));
+      leftCol += sub('後遺症', V(r.koui || ''));
+      leftCol += sub('休業見込<br>(損害見込額)', V(r.kyugyo || ''));
+      leftCol += ge;
+      leftCol += gs('人・設備・管理に<br>ついての教訓');
+      leftCol += sub('(人)', cellWithApprovals('kyukun_person', r.kyukun_person || ''));
+      leftCol += sub('(設備)', cellWithApprovals('kyukun_equip', r.kyukun_equip || ''));
+      leftCol += sub('(管理)', cellWithApprovals('kyukun_mgmt', r.kyukun_mgmt || ''));
+      leftCol += ge;
+      leftCol += '<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">労災原因分類</div>';
+      leftCol += row('起因物', V(r.kiinbutsu || ''));
+      leftCol += row('不安全状態', V(r.fuanzen || ''));
+      leftCol += row('不安全行動', V(r.fuanzen_kodo || ''));
+      leftCol += row('事故の型', V(r.jiko || ''));
+      leftCol += row('管理の欠陥', V(r.kanri || ''));
+    }
 
     var h =
       '<div style="border:1px solid #333;border-radius:6px;overflow:hidden;background:#fff;font-family:Meiryo,sans-serif;font-size:10.5pt">';
     h += '<div style="border-bottom:1px solid #333;padding:10px;text-align:center;font-weight:bold;font-size:16pt;background:#D9D9D9">災害事故(人身・物損)発生報告書</div>';
     h += '<div style="display:grid;grid-template-columns:' + cols + ';gap:0;' + (isMobile ? '' : 'min-height:400px') + '">';
     h += '<div style="' + bdr + 'display:flex;flex-direction:column"><div style="display:flex;flex-direction:column;gap:0;font-size:10.5pt">';
-    h += exportExtra;
-    h += row('災害日時', V(r.datetime || ''));
-    h += row('住所', cellWithApprovals('basho_jusho', r.basho_jusho || ''));
-    h += gs('被災(事故)の<br>程度');
-    h += sub('傷病名<br>(損害状況)', cellWithApprovals('shobyomei', r.shobyomei || ''));
-    h += sub('後遺症', V(r.koui || ''));
-    h += sub('休業見込<br>(損害見込額)', V(r.kyugyo || ''));
-    h += ge;
-    h += gs('人・設備・管理に<br>ついての教訓');
-    h += sub('(人)', cellWithApprovals('kyukun_person', r.kyukun_person || ''));
-    h += sub('(設備)', cellWithApprovals('kyukun_equip', r.kyukun_equip || ''));
-    h += sub('(管理)', cellWithApprovals('kyukun_mgmt', r.kyukun_mgmt || ''));
-    h += ge;
-    h += '<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">労災原因分類</div>';
-    h += row('起因物', V(r.kiinbutsu || ''));
-    h += row('不安全状態', V(r.fuanzen || ''));
-    h += row('不安全行動', V(r.fuanzen_kodo || ''));
-    h += row('事故の型', V(r.jiko || ''));
-    h += row('管理の欠陥', V(r.kanri || ''));
+    h += leftCol;
     h += '</div></div>';
     h += '<div style="' + bdr + 'display:flex;flex-direction:column;padding:0">';
     h += '<div style="background:#D0D0D0;font-weight:bold;padding:6px 8px;font-size:11pt;border-bottom:1px solid #333">災害発生状況</div>';
@@ -349,11 +412,32 @@
         h += '</div>';
       }
     }
+    if (formFormat) {
+      var hasMob =
+        !!(r.gyoshu || r.jigyosho || r.address || r.workers || r.machine || r.type || r.human_damage || r.material_damage || r.situation || r.cause || r.measure);
+      if (hasMob || (r.form && r.form !== 'pc')) {
+        h +=
+          '<div style="margin-top:10px;border:1px solid #999;border-radius:6px;overflow:hidden"><div style="background:#ECEFF1;padding:8px 10px;font-weight:bold;font-size:10.5pt;border-bottom:1px solid #999">簡易報告（携帯フォーム）の記入内容</div><div style="padding:0;font-size:10.5pt">';
+        h += row('事業の種類', V(r.gyoshu || ''));
+        h += row('事業場名', V(r.jigyosho || ''));
+        h += row('事業場所在地', V(r.address || ''));
+        h += row('労働者数', V(r.workers != null && r.workers !== '' ? r.workers : ''));
+        h += row('機器等の種類', V(r.machine || ''));
+        h += row('事故の種類', V(r.type || ''));
+        h += row('人的被害', V(r.human_damage || ''));
+        h += row('物的被害', V(r.material_damage || ''));
+        h += row('発生状況', V(r.situation || ''));
+        h += row('発生原因', V(r.cause || ''));
+        h += row('再発防止措置', V(r.measure || ''));
+        h += '</div></div>';
+      }
+    }
     h +=
       '<div style="margin-top:12px;padding:12px;background:#f8f8f8;border:1px solid #333;border-radius:6px;font-size:11pt"><div style="margin-bottom:8px">上記のとおり相違なく報告いたします。</div><div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap">' +
       V(r.report_date || '') +
       '　責任者：' +
       V(r.sekininsha || '') +
+      (formFormat && r.reporter ? '　報告者：' + V(r.reporter) : '') +
       '</div></div>';
     h += '</div>';
     return h;
