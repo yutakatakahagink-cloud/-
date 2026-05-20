@@ -589,4 +589,42 @@
     },
     stripDisasterReportsForStorage:hhStripDisasterReportsForStorage
   };
+
+  /** 委員会「対策進捗」：ヒヤリハット報告の対策(m)・ステータス(ss)から一覧を生成 */
+  global.buildComActionActs = function (reports) {
+    if (!reports || !reports.length) return [];
+    var map = Object.create(null);
+    var rank = { done: 3, review: 2, new: 1 };
+    reports.forEach(function (r) {
+      var m = String(r.m || '').trim();
+      if (!m) return;
+      var site = '全社';
+      if (r.dept) {
+        var parts = String(r.dept).split('/');
+        if (parts[0]) site = parts[0];
+      }
+      var ss = r.ss === 'done' || r.ss === 'review' ? r.ss : 'new';
+      var key = m + '\t' + site;
+      if (!map[key] || (rank[ss] || 0) >= (rank[map[key].ss] || 0)) {
+        map[key] = { t: m, s: site, ss: ss };
+      }
+    });
+    return Object.keys(map)
+      .map(function (k) {
+        return map[k];
+      })
+      .sort(function (a, b) {
+        var ra = rank[a.ss] || 0;
+        var rb = rank[b.ss] || 0;
+        if (rb !== ra) return rb - ra;
+        return String(a.t).localeCompare(String(b.t), 'ja');
+      });
+  };
+
+  global.filterComActionActsByDept = function (acts, deptFilt) {
+    if (!deptFilt || deptFilt === 'all') return acts || [];
+    return (acts || []).filter(function (a) {
+      return a.s === '全社' || a.s.indexOf(deptFilt) === 0 || deptFilt.indexOf(a.s) === 0;
+    });
+  };
 })();

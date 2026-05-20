@@ -1090,7 +1090,7 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260501-12" onerror="console.warn('config.js load failed')"></script>
-<script src="hh-data.js?v=20260430-4" onerror="console.warn('hh-data.js load failed')"></script>
+<script src="hh-data.js?v=20260520-acts" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
 <script src="disaster-email-notify.js?v=20260408-412" onerror="console.warn('disaster-email-notify.js load failed')"></script>
@@ -2236,7 +2236,7 @@ function sDt(id){
   document.getElementById('mI').innerHTML=h;
   document.getElementById('modal').classList.add('show');
 }
-function setSS(id,s){const r=DB.find(x=>x.id===id);if(r){r.ss=s;if(typeof HHDB!=='undefined')HHDB.saveReports(DB)}var m=document.getElementById('modal');m.classList.remove('show');var mb=m.querySelector('.mbd');if(mb)mb.classList.remove('dis-detail-wide');rDash()}
+function setSS(id,s){const r=DB.find(x=>x.id===id);if(r){r.ss=s;if(typeof HHDB!=='undefined')HHDB.saveReports(DB)}var m=document.getElementById('modal');m.classList.remove('show');var mb=m.querySelector('.mbd');if(mb)mb.classList.remove('dis-detail-wide');rDash();if(typeof rCom==='function')rCom()}
 
 // ===== ANALYTICS =====
 function rAnl(type){
@@ -2450,8 +2450,9 @@ function rCom(){
   document.getElementById('sug').innerHTML=sg;
   var sugFull=document.getElementById('sug_full');if(sugFull)sugFull.innerHTML='<div class="com-detail">'+sg+'</div>';
 
-  // Action tracker
-  const acts=[{t:'足場点検チェックリスト導入',s:'土木本部',ss:'done'},{t:'合図者常時配置ルール策定',s:'土木本部',ss:'review'},{t:'落下防止ワイヤー徹底',s:'土木本部',ss:'done'},{t:'バックモニター確認義務化',s:'建材本部',ss:'review'},{t:'計測頻度増加・警報導入',s:'土木本部',ss:'new'},{t:'匿名報告ルート整備',s:'全社',ss:'new'}];
+  // Action tracker（ヒヤリハット報告の対策・進捗ステータスから動的生成）
+  var allActs=typeof buildComActionActs==='function'?buildComActionActs(fd):[];
+  const acts=typeof filterComActionActsByDept==='function'?filterComActionActsByDept(allActs,deptFilt):allActs;
   var aTkCard=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:11px;font-weight:500">${a.t}</div><div style="font-size:9px;color:var(--t3)">${a.s}</div></div><span style="font-size:9px;font-weight:700;color:${c}">${l}</span></div>`}).join('');
   document.getElementById('aTk').innerHTML=aTkCard;
   var aTkFull=document.getElementById('aTk_full');if(aTkFull)aTkFull.innerHTML='<div class="com-detail">'+aTkCard+'</div>';

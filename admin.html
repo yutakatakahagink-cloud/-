@@ -326,7 +326,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
-<script src="hh-data.js?v=20260430-4"></script>
+<script src="hh-data.js?v=20260520-acts"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -663,7 +663,7 @@ function sDt(id){
   document.getElementById('mI').innerHTML=h;
   document.getElementById('modal').classList.add('show');
 }
-function setSS(id,s){const r=DB.find(x=>x.id===id);if(r)r.ss=s;saveDB();document.getElementById('modal').classList.remove('show');rDash()}
+function setSS(id,s){const r=DB.find(x=>x.id===id);if(r)r.ss=s;saveDB();document.getElementById('modal').classList.remove('show');rDash();if(typeof rCom==='function')rCom()}
 function showFullPhotoSrc(src){var ov=document.createElement('div');ov.className='photo-full-overlay';ov.innerHTML='<img src="'+src+'">';ov.onclick=function(){document.body.removeChild(ov)};document.body.appendChild(ov)}
 
 // ===== ANALYTICS (NO behind tab) =====
@@ -843,8 +843,9 @@ function rCom(){
   document.getElementById('sug_full').innerHTML='<div class="com-detail">'+sg+'</div>';
 
   // Action tracker
-  const allActs=[{t:'足場点検チェックリスト導入',s:'土木本部',ss:'done'},{t:'合図者常時配置ルール策定',s:'土木本部',ss:'review'},{t:'落下防止ワイヤー徹底',s:'土木本部',ss:'done'},{t:'バックモニター確認義務化',s:'建材本部',ss:'review'},{t:'計測頻度増加・警報導入',s:'土木本部',ss:'new'},{t:'匿名報告ルート整備',s:'全社',ss:'new'}];
-  const acts=deptFilt==='all'?allActs:allActs.filter(a=>a.s==='全社'||a.s.startsWith(deptFilt)||deptFilt.startsWith(a.s));
+  // Action tracker（ヒヤリハット報告の対策・進捗ステータスから動的生成）
+  var allActs=typeof buildComActionActs==='function'?buildComActionActs(fd):[];
+  const acts=typeof filterComActionActsByDept==='function'?filterComActionActsByDept(allActs,deptFilt):allActs;
   var aTkCard=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:11px;font-weight:500">${a.t}</div><div style="font-size:9px;color:var(--t3)">${a.s}</div></div><span style="font-size:9px;font-weight:700;color:${c}">${l}</span></div>`}).join('')||'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
   var aTkModal=acts.map(a=>{const c=a.ss==='done'?'var(--gn)':a.ss==='review'?'var(--yl)':'var(--t3)';const l=a.ss==='done'?'完了':a.ss==='review'?'進行中':'未着手';return`<div class="com-section" style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)"><span style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0"></span><div style="flex:1"><div style="font-size:14px;font-weight:500">${a.t}</div><div style="font-size:12px;color:var(--t3);margin-top:4px">${a.s}</div></div><span style="font-size:12px;font-weight:700;color:${c}">${l}</span></div>`}).join('')||'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
   document.getElementById('aTk').innerHTML=aTkCard;
