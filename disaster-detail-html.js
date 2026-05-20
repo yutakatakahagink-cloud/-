@@ -260,22 +260,6 @@
       return V(p.join('　'));
     }
 
-    function victimMainLine() {
-      var p = [];
-      if (r.victim) p.push(String(r.victim));
-      if (r.birth) p.push(String(r.birth));
-      if (r.age != null && r.age !== '') p.push(String(r.age) + '才');
-      if (r.victim_dept) p.push(String(r.victim_dept));
-      return V(p.join('　'));
-    }
-
-    function hireExpLine() {
-      var p = [];
-      if (r.hire_date) p.push(String(r.hire_date));
-      if (r.exp) p.push('経験:' + String(r.exp));
-      return V(p.join('　'));
-    }
-
     var leftCol = '';
     if (formFormat) {
       leftCol += row('工事件名', V(r.keigen || ''));
