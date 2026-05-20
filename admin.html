@@ -388,25 +388,17 @@ let DB=[],idc=0,cFi='all',deptFilt='all',REQ_LIST=[],DIS_LIST=[],pOTab='req';
 window.getDisasterListForExport=function(){return DIS_LIST;};
 var periodYear='all',periodMonth='all';
 const FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
-var DEMO_DATA=[
-{n:'志田和弘',dept:'土木本部/土木部',ku:'土木',ar:'50~59歳',e:['墜落しそうになった'],d:'足場手すりが外れ、寄りかかった際にぐらついた。転落危険。',c:['確認不足','作業環境'],l:8,w:'2/5 AM10 3階足場',wk:'外壁仕上げ',m:'足場点検チェックリスト導入',st:{workload:3,overtime:3,hardwork:3,fatigue:3,exhausted:3,sluggish:2,tense:3,anxiety:2,restless:2,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:2},we:{pace:2,autonomy:2,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:3,happiness:2},av:['注意不足','焦り'],ac:['KY活動','朝礼夕礼'],ss:'review'},
-{n:'児玉大佑',dept:'土木本部/土木部',ku:'土木',ar:'40~49歳',e:['機械等に激突されそうになった'],d:'クレーン旋回時に吊り荷が近くを通過。声掛け不足。',c:['連絡・連携ミス','確認不足'],l:9,w:'2/4 PM2 橋脚下部',wk:'クレーン作業',m:'合図者常時配置',st:{workload:2,overtime:2,hardwork:3,fatigue:2,exhausted:2,sluggish:1,tense:4,anxiety:3,restless:3,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:2,autonomy:2,voice:1,boss_talk:1,peer_talk:2,boss_help:1,peer_help:2,boss_consult:1,peer_consult:2,vigor:2,pride:2,happiness:2},av:['連携不足','慣れ・油断'],ac:['現地MT','コミュニケーション','災害事例'],ss:'new'},
-{n:'松本聖紀',dept:'土木本部/土木部/大武作業所',ku:'土木技能工',ar:'50~59歳',e:['ものが落下してきた'],d:'上階から工具が落下。ヘルメットで防いだが危険。',c:['確認不足'],l:5,w:'2/4 AM9 2階開口部',wk:'型枠組立',m:'落下防止ワイヤー徹底',st:{workload:2,overtime:1,hardwork:2,fatigue:2,exhausted:1,sluggish:1,tense:2,anxiety:1,restless:1,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:3,autonomy:3,voice:2,boss_talk:3,peer_talk:3,boss_help:3,peer_help:3,boss_consult:2,peer_consult:3,vigor:3,pride:3,happiness:3},av:['経験不足'],ac:['安全教育','4S'],ss:'done'},
-{n:'内八重俊哉',dept:'建材本部/宮崎支店',ku:'建材',ar:'40~49歳',e:['交通事故になりそうだった'],d:'ダンプ後退時、後方確認不十分で誘導員と接触寸前。',c:['確認不足','連絡・連携ミス'],l:7,w:'2/3 PM4 出入口',wk:'車両誘導',m:'バックモニター確認義務化',st:{workload:3,overtime:3,hardwork:3,fatigue:3,exhausted:2,sluggish:2,tense:3,anxiety:3,restless:2,depressed:2,bothered:2,gloomy:2,appetite:1,sleep:2},we:{pace:2,autonomy:2,voice:2,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:2,happiness:2},av:['判断の遅れ','周囲確認不足'],ac:['パトロール','手順書'],ss:'review'},
-{n:'山田晃也',dept:'土木本部/土木部',ku:'土木',ar:'20~29歳',e:['ものが倒れかかってきた'],d:'小規模な肌落ち発生。予兆を見逃していた。',c:['設備・機械','不注意行動'],l:9,w:'2/3 AM11 トンネル坑口',wk:'掘削補助',m:'計測頻度増加、警報システム導入',st:{workload:4,overtime:4,hardwork:4,fatigue:4,exhausted:4,sluggish:3,tense:4,anxiety:4,restless:3,depressed:3,bothered:2,gloomy:3,appetite:2,sleep:3},we:{pace:1,autonomy:1,voice:1,boss_talk:1,peer_talk:2,boss_help:1,peer_help:2,boss_consult:1,peer_consult:1,vigor:1,pride:2,happiness:1},av:['経験不足','知識不足'],ac:['同僚の話'],ss:'new'},
-{n:'甲斐聡史',dept:'建材本部/延岡営業所',ku:'建材',ar:'40~49歳',e:['感電しそうになった'],d:'仮設電源の配線被覆劣化で触れた際にピリッと感電。',c:['設備・機械','確認不足'],l:4,w:'2/2 PM1 電気設備室',wk:'仮設配線接続',m:'週次点検徹底',st:{workload:2,overtime:1,hardwork:2,fatigue:1,exhausted:1,sluggish:1,tense:2,anxiety:1,restless:1,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:3,autonomy:3,voice:3,boss_talk:3,peer_talk:4,boss_help:3,peer_help:4,boss_consult:3,peer_consult:3,vigor:3,pride:4,happiness:3},av:['設備確認不足'],ac:['設備点検','安全教育','HH体験'],ss:'done'},
-{n:'忍賀俊治',dept:'土木本部/高千穂営業所',ku:'土木',ar:'60~64歳',e:['墜落しそうになった'],d:'安全ネット破損、足を踏み外しかけた。',c:['設備・機械'],l:6,w:'2/1 AM8:30 橋梁上部',wk:'高所組立',m:'安全ネット定期交換',st:{workload:2,overtime:1,hardwork:3,fatigue:2,exhausted:2,sluggish:1,tense:2,anxiety:2,restless:1,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:3,autonomy:3,voice:2,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:2,peer_consult:3,vigor:3,pride:3,happiness:3},av:['体力低下','過信'],ac:['RA','KY活動','目配り'],ss:'done'},
-{n:'田島禾楓',dept:'土木本部/土木部',ku:'土木',ar:'20歳未満',e:['転倒しそうになった'],d:'資材間を通行中、配管につまずいて転倒しかけた。',c:['作業環境','視界不良'],l:3,w:'1/31 PM3 資材置場',wk:'資材運搬',m:'4S活動強化、通路確保',st:{workload:3,overtime:2,hardwork:3,fatigue:3,exhausted:2,sluggish:2,tense:2,anxiety:2,restless:1,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:1},we:{pace:2,autonomy:1,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:2,happiness:2},av:['注意不足','経験不足'],ac:['4S','見える化'],ss:'done'}
-];
+// デモデータは自動投入しない（第三者テスト・データ初期化後に復活しないよう）
 function loadDB(){
   try{var s=localStorage.getItem('hh_reports');if(s){DB=JSON.parse(s);idc=DB.reduce(function(m,r){return Math.max(m,r.id||0)},0);return}}catch(e){}
   // 第三者テスト準備（2026-05-01）以降、デモデータの自動シードは行わない。
   DB=[];idc=0;
 }
 function saveDB(){
-  if(typeof HHDB!=='undefined'&&HHDB.useFirebase()){HHDB.saveReports(DB);HHDB.savePhotos(DB);try{var data=DB.map(function(r){var c=Object.assign({},r);delete c.photos;return c});localStorage.setItem('hh_reports',JSON.stringify(data));if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});localStorage.setItem('hh_photos',JSON.stringify(ph))}}catch(e){}return}
+  if(typeof HHDB!=='undefined'&&HHDB.useFirebase()){HHDB.saveReports(DB);HHDB.savePhotos(DB);try{var data=DB.map(function(r){var c=Object.assign({},r);delete c.photos;return c});localStorage.setItem('hh_reports',JSON.stringify(data));if(!DB.length){localStorage.removeItem('hh_photos')}else if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});localStorage.setItem('hh_photos',JSON.stringify(ph))}}catch(e){}return}
   try{var data=DB.map(function(r){var c=Object.assign({},r);delete c.photos;return c});localStorage.setItem('hh_reports',JSON.stringify(data));
-  if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});try{localStorage.setItem('hh_photos',JSON.stringify(ph))}catch(e){}}
+  if(!DB.length){localStorage.removeItem('hh_photos')}
+  else if(DB.some(function(r){return r.photos&&r.photos.length})){var ph={};DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});try{localStorage.setItem('hh_photos',JSON.stringify(ph))}catch(e){}}
   }catch(e){console.warn('localStorage save failed',e)}
 }
 function loadPhotos(){
@@ -425,22 +417,49 @@ function loadReqDis(cb){
   HHDB.loadRequests(function(arr){REQ_LIST=arr||[];done()});
   HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];done()});
 }
+function syncReportsFromCloud(arr){
+  arr=arr||[];
+  try{
+    var data=arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c});
+    localStorage.setItem('hh_reports',JSON.stringify(data));
+    if(!arr.length){localStorage.removeItem('hh_photos')}
+    else{
+      var phOld={};
+      try{phOld=JSON.parse(localStorage.getItem('hh_photos')||'{}')}catch(e){}
+      var ph={};
+      arr.forEach(function(r){
+        if(r.photos&&r.photos.length)ph[r.id]=r.photos;
+        else if(phOld[r.id])ph[r.id]=phOld[r.id];
+      });
+      if(Object.keys(ph).length)localStorage.setItem('hh_photos',JSON.stringify(ph));
+      else localStorage.removeItem('hh_photos');
+    }
+  }catch(e){}
+  DB=arr;
+  idc=DB.reduce(function(m,r){return Math.max(m,r.id||0)},0);
+  loadPhotos();
+  if(typeof rDash==='function')rDash();
+  if(typeof rAnl==='function')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');
+  if(typeof rCom==='function')rCom();
+}
 function doDataInit(){
-  if(typeof HHDB==='undefined'||!HHDB.useFirebase()){loadDB();loadPhotos();loadReqDis();return}
+  if(typeof HHDB==='undefined'||!HHDB.useFirebase()){
+    loadDB();loadPhotos();loadReqDis(function(){
+      if(typeof rDash==='function')rDash();
+      if(typeof rCom==='function')rCom();
+    });
+    return;
+  }
   HHDB.init(function(){
     HHDB.loadAdmins(function(admins){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins))}catch(e){}});
-    HHDB.loadReports(DEMO_DATA,function(arr){
-      arr.forEach(function(r,i){if(!r.id){r.id=i+1;r.date=r.date||'2026-02-0'+(8-i)}});
-      try{localStorage.setItem('hh_reports',JSON.stringify(arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c})))}catch(e){}
-      HHDB.loadPhotos(arr,function(){
-        var ph={};arr.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
-        if(Object.keys(ph).length){try{localStorage.setItem('hh_photos',JSON.stringify(ph))}catch(e){}}
-        loadDB();loadPhotos();
+    HHDB.loadReports([],function(arr){
+      HHDB.loadPhotos(arr||[],function(){
+        syncReportsFromCloud(arr||[]);
       });
     });
     HHDB.loadRequests(function(arr){REQ_LIST=arr||[]});
     HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[]});
-    HHDB.onReportsChange(function(arr){if(arr&&arr.length){try{localStorage.setItem('hh_reports',JSON.stringify(arr));loadDB();loadPhotos();rDash&&rDash();rAnl&&rAnl('simple');rCom&&rCom()}catch(e){}}});
+    HHDB.onReportsChange(function(arr){syncReportsFromCloud(arr||[])});
     HHDB.onAdminsChange(function(admins){if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins))}catch(e){}}});
     HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(document.querySelector('#pReq.pg.on'))rReqList()});
     HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
