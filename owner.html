@@ -801,14 +801,19 @@ function showDisDetail(id){
   var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r,{formFormat:true}):'';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
-  // 所有者のみ：詳細モーダル下部に削除ボタンを追加
-  var delBtn='';
+  // 所有者のみ：詳細モーダル下部に編集（確定済みのみ）・削除ボタンを追加
+  var ownerActions='';
   if(typeof ROLE!=='undefined'&&ROLE==='owner'){
     var idEsc=String(id||'').replace(/'/g,"\\'");
-    delBtn='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #FFCDD2;text-align:right"><button type="button" onclick="ownerDeleteDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #B71C1C;background:#B71C1C;color:#fff;font-weight:700;cursor:pointer">🗑 この災害発生報告を削除（所有者）</button></div>';
+    var editBtn='';
+    if(r.wf&&r.wf.state==='final'){
+      editBtn='<button type="button" onclick="ownerEditDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #0D47A1;background:#0D47A1;color:#fff;font-weight:700;cursor:pointer">✎ 承認済み報告を修正（所有者）</button>';
+    }
+    var delBtn='<button type="button" onclick="ownerDeleteDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #B71C1C;background:#B71C1C;color:#fff;font-weight:700;cursor:pointer">🗑 この災害発生報告を削除（所有者）</button>';
+    ownerActions='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #FFCDD2;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'+editBtn+delBtn+'</div>';
   }
   document.getElementById('mT').textContent='災害発生報告 詳細';
-  document.getElementById('mI').innerHTML=h+ex+delBtn;
+  document.getElementById('mI').innerHTML=h+ex+ownerActions;
   showDisExportToolbar(id);
   var modal=document.getElementById('modal');
   var mbd=modal.querySelector('.mbd');
@@ -1049,6 +1054,166 @@ function ownerDeleteDisasterReport(id){
   hideDisExportToolbar();
   if(typeof rDisList==='function')rDisList();
   _ownerToast('✓ 災害発生報告を削除しました');
+}
+
+// ===== OWNER: 承認確定済み災害発生報告の修正 =====
+// 承認の降りた（final）災害報告について所有者のみフィールドを修正できる。
+// 変更内容は wf.history と wf.report_addenda に記録される。
+var OWNER_DIS_EDIT_FIELDS=[
+  // 報告情報
+  {g:'報告情報',k:'report_date',l:'報告日',t:'text'},
+  {g:'報告情報',k:'sekininsha',l:'責任者',t:'text'},
+  {g:'報告情報',k:'reporter',l:'報告者',t:'text'},
+  // 災害情報
+  {g:'災害情報',k:'datetime',l:'発生日時',t:'text'},
+  {g:'災害情報',k:'keigen',l:'軽重',t:'text'},
+  {g:'災害情報',k:'jiko',l:'事故型',t:'text'},
+  {g:'災害情報',k:'type',l:'事故型詳細',t:'text'},
+  {g:'災害情報',k:'kiinbutsu',l:'起因物',t:'text'},
+  {g:'災害情報',k:'kanri',l:'管理状況',t:'text'},
+  // 場所
+  {g:'場所',k:'basho',l:'災害場所',t:'text'},
+  {g:'場所',k:'basho_jusho',l:'住所',t:'text'},
+  {g:'場所',k:'jusho',l:'場所（自由記述）',t:'text'},
+  {g:'場所',k:'basho_detail',l:'場所詳細',t:'textarea'},
+  // 被災者
+  {g:'被災者',k:'victim',l:'被災者氏名',t:'text'},
+  {g:'被災者',k:'age',l:'年齢',t:'text'},
+  {g:'被災者',k:'birth',l:'生年月日',t:'text'},
+  {g:'被災者',k:'victim_dept',l:'部署・職種',t:'text'},
+  {g:'被災者',k:'shokumei',l:'職名',t:'text'},
+  {g:'被災者',k:'hire_date',l:'雇入年月日',t:'text'},
+  {g:'被災者',k:'exp',l:'経験年数',t:'text'},
+  // 傷病
+  {g:'傷病',k:'shobyomei',l:'傷病名',t:'text'},
+  {g:'傷病',k:'byoin',l:'病院名',t:'text'},
+  {g:'傷病',k:'koui',l:'受傷部位',t:'text'},
+  {g:'傷病',k:'kyugyo',l:'休業',t:'text'},
+  {g:'傷病',k:'kyugyo_type',l:'休業区分',t:'text'},
+  {g:'傷病',k:'kyugyo_days',l:'休業日数',t:'text'},
+  {g:'傷病',k:'kyugyo_yen',l:'休業損害(円)',t:'text'},
+  // 事業場
+  {g:'事業場',k:'gyoshu',l:'業種',t:'text'},
+  {g:'事業場',k:'jigyosho',l:'事業場名',t:'text'},
+  {g:'事業場',k:'address',l:'事業場住所',t:'text'},
+  {g:'事業場',k:'workers',l:'労働者数',t:'text'},
+  // 作業・機械
+  {g:'作業・機械',k:'machine',l:'機械等',t:'text'},
+  {g:'作業・機械',k:'sagyo',l:'作業内容',t:'textarea'},
+  // 状況・原因
+  {g:'状況・原因',k:'situation',l:'発生状況',t:'textarea'},
+  {g:'状況・原因',k:'cause',l:'原因（概要）',t:'textarea'},
+  {g:'状況・原因',k:'gennin',l:'原因',t:'textarea'},
+  {g:'状況・原因',k:'gennin_aru',l:'原因（あるべき）',t:'textarea'},
+  {g:'状況・原因',k:'gennin_name',l:'原因者氏名',t:'text'},
+  {g:'状況・原因',k:'genin_busshi',l:'物的原因',t:'textarea'},
+  {g:'状況・原因',k:'genin_jin',l:'人的原因',t:'textarea'},
+  {g:'状況・原因',k:'fuanzen',l:'不安全状態',t:'textarea'},
+  {g:'状況・原因',k:'fuanzen_kodo',l:'不安全行動',t:'textarea'},
+  // 被害
+  {g:'被害',k:'human_damage',l:'人的被害',t:'textarea'},
+  {g:'被害',k:'material_damage',l:'物的被害',t:'textarea'},
+  {g:'被害',k:'kekka',l:'結果',t:'textarea'},
+  // 対策・教訓
+  {g:'対策・教訓',k:'measure',l:'対策（概要）',t:'textarea'},
+  {g:'対策・教訓',k:'taisaku',l:'対策（詳細）',t:'textarea'},
+  {g:'対策・教訓',k:'kaizen_honin',l:'改善（本人）',t:'textarea'},
+  {g:'対策・教訓',k:'kaizen_kantoku',l:'改善（監督）',t:'textarea'},
+  {g:'対策・教訓',k:'kyukun_person',l:'教訓（人）',t:'textarea'},
+  {g:'対策・教訓',k:'kyukun_equip',l:'教訓（設備）',t:'textarea'},
+  {g:'対策・教訓',k:'kyukun_mgmt',l:'教訓（管理）',t:'textarea'}
+];
+
+function _ownerEscHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function ownerEditDisasterReport(id){
+  if(!_ownerAssertOwner())return;
+  var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+  if(!r){alert('対象の災害発生報告が見つかりません');return}
+  if(!r.wf||r.wf.state!=='final'){alert('承認確定済み（final）の報告のみ修正できます');return}
+  var idEsc=String(id||'').replace(/'/g,"\\'");
+  var groups={};
+  OWNER_DIS_EDIT_FIELDS.forEach(function(f){if(!groups[f.g])groups[f.g]=[];groups[f.g].push(f)});
+  var body='<div style="padding:14px 16px;max-height:60vh;overflow-y:auto;background:#FAFAFA">';
+  body+='<div style="padding:10px 14px;background:#E3F2FD;border-left:4px solid #1565C0;border-radius:6px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#0D47A1;margin-bottom:4px">⚠ 承認確定済み報告の修正（所有者）</div><div style="font-size:11px;color:#1565C0;line-height:1.5">この報告はすでに承認が完了しています。修正内容は履歴に記録され、変更前後の値も残ります。<br>軽微な誤記訂正・追記情報の反映等にお使いください。</div></div>';
+  body+='<div class="fg" style="margin-bottom:14px"><label class="fl" style="font-size:12px;font-weight:600;color:#0D47A1">修正理由・コメント<span style="color:#B71C1C">*</span></label><textarea id="ownerEditDisNote" rows="2" style="width:100%;padding:8px 10px;border:1px solid #1565C0;border-radius:6px;font-size:12px" placeholder="例: 誤記訂正、受傷部位の追記、休業日数確定の反映 など"></textarea></div>';
+  Object.keys(groups).forEach(function(gn){
+    body+='<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#0D47A1;padding:6px 10px;background:#E8F5E9;border-radius:4px;margin-bottom:8px">'+_ownerEscHtml(gn)+'</div>';
+    groups[gn].forEach(function(f){
+      var val=r[f.k]==null?'':String(r[f.k]);
+      var esc=_ownerEscHtml(val);
+      body+='<div class="fg" style="margin-bottom:8px"><label class="fl" style="font-size:11px;color:var(--t2);margin-bottom:2px">'+_ownerEscHtml(f.l)+'</label>';
+      if(f.t==='textarea'){
+        body+='<textarea data-owner-edit-key="'+_ownerEscHtml(f.k)+'" rows="3" style="width:100%;padding:7px 9px;border:1px solid var(--bd);border-radius:6px;font-size:12px;font-family:inherit;resize:vertical">'+esc+'</textarea>';
+      }else{
+        body+='<input type="text" data-owner-edit-key="'+_ownerEscHtml(f.k)+'" value="'+esc+'" style="width:100%;padding:7px 9px;border:1px solid var(--bd);border-radius:6px;font-size:12px">';
+      }
+      body+='</div>';
+    });
+    body+='</div>';
+  });
+  body+='</div>';
+  body+='<div style="padding:12px 16px;border-top:1px solid var(--bd);text-align:right;display:flex;gap:8px;justify-content:flex-end;background:#fff">';
+  body+='<button type="button" class="fp" onclick="showDisDetail(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid var(--bd);background:#fff;color:var(--t1);font-weight:600;cursor:pointer">キャンセル</button>';
+  body+='<button type="button" class="fp" onclick="ownerSaveEditedDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #1B5E20;background:#2E7D32;color:#fff;font-weight:700;cursor:pointer">💾 修正を保存</button>';
+  body+='</div>';
+  hideDisExportToolbar();
+  document.getElementById('mT').textContent='災害発生報告 修正（所有者）';
+  document.getElementById('mI').innerHTML=body;
+  var modal=document.getElementById('modal');
+  var mbd=modal.querySelector('.mbd');
+  if(mbd)mbd.classList.add('dis-detail-wide');
+  modal.classList.add('show');
+}
+
+function ownerSaveEditedDisasterReport(id){
+  if(!_ownerAssertOwner())return;
+  var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+  if(!r){alert('対象の災害発生報告が見つかりません');return}
+  if(!r.wf||r.wf.state!=='final'){alert('承認確定済み（final）の報告のみ修正できます');return}
+  var noteEl=document.getElementById('ownerEditDisNote');
+  var note=noteEl?String(noteEl.value||'').trim():'';
+  if(!note){alert('修正理由・コメントを入力してください');noteEl&&noteEl.focus();return}
+  var changes=[];
+  document.querySelectorAll('[data-owner-edit-key]').forEach(function(el){
+    var k=el.getAttribute('data-owner-edit-key');
+    var nv=String(el.value==null?'':el.value);
+    var ov=r[k]==null?'':String(r[k]);
+    if(nv!==ov){changes.push({key:k,label:(OWNER_DIS_EDIT_FIELDS.find(function(f){return f.k===k})||{}).l||k,from:ov,to:nv});r[k]=nv}
+  });
+  if(!changes.length){
+    if(!confirm('項目の変更はありません。コメントのみを履歴に追記しますか？'))return;
+  }
+  var now=new Date().toISOString();
+  r.wf=r.wf||{};
+  r.wf.history=Array.isArray(r.wf.history)?r.wf.history:[];
+  r.wf.report_addenda=Array.isArray(r.wf.report_addenda)?r.wf.report_addenda:[];
+  r.wf.history.push({
+    type:'owner_edit',
+    at:now,
+    by:CUR&&CUR.name?CUR.name:'所有者',
+    note:'承認確定後の修正：'+note+(changes.length?'（'+changes.length+'項目変更）':'（項目変更なし）')
+  });
+  var addText='【所有者による承認確定後の修正】\n'+note;
+  if(changes.length){
+    addText+='\n\n【変更項目】\n'+changes.map(function(c){
+      var fromS=c.from===''?'（空白）':c.from;
+      var toS=c.to===''?'（空白）':c.to;
+      return '・'+c.label+'\n  旧: '+fromS+'\n  新: '+toS;
+    }).join('\n');
+  }
+  r.wf.report_addenda.push({
+    at:now,
+    by:CUR&&CUR.name?CUR.name:'所有者',
+    role:'所有者（承認確定後の修正）',
+    text:addText
+  });
+  if(typeof disasterSaveReports==='function')disasterSaveReports(DIS_LIST,id);
+  else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
+  else{try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}}
+  _ownerToast('✓ 災害発生報告を修正しました'+(changes.length?'（'+changes.length+'項目）':'（コメント追記）'));
+  showDisDetail(id);
+  if(typeof rDisList==='function')rDisList();
 }
 
 // ===== QR CODE GENERATION =====
