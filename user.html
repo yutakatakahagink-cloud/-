@@ -483,30 +483,46 @@ input[type="file"].photo-input{display:none}
     if(!dept){nS.disabled=true;return}
     nS.disabled=false;
     EMP.filter(function(e){var d=e.honbu;if(e.bu)d+='/'+e.bu;if(e.ka)d+='/'+e.ka;return d===dept}).forEach(function(e){var o=document.createElement('option');o.value=e.name;o.textContent=e.name;nS.appendChild(o)});
+    var oOther=document.createElement('option');oOther.value='__other__';oOther.textContent='その他（一覧にない方）';nS.appendChild(oOther);
   }
   function onNameSel(){
     var name=document.getElementById('loginName').value;
     var info=document.getElementById('loginInfo'),btn=document.getElementById('loginBtn');
     if(!name){info.style.display='none';btn.disabled=true;return}
+    if(name==='__other__'){var dept=(window.dSel||document.getElementById('loginDept')).value;info.style.display='block';info.innerHTML='<b>その他</b>（'+dept+'）／ログイン後に氏名を入力してください';btn.disabled=false;return}
     var e=EMP.find(function(x){return x.name===name});
     if(e){info.style.display='block';info.innerHTML='<b>'+e.name+'</b>（'+e.kubun+'）/ '+e.age+'歳（'+e.ageRange+'）/ '+e.dept;btn.disabled=false}
   }
   function doLogin(){
     var name=document.getElementById('loginName').value;
-    var CUR=EMP.find(function(x){return x.name===name});
-    if(!CUR)return;
-    CUR.dept=CUR.dept||(CUR.honbu+(CUR.bu?'/'+CUR.bu:'')+(CUR.ka?'/'+CUR.ka:''));
+    var CUR;
+    if(name==='__other__'){
+      var dept=(window.dSel||document.getElementById('loginDept')).value;
+      var parts=dept.split('/');
+      CUR={name:'',kubun:'',age:'',ageRange:'',honbu:parts[0]||'',bu:parts[1]||'',ka:parts[2]||'',dept:dept,isOther:true};
+    }else{
+      CUR=EMP.find(function(x){return x.name===name});
+      if(!CUR)return;
+      CUR.dept=CUR.dept||(CUR.honbu+(CUR.bu?'/'+CUR.bu:'')+(CUR.ka?'/'+CUR.ka:''));
+    }
     window.CUR=CUR;window.ROLE='user';
     var ls=document.getElementById('loginScreen');
     if(ls){ls.style.display='none';ls.classList.add('hidden');}
-    document.getElementById('f_name').value=CUR.name;
-    document.getElementById('f_kubun').value=CUR.kubun;
-    document.getElementById('f_age').value=CUR.ageRange;
+    var fName=document.getElementById('f_name');
+    var fKubun=document.getElementById('f_kubun');
+    if(CUR.isOther){
+      fName.value='';fName.removeAttribute('readonly');fName.placeholder='氏名を入力';
+      fKubun.value='';fKubun.removeAttribute('readonly');fKubun.placeholder='区分を入力（例: 土木技能工）';
+    }else{
+      fName.value=CUR.name;fName.setAttribute('readonly','');fName.removeAttribute('placeholder');
+      fKubun.value=CUR.kubun;fKubun.setAttribute('readonly','');fKubun.removeAttribute('placeholder');
+    }
+    document.getElementById('f_age').value=CUR.ageRange||'';
     document.getElementById('f_dept').value=CUR.dept;
     document.getElementById('userPill').textContent='ログイン画面へ';
-    var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
+    var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name||'';
     var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
-    document.getElementById('f_reporter').value=CUR.name;
+    document.getElementById('f_reporter').value=CUR.name||'';
     document.getElementById('f_victim_dept').value=CUR.dept;
     if(typeof window.HHDB!=='undefined')window.HHDB.init(function(){if(typeof doDataInit==='function')doDataInit()});
     if(typeof loadRequests==='function')loadRequests();
@@ -1066,8 +1082,6 @@ input[type="file"].photo-input{display:none}
   <div class="cs">
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('📊 体験別→対策提案',document.getElementById('cByExp_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp" class="byexp-grid"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
-    <div class="cb com-card" onclick="showComDetail('高ストレス×高リスク',document.getElementById('cL_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--rd)"></span>高ストレス×高リスク</div><div id="cL"></div><div class="com-tap">タップで詳細を表示</div><div id="cL_full" style="display:none"></div></div>
-    <div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>現場別ストレス傾向</div><div id="sStr"></div></div>
     <div class="cb com-card" onclick="showComDetail('💡 改善提案',document.getElementById('sug_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>💡 改善提案</div><div class="icb" id="sug"></div><div class="com-tap">タップで詳細を表示</div><div id="sug_full" style="display:none"></div></div>
     <div class="cb com-card" onclick="showComDetail('対策進捗',document.getElementById('aTk_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>対策進捗</div><div id="aTk"></div><div class="com-tap">タップで詳細を表示</div><div id="aTk_full" style="display:none"></div></div>
     <div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--bl)"></span>📜 法改正</div><div id="cLaw"></div></div>
@@ -1132,29 +1146,45 @@ function onDeptSel(){
   nS.disabled=false;
   EMP.filter(e=>{let d=e.honbu;if(e.bu)d+='/'+e.bu;if(e.ka)d+='/'+e.ka;return d===dept}).forEach(e=>{
     var o=document.createElement('option');o.value=e.name;o.textContent=e.name;nS.appendChild(o)});
+  var oOther=document.createElement('option');oOther.value='__other__';oOther.textContent='その他（一覧にない方）';nS.appendChild(oOther);
 }
 function onNameSel(){
   const name=document.getElementById('loginName').value;
   const info=document.getElementById('loginInfo'),btn=document.getElementById('loginBtn');
   if(!name){info.style.display='none';btn.disabled=true;return}
+  if(name==='__other__'){var dept=(dSel||document.getElementById('loginDept')).value;info.style.display='block';info.innerHTML='<b>その他</b>（'+dept+'）／ログイン後に氏名を入力してください';btn.disabled=false;return}
   const e=EMP.find(x=>x.name===name);
   if(e){info.style.display='block';info.innerHTML=`<b>${e.name}</b>（${e.kubun}）/ ${e.age}歳（${e.ageRange}）/ ${e.dept}`;btn.disabled=false}
 }
 function doLogin(){
   const name=document.getElementById('loginName').value;
-  CUR=EMP.find(x=>x.name===name);ROLE='user';window.CUR=CUR;window.ROLE=ROLE;
-  if(!CUR)return;
-  CUR.dept=CUR.dept||(CUR.honbu+(CUR.bu?'/'+CUR.bu:'')+(CUR.ka?'/'+CUR.ka:''));
+  if(name==='__other__'){
+    var dept=(dSel||document.getElementById('loginDept')).value;
+    var parts=dept.split('/');
+    CUR={name:'',kubun:'',age:'',ageRange:'',honbu:parts[0]||'',bu:parts[1]||'',ka:parts[2]||'',dept:dept,isOther:true};
+  }else{
+    CUR=EMP.find(x=>x.name===name);
+    if(!CUR)return;
+    CUR.dept=CUR.dept||(CUR.honbu+(CUR.bu?'/'+CUR.bu:'')+(CUR.ka?'/'+CUR.ka:''));
+  }
+  ROLE='user';window.CUR=CUR;window.ROLE=ROLE;
   var ls=document.getElementById('loginScreen');
   if(ls){ls.style.display='none';ls.classList.add('hidden');}
-  document.getElementById('f_name').value=CUR.name;
-  document.getElementById('f_kubun').value=CUR.kubun;
-  document.getElementById('f_age').value=CUR.ageRange;
+  var fName=document.getElementById('f_name');
+  var fKubun=document.getElementById('f_kubun');
+  if(CUR.isOther){
+    fName.value='';fName.removeAttribute('readonly');fName.placeholder='氏名を入力';
+    fKubun.value='';fKubun.removeAttribute('readonly');fKubun.placeholder='区分を入力（例: 土木技能工）';
+  }else{
+    fName.value=CUR.name;fName.setAttribute('readonly','');fName.removeAttribute('placeholder');
+    fKubun.value=CUR.kubun;fKubun.setAttribute('readonly','');fKubun.removeAttribute('placeholder');
+  }
+  document.getElementById('f_age').value=CUR.ageRange||'';
   document.getElementById('f_dept').value=CUR.dept;
   document.getElementById('userPill').textContent='ログイン画面へ';
-  var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
+  var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name||'';
   var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
-  document.getElementById('f_reporter').value=CUR.name;
+  document.getElementById('f_reporter').value=CUR.name||'';
   document.getElementById('f_victim_dept').value=CUR.dept;
   // 全社のヒヤリハット報告を初期表示し、必要に応じて部署タブで絞り込めるようにする
   deptFilt='all';
@@ -2080,7 +2110,11 @@ function doSubmit(){
   const gL=id=>{const o={};document.querySelectorAll('#'+id+' .lkd').forEach(g=>{const sel=g.querySelector('.lkdt.on');o[g.dataset.f]=sel?parseInt(sel.dataset.v,10):0});return o};
   const otherText=document.getElementById('f_other').value;
   if(exp.includes('その他')&&otherText)exp[exp.indexOf('その他')]='その他:'+otherText;
-  var newR={id:++idc,date:document.getElementById('f_date').value,n:CUR.name,dept:CUR.dept,ku:CUR.kubun,ar:CUR.ageRange,e:exp,w:document.getElementById('f_ww').value,wk:document.getElementById('f_wk').value,d:ds,m:document.getElementById('f_msr').value,c:[...document.querySelectorAll('#cC .ch.on')].map(c=>c.dataset.v),l:+(document.querySelector('.lb.on')?.dataset.v||0),st:gL('lkS'),we:gL('lkW'),av:[...document.querySelectorAll('#cAv .ch.on')].map(c=>c.dataset.v),ac:[...document.querySelectorAll('#cAc .ck.on')].map(c=>c.dataset.v),ss:'new'};
+  var fNameVal=(document.getElementById('f_name').value||'').trim()||CUR.name||'';
+  var fKubunVal=(document.getElementById('f_kubun').value||'').trim()||CUR.kubun||'';
+  var fDeptVal=(document.getElementById('f_dept').value||'').trim()||CUR.dept||'';
+  if(CUR&&CUR.isOther&&!fNameVal){alert('氏名を入力してください');return}
+  var newR={id:++idc,date:document.getElementById('f_date').value,n:fNameVal,dept:fDeptVal,ku:fKubunVal,ar:CUR.ageRange||'',e:exp,w:document.getElementById('f_ww').value,wk:document.getElementById('f_wk').value,d:ds,m:document.getElementById('f_msr').value,c:[...document.querySelectorAll('#cC .ch.on')].map(c=>c.dataset.v),l:+(document.querySelector('.lb.on')?.dataset.v||0),st:gL('lkS'),we:gL('lkW'),av:[...document.querySelectorAll('#cAv .ch.on')].map(c=>c.dataset.v),ac:[...document.querySelectorAll('#cAc .ck.on')].map(c=>c.dataset.v),ss:'new'};
   var _ph=window._hhPhotos||pendingPhotos||[];
   if(_ph&&_ph.length)newR.photos=_ph.slice(0,5);
   DB.unshift(newR);
@@ -2424,26 +2458,7 @@ function rCom(){
   if(typeof applyLawsToDashboard==='function')applyLawsToDashboard(esc,cLaw);
   else if(cLaw)cLaw.innerHTML='<p style="font-size:12px;line-height:1.55;color:var(--rd)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p><p style="font-size:11px;line-height:1.55;color:var(--t3);margin-top:8px">F12→コンソールでエラーを確認してください。GitHub Pages では laws_refresh.js が未アップロードまたは構文エラーのときに出ます。GitHubにアップロード.ps1 で laws_refresh.js・laws_data.json を含めて再デプロイしてください。</p>';
 
-  // Critical: high stress x high risk
-  if(IS_ADMIN){
-    const crit=fd.filter(r=>{const v=Object.values(r.st||{});return v.length&&r.l>=7&&(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
-    var cLHtml=crit.length?crit.map(r=>{const v=Object.values(r.st||{});const av=v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'0';return`<div class="rc" onclick="event.stopPropagation();sDt(${r.id})" style="margin-bottom:5px"><div class="rt"><span class="bd2 bf">${((r.e||[])[0]||'').substring(0,8)}</span><span style="font-size:9px;color:var(--rd);font-weight:700">Lv.${r.l}/ストレス${av}</span></div><div class="rde">${r.d||''}</div><div class="rm"><span>${r.n||''}</span><span>${(r.dept||'').split('/').pop()}</span></div></div>`}).join(''):'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
-    document.getElementById('cL').innerHTML=cLHtml;
-    var cLFull=document.getElementById('cL_full');if(cLFull)cLFull.innerHTML='<div class="com-detail">'+cLHtml+'</div>';
-  }else{
-    document.getElementById('cL').innerHTML='<p style="color:var(--t3);font-size:11px;padding:14px">🔒 管理者のみ閲覧可能</p>';
-    var cLFull=document.getElementById('cL_full');if(cLFull)cLFull.innerHTML='<div class="com-detail"><p>🔒 管理者のみ閲覧可能</p></div>';
-  }
-
-  // Dept stress comparison
-  if(IS_ADMIN){
-    const sites={};fd.forEach(r=>{if(!r.dept)return;const s=r.dept.split('/').slice(0,2).join('/');if(!sites[s])sites[s]={ct:0,stS:0,lS:0,hc:0};sites[s].ct++;const sv=Object.values(r.st||{});if(sv.length)sites[s].stS+=sv.reduce((a,b)=>a+b,0)/sv.length;sites[s].lS+=(r.l||0);if(r.l>=7)sites[s].hc++});
-    const se=Object.entries(sites).sort((a,b)=>b[1].hc-a[1].hc);
-    const scl={'土木本部/土木部':'var(--ac)','土木本部/高千穂営業所':'var(--yl)','建材本部/宮崎支店':'var(--bl)','建材本部/延岡営業所':'var(--pr)'};
-    document.getElementById('sStr').innerHTML=se.map(([n,d])=>{const as=(d.stS/d.ct).toFixed(1),al=(d.lS/d.ct).toFixed(1),co=scl[n]||'var(--t2)';return`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${co};margin-bottom:3px">${n.split('/').pop()}（${d.ct}件）</div><div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:50px;font-size:9px;color:var(--t3)">ストレス</span><div class="crt"><div class="crf" style="width:${(as/4)*100}%;background:${co}"></div></div><span class="crv" style="color:${co}">${as}</span></div><div style="display:flex;gap:6px;align-items:center"><span style="width:50px;font-size:9px;color:var(--t3)">危険度</span><div class="crt"><div class="crf" style="width:${(al/10)*100}%;background:${co};opacity:.6"></div></div><span class="crv" style="color:${co}">${al}</span></div></div>`}).join('');
-  }else{
-    document.getElementById('sStr').innerHTML='<p style="color:var(--t3);font-size:11px;padding:14px">🔒 管理者のみ閲覧可能</p>';
-  }
+  // 「高ストレス×高リスク」「現場別ストレス傾向」は使用者画面では非表示
 
   // Suggestions
   let sg='';
