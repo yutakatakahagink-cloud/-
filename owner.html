@@ -1136,7 +1136,6 @@ function ownerEditDisasterReport(id){
   OWNER_DIS_EDIT_FIELDS.forEach(function(f){if(!groups[f.g])groups[f.g]=[];groups[f.g].push(f)});
   var body='<div style="padding:14px 16px;max-height:60vh;overflow-y:auto;background:#FAFAFA">';
   body+='<div style="padding:10px 14px;background:#E3F2FD;border-left:4px solid #1565C0;border-radius:6px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#0D47A1;margin-bottom:4px">⚠ 承認確定済み報告の修正（所有者）</div><div style="font-size:11px;color:#1565C0;line-height:1.5">この報告はすでに承認が完了しています。修正内容は履歴に記録され、変更前後の値も残ります。<br>軽微な誤記訂正・追記情報の反映等にお使いください。</div></div>';
-  body+='<div class="fg" style="margin-bottom:14px"><label class="fl" style="font-size:12px;font-weight:600;color:#0D47A1">修正理由・コメント<span style="color:#B71C1C">*</span></label><textarea id="ownerEditDisNote" rows="2" style="width:100%;padding:8px 10px;border:1px solid #1565C0;border-radius:6px;font-size:12px" placeholder="例: 誤記訂正、受傷部位の追記、休業日数確定の反映 など"></textarea></div>';
   Object.keys(groups).forEach(function(gn){
     body+='<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#0D47A1;padding:6px 10px;background:#E8F5E9;border-radius:4px;margin-bottom:8px">'+_ownerEscHtml(gn)+'</div>';
     groups[gn].forEach(function(f){
@@ -1171,9 +1170,6 @@ function ownerSaveEditedDisasterReport(id){
   var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
   if(!r){alert('対象の災害発生報告が見つかりません');return}
   if(!r.wf||r.wf.state!=='final'){alert('承認確定済み（final）の報告のみ修正できます');return}
-  var noteEl=document.getElementById('ownerEditDisNote');
-  var note=noteEl?String(noteEl.value||'').trim():'';
-  if(!note){alert('修正理由・コメントを入力してください');noteEl&&noteEl.focus();return}
   var changes=[];
   document.querySelectorAll('[data-owner-edit-key]').forEach(function(el){
     var k=el.getAttribute('data-owner-edit-key');
@@ -1181,9 +1177,7 @@ function ownerSaveEditedDisasterReport(id){
     var ov=r[k]==null?'':String(r[k]);
     if(nv!==ov){changes.push({key:k,label:(OWNER_DIS_EDIT_FIELDS.find(function(f){return f.k===k})||{}).l||k,from:ov,to:nv});r[k]=nv}
   });
-  if(!changes.length){
-    if(!confirm('項目の変更はありません。コメントのみを履歴に追記しますか？'))return;
-  }
+  if(!changes.length){alert('変更がありません');return}
   var now=new Date().toISOString();
   r.wf=r.wf||{};
   r.wf.history=Array.isArray(r.wf.history)?r.wf.history:[];
@@ -1192,16 +1186,13 @@ function ownerSaveEditedDisasterReport(id){
     type:'owner_edit',
     at:now,
     by:CUR&&CUR.name?CUR.name:'所有者',
-    note:'承認確定後の修正：'+note+(changes.length?'（'+changes.length+'項目変更）':'（項目変更なし）')
+    note:'承認確定後の修正（'+changes.length+'項目変更）'
   });
-  var addText='【所有者による承認確定後の修正】\n'+note;
-  if(changes.length){
-    addText+='\n\n【変更項目】\n'+changes.map(function(c){
-      var fromS=c.from===''?'（空白）':c.from;
-      var toS=c.to===''?'（空白）':c.to;
-      return '・'+c.label+'\n  旧: '+fromS+'\n  新: '+toS;
-    }).join('\n');
-  }
+  var addText='【所有者による承認確定後の修正】\n\n【変更項目】\n'+changes.map(function(c){
+    var fromS=c.from===''?'（空白）':c.from;
+    var toS=c.to===''?'（空白）':c.to;
+    return '・'+c.label+'\n  旧: '+fromS+'\n  新: '+toS;
+  }).join('\n');
   r.wf.report_addenda.push({
     at:now,
     by:CUR&&CUR.name?CUR.name:'所有者',
@@ -1211,7 +1202,7 @@ function ownerSaveEditedDisasterReport(id){
   if(typeof disasterSaveReports==='function')disasterSaveReports(DIS_LIST,id);
   else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);
   else{try{localStorage.setItem('hh_disaster_reports',JSON.stringify(DIS_LIST))}catch(e){}}
-  _ownerToast('✓ 災害発生報告を修正しました'+(changes.length?'（'+changes.length+'項目）':'（コメント追記）'));
+  _ownerToast('✓ 災害発生報告を修正しました（'+changes.length+'項目）');
   showDisDetail(id);
   if(typeof rDisList==='function')rDisList();
 }
