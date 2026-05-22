@@ -672,7 +672,7 @@ input[type="file"].photo-input{display:none}
           <div class="dis-fl-group-body">
             <div class="dis-fl-row"><div class="dis-fl-sublabel">傷病名<br>(損害状況)</div><div class="dis-fl-input"><input class="fi" id="f_shobyomei_pc" placeholder="例: ※診断書の参照"></div></div>
             <div class="dis-fl-row"><div class="dis-fl-sublabel">病院名</div><div class="dis-fl-input"><input class="fi" id="f_byoin_pc" placeholder="例:○○病院" style="flex:1;min-width:80px"> 後遺症:<label><input type="radio" name="koui_pc" value="有">有</label><label><input type="radio" name="koui_pc" value="無" checked>無</label></div></div>
-            <div class="dis-fl-row"><div class="dis-fl-sublabel">休業見込<br>(損害見込額)</div><div class="dis-fl-input dis-fl-kyugyo"><input class="fi dis-kyugyo-days" id="f_kyugyo_days_pc" type="text" placeholder="日数">日間 <input class="fi dis-kyugyo-yen" id="f_kyugyo_yen_pc" type="text" placeholder="金額">円 <label><input type="radio" name="kyugyo_type_pc" value="不休">不休</label><label><input type="radio" name="kyugyo_type_pc" value="休業" checked>休業</label></div></div>
+            <div class="dis-fl-row"><div class="dis-fl-sublabel">休業見込<br>(損害見込額)</div><div class="dis-fl-input dis-fl-kyugyo"><label><input type="radio" name="kyugyo_type_pc" value="不休" checked>不休</label><label><input type="radio" name="kyugyo_type_pc" value="休業">休業</label> <input class="fi dis-kyugyo-days" id="f_kyugyo_days_pc" type="text" placeholder="日数">日間 <input class="fi dis-kyugyo-yen" id="f_kyugyo_yen_pc" type="text" placeholder="金額">円</div></div>
           </div>
         </div>
         <div class="dis-fl-row"><div class="dis-fl-label">現認者</div><div class="dis-fl-input dis-fl-gennin"><label><input type="radio" name="gennin_aru_pc" value="有">有</label><label><input type="radio" name="gennin_aru_pc" value="無" checked>無</label> 職名:<input class="fi dis-gennin-shoku" id="f_shokumei_pc" placeholder="職名"> 氏名:<input class="fi dis-gennin-name" id="f_gennin_pc" placeholder="氏名"></div></div>
@@ -1530,7 +1530,7 @@ function resetDisasterFormPC(){
   ids.forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
   ['f_kiinbutsu_pc','f_fuanzen_pc','f_fuanzen_kodo_pc','f_jiko_pc','f_kanri_pc'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});
   var koui=document.querySelector('input[name="koui_pc"][value="無"]');if(koui)koui.checked=true;
-  var ky=document.querySelector('input[name="kyugyo_type_pc"][value="休業"]');if(ky)ky.checked=true;
+  var ky=document.querySelector('input[name="kyugyo_type_pc"][value="不休"]');if(ky)ky.checked=true;
   var gn=document.querySelector('input[name="gennin_aru_pc"][value="無"]');if(gn)gn.checked=true;
   if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
   if(window._disPhotosPC_render)window._disPhotosPC_render();
@@ -2019,7 +2019,7 @@ function rDisList(){
 }
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
-  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r):'<p style="padding:12px">詳細表示の読み込みに失敗しました。</p>';
+  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r,{formFormat:true}):'<p style="padding:12px">詳細表示の読み込みに失敗しました。</p>';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfUserPanelHtml==='function'?disasterWfUserPanelHtml(r,id,CUR?CUR.name:''):'');
   document.getElementById('mT').textContent='災害発生報告 詳細';
