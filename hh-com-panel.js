@@ -91,8 +91,46 @@
       measures:summarizeField(sub,'m',3),
       expMeasure:EXP_TO_MEASURE[exp]||'',
       causeM:causeMeasuresText(sub),
-      hiCount:sub.filter(function(r){return+r.l>=7}).length
+      hiCount:sub.filter(function(r){return+r.l>=7}).length,
+      photoCount:countPhotosInSub(sub)
     };
+  }
+  function normalizePhotos(photos){
+    var rd=typeof global.hhReportDetail!=='undefined'?global.hhReportDetail:null;
+    return rd?rd.normalizePhotoList(photos):(photos||[]);
+  }
+  function countPhotosInSub(sub){
+    var n=0;
+    (sub||[]).forEach(function(r){n+=normalizePhotos(r.photos).length});
+    return n;
+  }
+  function photosGridHtml(photos){
+    photos=normalizePhotos(photos);
+    if(!photos.length)return '';
+    var imgs=photos.map(function(p,i){
+      var src=esc(p);
+      return '<img src="'+src+'" alt="現場写真'+(i+1)+'" loading="lazy" onclick="typeof showFullPhotoSrc===\'function\'&&showFullPhotoSrc(this.src)" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:\'表示不可\',style:\'font-size:11px;color:var(--t3)\'}))">';
+    }).join('');
+    return '<div class="modal-photos">'+imgs+'</div>';
+  }
+  function reportPhotoMeta(r){
+    var d=String(r.w||r.date||'').replace(/\s+/g,' ').trim();
+    var det=String(r.d||'').replace(/\s+/g,' ').trim();
+    if(det.length>40)det=det.substring(0,40)+'…';
+    return esc(d)+(det?' — '+esc(det):'');
+  }
+  function buildExpPhotosSection(sub){
+    var blocks=[],total=0;
+    (sub||[]).forEach(function(r){
+      var photos=normalizePhotos(r.photos);
+      if(!photos.length)return;
+      total+=photos.length;
+      blocks.push('<div class="com-exp-photo-block"><p class="com-exp-photo-meta">'+reportPhotoMeta(r)+'</p>'+photosGridHtml(photos)+'</div>');
+    });
+    if(!blocks.length){
+      return '<div class="com-exp-row com-exp-photos-row"><div class="com-exp-label">現場写真</div><div class="com-exp-body"><p class="com-exp-txt com-exp-no-photo">写真はありません</p></div></div>';
+    }
+    return '<div class="com-exp-row com-exp-photos-row"><div class="com-exp-label">現場写真<br><span class="com-exp-photo-count">'+total+'枚</span></div><div class="com-exp-body com-exp-photo-list">'+blocks.join('')+'</div></div>';
   }
   function expRowHtml(label,content,opts){
     opts=opts||{};
@@ -120,6 +158,9 @@
       if(d.hiCount){
         body+='<p class="com-exp-warn-sm">Lv.7+ '+d.hiCount+'件</p>';
       }
+      if(d.photoCount){
+        body+='<p class="com-exp-meta">📷 現場写真 '+d.photoCount+'枚（詳細で表示）</p>';
+      }
       return '<div class="com-exp-card com-exp-compact">'+head+body+'</div>';
     }
     var rows='';
@@ -129,6 +170,7 @@
     rows+=expRowHtml('報告者の対策',d.measures);
     rows+=expRowHtml('推奨対策',d.expMeasure,{highlight:true});
     rows+=expRowHtml('原因別の有効策',d.causeM);
+    rows+=buildExpPhotosSection(sub);
     var warn=d.hiCount?'<p class="com-exp-warn">⚠ 災害レベル Lv.7 以上 '+d.hiCount+'件 — 優先的な対策検討が必要</p>':'';
     return '<div class="com-exp-card">'+head+'<div class="com-exp-body-wrap">'+rows+'</div>'+warn+'</div>';
   }
@@ -148,11 +190,48 @@
     var more=compact&&seCom.length>3?'<p class="com-exp-more">他 '+(seCom.length-3)+' 種類 — タップで全文</p>':'';
     return intro+'<div class="'+wrapCls+'">'+cards+'</div>'+more;
   }
+  function attachPhotosFromStorage(reports){
+    if(typeof global.hhReportDetail==='undefined')return;
+    try{
+      var ph=JSON.parse(localStorage.getItem('hh_photos')||'{}');
+      (reports||[]).forEach(function(r){
+        if(!r||r.id==null)return;
+        var raw=ph[r.id]!=null?ph[r.id]:ph[String(r.id)];
+        if(raw)r.photos=global.hhReportDetail.normalizePhotoList(raw);
+      });
+    }catch(e){}
+  }
+  function ensureReportsPhotos(reports,cb){
+    var list=(reports||[]).slice();
+    if(typeof global.hhReportDetail!=='undefined'&&global.hhReportDetail.ensurePhotosForReports){
+      global.hhReportDetail.ensurePhotosForReports(list,cb);
+      return;
+    }
+    if(typeof global.loadPhotos==='function')global.loadPhotos();
+    attachPhotosFromStorage(list);
+    list.forEach(function(r){r.photos=normalizePhotos(r.photos)});
+    if(typeof cb==='function')cb(list);
+  }
   function renderComByExpSummary(reports,cardEl,fullEl){
-    var card=buildComByExpSummaryHtml(reports,true);
-    var full=buildComByExpSummaryHtml(reports,false);
-    if(cardEl)cardEl.innerHTML=card;
-    if(fullEl)fullEl.innerHTML='<div class="com-detail">'+full+'</div>';
+    if(cardEl)cardEl.innerHTML=buildComByExpSummaryHtml(reports,true);
+    function renderFull(list){
+      if(fullEl)fullEl.innerHTML='<div class="com-detail">'+buildComByExpSummaryHtml(list,false)+'</div>';
+    }
+    if(!fullEl)return;
+    renderFull(reports);
+    ensureReportsPhotos(reports,function(list){
+      if(cardEl)cardEl.innerHTML=buildComByExpSummaryHtml(list,true);
+      renderFull(list);
+    });
+  }
+  function openComByExpDetail(reports){
+    var title='📊 体験別→対策提案';
+    var show=typeof global.showComDetail==='function'?global.showComDetail:null;
+    if(!show)return;
+    show(title,'<p style="color:var(--t3);font-size:12px;padding:16px">写真を読み込み中…</p>');
+    ensureReportsPhotos(reports,function(list){
+      show(title,'<div class="com-detail">'+buildComByExpSummaryHtml(list,false)+'</div>');
+    });
   }
   function filterComRequests(requests,deptFilt,periodYear,periodMonth){
     var list=(requests||[]).slice();
@@ -203,6 +282,7 @@
     if(fullEl)fullEl.innerHTML='<div class="com-detail">'+full+'</div>';
   }
   global.renderComByExpSummary=renderComByExpSummary;
+  global.openComByExpDetail=openComByExpDetail;
   global.renderComRequests=renderComRequests;
   global.filterComRequests=filterComRequests;
 })(typeof window!=='undefined'?window:this);

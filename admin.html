@@ -180,6 +180,15 @@ select,input,textarea,button{color:var(--t1)}
 .com-detail .com-exp-list{gap:16px}
 .com-detail .com-exp-row{font-size:12px}
 .com-detail .com-exp-label{font-size:11px}
+.com-exp-photo-list{display:flex;flex-direction:column;gap:10px}
+.com-exp-photo-block{padding:8px 0;border-top:1px dashed rgba(46,125,50,.2)}
+.com-exp-photo-block:first-child{border-top:none;padding-top:0}
+.com-exp-photo-meta{font-size:10px;color:var(--t3);margin:0 0 6px;line-height:1.45}
+.com-exp-photo-count{font-size:9px;font-weight:600;color:var(--ac)}
+.com-exp-no-photo{color:var(--t3)!important;font-size:11px}
+.com-exp-photos-row{align-items:start}
+.com-exp-photos-row .modal-photos img{max-width:140px}
+.com-detail .com-exp-photos-row .modal-photos img{max-width:220px}
 .law-row:hover,.law-row:active{background:rgba(46,125,50,.08)}
 
 /* ===== PC RESPONSIVE (768px+) ===== */
@@ -319,7 +328,7 @@ select,input,textarea,button{color:var(--t1)}
   <div class="dept-flt" id="dfCom"></div>
   <div class="cs">
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
-    <div class="cb cb-wide com-card" onclick="showComDetail('📊 体験別→対策提案',document.getElementById('cByExp_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
+    <div class="cb cb-wide com-card" onclick="openComByExpDetail(window._comByExpReports||[])"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('🏢 本部別 背景要因・職場環境分析',document.getElementById('cDeptAn_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--pr)"></span>🏢 本部別 背景要因・職場環境分析</div><div id="cDeptAn"></div><div class="com-tap">タップで詳細を表示</div><div id="cDeptAn_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('💬 安全衛生要望',document.getElementById('cReq_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>💬 安全衛生要望</div><div id="cReq"></div><div class="com-tap">タップで詳細を表示</div><div id="cReq_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('🚨 災害報告（発生状況・原因分類・対策）',document.getElementById('cDisCom_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--rd)"></span>🚨 災害報告（発生状況・原因分類・対策）</div><div id="cDisCom"></div><div class="com-tap">タップで詳細を表示</div><div id="cDisCom_full" style="display:none"></div></div>
@@ -354,7 +363,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="hh-data.js?v=20260525-photos2"></script>
 <script src="hh-report-detail.js?v=20260525-cause-photos"></script>
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
-<script src="hh-com-panel.js?v=20260526-byexp-ui"></script>
+<script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
 <script src="hh-com-disaster.js?v=20260525-dis-notitle"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
@@ -866,6 +875,7 @@ function rCom(){
   document.getElementById('cS_full').innerHTML='<div class="com-detail">'+sm+'</div>';
 
   // 体験別→対策提案（体験ごとに文章で要約）
+  window._comByExpReports=fd;
   if(typeof renderComByExpSummary==='function'){
     renderComByExpSummary(fd,document.getElementById('cByExp'),document.getElementById('cByExp_full'));
   }
