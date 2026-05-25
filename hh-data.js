@@ -257,17 +257,33 @@
       },function(){onLoaded();});
     },
     savePhotos:function(reports){
+      if(!reports||!reports.length)return;
       if(!useFirebase||!db){
         try{
-          var ph={};
-          reports.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
-          if(Object.keys(ph).length)localStorage.setItem('hh_photos',JSON.stringify(ph));
+          var phOld={};
+          try{phOld=JSON.parse(localStorage.getItem('hh_photos')||'{}')}catch(e){}
+          reports.forEach(function(r){
+            if(!r||r.id==null)return;
+            if(r.photos&&r.photos.length)phOld[r.id]=r.photos;
+            else delete phOld[r.id];
+          });
+          if(Object.keys(phOld).length)localStorage.setItem('hh_photos',JSON.stringify(phOld));
+          else localStorage.removeItem('hh_photos');
         }catch(e){}
         return;
       }
-      var ph={};
-      reports.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
-      getPhotosRef().set(ph);
+      reports.forEach(function(r){
+        if(!r||r.id==null)return;
+        var ref=getPhotosRef().child(String(r.id));
+        if(r.photos&&r.photos.length)ref.set(r.photos);
+        else ref.remove();
+      });
+    },
+    onPhotosChange:function(cb){
+      if(!useFirebase||!db){return}
+      getPhotosRef().on('value',function(snap){
+        if(typeof cb==='function')cb(snap.val()||{});
+      });
     },
     getAdmins:function(){
       if(!useFirebase||!db){

@@ -326,7 +326,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
-<script src="hh-data.js?v=20260520-acts"></script>
+<script src="hh-data.js?v=20260525-photos"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -419,28 +419,49 @@ function loadReqDis(cb){
 }
 function syncReportsFromCloud(arr){
   arr=arr||[];
-  try{
-    var data=arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c});
-    localStorage.setItem('hh_reports',JSON.stringify(data));
-    if(!arr.length){localStorage.removeItem('hh_photos')}
-    else{
-      var phOld={};
-      try{phOld=JSON.parse(localStorage.getItem('hh_photos')||'{}')}catch(e){}
+  function applySync(){
+    try{
+      var data=arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c});
+      localStorage.setItem('hh_reports',JSON.stringify(data));
+      if(!arr.length){localStorage.removeItem('hh_photos')}
+      else{
+        var phOld={};
+        try{phOld=JSON.parse(localStorage.getItem('hh_photos')||'{}')}catch(e){}
+        var ph={};
+        arr.forEach(function(r){
+          if(r.photos&&r.photos.length)ph[r.id]=r.photos;
+          else if(phOld[r.id])ph[r.id]=phOld[r.id];
+        });
+        if(Object.keys(ph).length)localStorage.setItem('hh_photos',JSON.stringify(ph));
+        else localStorage.removeItem('hh_photos');
+      }
+    }catch(e){}
+    DB=arr;
+    idc=DB.reduce(function(m,r){return Math.max(m,r.id||0)},0);
+    loadPhotos();
+    if(typeof rDash==='function')rDash();
+    if(typeof rAnl==='function')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');
+    if(typeof rCom==='function')rCom();
+  }
+  if(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&HHDB.loadPhotos){
+    HHDB.loadPhotos(arr,function(){applySync()});
+  }else{
+    applySync();
+  }
+}
+function reloadPhotosFromCloud(){
+  if(typeof HHDB==='undefined'||!HHDB.loadPhotos||!DB||!DB.length){loadPhotos();return}
+  HHDB.loadPhotos(DB,function(){
+    try{
       var ph={};
-      arr.forEach(function(r){
-        if(r.photos&&r.photos.length)ph[r.id]=r.photos;
-        else if(phOld[r.id])ph[r.id]=phOld[r.id];
-      });
+      DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
       if(Object.keys(ph).length)localStorage.setItem('hh_photos',JSON.stringify(ph));
       else localStorage.removeItem('hh_photos');
-    }
-  }catch(e){}
-  DB=arr;
-  idc=DB.reduce(function(m,r){return Math.max(m,r.id||0)},0);
-  loadPhotos();
-  if(typeof rDash==='function')rDash();
-  if(typeof rAnl==='function')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');
-  if(typeof rCom==='function')rCom();
+    }catch(e){}
+    if(typeof rDash==='function')rDash();
+    if(typeof rAnl==='function')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');
+    if(typeof rCom==='function')rCom();
+  });
 }
 function doDataInit(){
   if(typeof HHDB==='undefined'||!HHDB.useFirebase()){
@@ -460,6 +481,7 @@ function doDataInit(){
     HHDB.loadRequests(function(arr){REQ_LIST=arr||[]});
     HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[]});
     HHDB.onReportsChange(function(arr){syncReportsFromCloud(arr||[])});
+    if(HHDB.useFirebase()&&HHDB.onPhotosChange)HHDB.onPhotosChange(function(){reloadPhotosFromCloud()});
     HHDB.onAdminsChange(function(admins){if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins))}catch(e){}}});
     HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(document.querySelector('#pReq.pg.on'))rReqList()});
     HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
@@ -908,6 +930,7 @@ function showByExpReportDetail(expIdx,rIdx){
   if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}
   if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}
   if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}
+  if(r.photos&&r.photos.length){h+='<div class="com-section"><strong>現場写真（'+r.photos.length+'枚）</strong><div class="modal-photos">'+r.photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div></div>';}
   h+='<div class="com-section"><strong>対策提案（詳細）</strong>';
   var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');
   if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');

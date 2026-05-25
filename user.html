@@ -1104,7 +1104,7 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260501-12" onerror="console.warn('config.js load failed')"></script>
-<script src="hh-data.js?v=20260520-acts" onerror="console.warn('hh-data.js load failed')"></script>
+<script src="hh-data.js?v=20260525-photos" onerror="console.warn('hh-data.js load failed')"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
 <script src="disaster-email-notify.js?v=20260408-412" onerror="console.warn('disaster-email-notify.js load failed')"></script>
@@ -1346,26 +1346,55 @@ function loadPhotos(){
 // ===== DATA INIT (HHDB) =====
 function syncReportsFromCloud(arr){
   arr=arr||[];
-  try{
-    var data=arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c});
-    localStorage.setItem('hh_reports',JSON.stringify(data));
-    if(!arr.length){localStorage.removeItem('hh_photos')}
-    else if(arr.some(function(r){return r.photos&&r.photos.length})){
-      var ph={};arr.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
-      localStorage.setItem('hh_photos',JSON.stringify(ph));
-    }
-  }catch(e){}
-  DB=arr;
-  idc=Math.max(0,...(DB.map(r=>r.id||0).concat([0])));
-  loadPhotos();
-  if(typeof rDash==='function')rDash();
-  if(typeof rList==='function')rList();
-  if(typeof rCom==='function')rCom();
+  function applySync(){
+    try{
+      var data=arr.map(function(r){var c=Object.assign({},r);delete c.photos;return c});
+      localStorage.setItem('hh_reports',JSON.stringify(data));
+      if(!arr.length){localStorage.removeItem('hh_photos')}
+      else{
+        var phOld={};
+        try{phOld=JSON.parse(localStorage.getItem('hh_photos')||'{}')}catch(e){}
+        var ph={};
+        arr.forEach(function(r){
+          if(r.photos&&r.photos.length)ph[r.id]=r.photos;
+          else if(phOld[r.id])ph[r.id]=phOld[r.id];
+        });
+        if(Object.keys(ph).length)localStorage.setItem('hh_photos',JSON.stringify(ph));
+        else localStorage.removeItem('hh_photos');
+      }
+    }catch(e){}
+    DB=arr;
+    idc=Math.max(0,...(DB.map(r=>r.id||0).concat([0])));
+    loadPhotos();
+    if(typeof rDash==='function')rDash();
+    if(typeof rAnl==='function')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');
+    if(typeof rCom==='function')rCom();
+  }
+  if(typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&HHDB.loadPhotos){
+    HHDB.loadPhotos(arr,function(){applySync()});
+  }else{
+    applySync();
+  }
+}
+function reloadPhotosFromCloud(){
+  if(typeof HHDB==='undefined'||!HHDB.loadPhotos||!DB||!DB.length){loadPhotos();return}
+  HHDB.loadPhotos(DB,function(){
+    try{
+      var ph={};
+      DB.forEach(function(r){if(r.photos&&r.photos.length)ph[r.id]=r.photos});
+      if(Object.keys(ph).length)localStorage.setItem('hh_photos',JSON.stringify(ph));
+      else localStorage.removeItem('hh_photos');
+    }catch(e){}
+    if(typeof rDash==='function')rDash();
+    if(typeof rAnl==='function')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');
+    if(typeof rCom==='function')rCom();
+  });
 }
 function doDataInit(){
   if(typeof HHDB==='undefined')return;
   HHDB.loadReports([],function(arr){syncReportsFromCloud(arr||[])});
   if(HHDB.useFirebase()&&HHDB.onReportsChange)HHDB.onReportsChange(function(arr){syncReportsFromCloud(arr||[])});
+  if(HHDB.useFirebase()&&HHDB.onPhotosChange)HHDB.onPhotosChange(function(){reloadPhotosFromCloud()});
   HHDB.loadRequests(function(arr){REQ_LIST=arr||[];renderReqList()});
   if(HHDB.useFirebase()&&HHDB.onRequestsChange)HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderReqList()});
   if(HHDB.loadDisasterReports)HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];});
@@ -2120,6 +2149,7 @@ function doSubmit(){
   DB.unshift(newR);
   if(typeof HHDB!=='undefined'){HHDB.saveReports(DB);if(newR.photos&&HHDB.savePhotos)HHDB.savePhotos([newR]);}
   else try{localStorage.setItem('hh_reports',JSON.stringify(DB.map(r=>{var c=Object.assign({},r);delete c.photos;return c})));if(newR.photos)try{var ph=JSON.parse(localStorage.getItem('hh_photos')||'{}');ph[newR.id]=newR.photos;localStorage.setItem('hh_photos',JSON.stringify(ph))}catch(e){}}catch(e){}
+  if(newR.photos){try{var ph2=JSON.parse(localStorage.getItem('hh_photos')||'{}');ph2[newR.id]=newR.photos;localStorage.setItem('hh_photos',JSON.stringify(ph2))}catch(e){}}
   if(window._hhPhotos){window._hhPhotos.length=0}if(window._hhPhotoNames){window._hhPhotoNames.length=0}pendingPhotos=window._hhPhotos||[];pendingPhotoNames=window._hhPhotoNames||[];
   if(typeof window._hhRender==='function')window._hhRender();
   const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
@@ -2487,9 +2517,14 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function showComDetail(title,content){document.getElementById('mT').textContent=title;document.getElementById('mI').innerHTML=content;document.getElementById('modal').classList.add('show');}
 function showCauseReporters(cause){var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});var photos=[];fd.forEach(function(r){if(r.photos&&r.photos.length)r.photos.forEach(function(p){photos.push(p)})});var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';h+='</div>';showComDetail('発生原因：'+cause,h);}
 function showLawDetailByIdx(type,i){var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);var l=arr[i];if(!l)return;var headShort=esc(l.short||l.law);var h='<div class="com-detail"><div class="com-section"><p style="margin:0;font-size:13px;line-height:1.5;word-break:break-word"><span style="color:var(--t3);font-size:11px">改正の要点：</span><strong>'+headShort+'</strong><span style="color:var(--t2)">　'+esc(l.law)+'　</span><span style="color:var(--t3)">施行日 '+esc(l.date)+'</span></p></div><div class="com-section"><strong>改正内容</strong><p>'+esc(l.desc)+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+esc(l.impact)+'</p></div>';if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+esc(l.action)+'</p></div>';if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+esc(l.ref)+'</p></div>';h+='</div>';showComDetail((l.short||l.law)+' — '+l.law+'（'+l.date+'）',h);}
-function showByExpReportDetail(expIdx,rIdx){var data=window.comByExpData;var expM=window.comExpToMeasure;var causeM=window.comCauseToMeasure;if(!data||!data[expIdx])return;var item=data[expIdx];var r=item.sub[rIdx];if(!r)return;var exp=item.exp;var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');var h='<div class="com-detail">';h+='<div class="com-section"><strong>【自由記述】</strong></div>';if(r.w){h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(r.w)+'</p></div>';}if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}h+='<div class="com-section"><strong>対策提案（詳細）</strong>';var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');if(r.c&&r.c.length){var causeStr=r.c.map(c=>causeM[c]||'').filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';h+='</div></div>';showComDetail(expShort+' の対策案',h);}
+function showByExpReportDetail(expIdx,rIdx){var data=window.comByExpData;var expM=window.comExpToMeasure;var causeM=window.comCauseToMeasure;if(!data||!data[expIdx])return;var item=data[expIdx];var r=item.sub[rIdx];if(!r)return;var exp=item.exp;var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');var h='<div class="com-detail">';h+='<div class="com-section"><strong>【自由記述】</strong></div>';if(r.w){h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(r.w)+'</p></div>';}if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}if(r.photos&&r.photos.length){h+='<div class="com-section"><strong>現場写真（'+r.photos.length+'枚）</strong><div class="modal-photos">'+r.photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div></div>';}h+='<div class="com-section"><strong>対策提案（詳細）</strong>';var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');if(r.c&&r.c.length){var causeStr=r.c.map(c=>causeM[c]||'').filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';h+='</div></div>';showComDetail(expShort+' の対策案',h);}
 
 rDash();
+
+function syncUI(){loadDB();loadPhotos();var pg=document.querySelector('.pg.on');if(pg&&pg.id==='pD')rDash();if(pg&&pg.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg&&pg.id==='pC')rCom()}
+window.addEventListener('focus',syncUI);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)syncUI()});
+window.addEventListener('storage',function(e){if(e.key==='hh_reports'||e.key==='hh_photos')syncUI()});
 
 </script>
 <script>
