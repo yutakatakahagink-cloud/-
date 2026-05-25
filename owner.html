@@ -350,8 +350,7 @@ select,input,textarea,button{color:var(--t1)}
   <div class="cs">
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('📊 体験別→対策提案',document.getElementById('cByExp_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp" class="byexp-grid"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
-    <div class="cb com-card" onclick="showComDetail('高ストレス×高リスク',document.getElementById('cL_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--rd)"></span>高ストレス×高リスク</div><div id="cL"></div><div class="com-tap">タップで詳細を表示</div><div id="cL_full" style="display:none"></div></div>
-    <div class="cb"><div class="cht"><span class="chd" style="background:var(--yl)"></span>現場別ストレス傾向</div><div id="sStr"></div></div>
+    <div class="cb cb-wide com-card" onclick="showComDetail('🏢 本部別 背景要因・職場環境分析',document.getElementById('cDeptAn_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--pr)"></span>🏢 本部別 背景要因・職場環境分析</div><div id="cDeptAn"></div><div class="com-tap">タップで詳細を表示</div><div id="cDeptAn_full" style="display:none"></div></div>
     <div class="cb com-card" onclick="showComDetail('💡 改善提案',document.getElementById('sug_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>💡 改善提案</div><div class="icb" id="sug"></div><div class="com-tap">タップで詳細を表示</div><div id="sug_full" style="display:none"></div></div>
     <div class="cb com-card" onclick="showComDetail('対策進捗',document.getElementById('aTk_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>対策進捗</div><div id="aTk"></div><div class="com-tap">タップで詳細を表示</div><div id="aTk_full" style="display:none"></div></div>
     <div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--bl)"></span>📜 法改正</div><div id="cLaw"></div></div>
@@ -532,6 +531,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260525-photos2"></script>
 <script src="hh-report-detail.js?v=20260525-cause-photos"></script>
+<script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -1530,18 +1530,7 @@ function rCom(){
   if(typeof applyLawsToDashboard==='function')applyLawsToDashboard(esc,document.getElementById('cLaw'));
   else document.getElementById('cLaw').innerHTML='<p style="font-size:12px;line-height:1.55;color:var(--rd)">法改正モジュール（laws_refresh.js）が読み込まれていません。</p><p style="font-size:11px;line-height:1.55;color:var(--t3);margin-top:8px">F12→コンソールでエラーを確認してください。GitHub Pages では <code style="font-size:10px">laws_refresh.js</code> が未アップロードまたは構文エラー（例: <code style="font-size:10px">}]];</code>）のときに出ます。同フォルダの <code style="font-size:10px">GitHubにアップロード.ps1</code> で <code style="font-size:10px">laws_refresh.js</code> と <code style="font-size:10px">laws_data.json</code> を含めて再デプロイしてください。</p>';
 
-  // Critical: high stress x high risk
-  const crit=fd.filter(r=>{const v=Object.values(r.st||{});return r.l>=7&&(v.reduce((a,b)=>a+b,0)/v.length)>=2.5});
-  var cLHtml=crit.length?crit.map(r=>{const v=Object.values(r.st||{});const av=(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1);return`<div class="rc" onclick="event.stopPropagation();sDt(${r.id})" style="margin-bottom:5px"><div class="rt"><span class="bd2 bf">${(r.e[0]||'').substring(0,8)}</span><span style="font-size:9px;color:var(--rd);font-weight:700">Lv.${r.l}/ストレス${av}</span></div><div class="rde">${r.d}</div><div class="rm"><span>${r.n}</span><span>${(r.dept||'').split('/').pop()}</span></div></div>`}).join(''):'<p style="color:var(--t3);font-size:11px;text-align:center;padding:14px">該当なし</p>';
-  document.getElementById('cL').innerHTML=cLHtml;
-  document.getElementById('cL_full').innerHTML='<div class="com-detail">'+cLHtml+'</div>';
-
-  // Dept stress comparison
-  const sites={};fd.forEach(r=>{if(!r.dept)return;const s=r.dept.split('/').slice(0,2).join('/');if(!sites[s])sites[s]={ct:0,stS:0,lS:0,hc:0};sites[s].ct++;const sv=Object.values(r.st||{});sites[s].stS+=sv.reduce((a,b)=>a+b,0)/sv.length;sites[s].lS+=r.l;if(r.l>=7)sites[s].hc++});
-  const se=Object.entries(sites).sort((a,b)=>b[1].hc-a[1].hc);
-  const scl={'土木本部/土木部':'var(--ac)','土木本部/高千穂営業所':'var(--yl)','建材本部/宮崎支店':'var(--bl)','建材本部/延岡営業所':'var(--pr)'};
-  var sStrHtml=se.map(([n,d])=>{const as=(d.stS/d.ct).toFixed(1),al=(d.lS/d.ct).toFixed(1),co=scl[n]||'var(--t2)';return`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${co};margin-bottom:3px">${n.split('/').pop()}（${d.ct}件）</div><div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:50px;font-size:9px;color:var(--t3)">ストレス</span><div class="crt"><div class="crf" style="width:${(as/4)*100}%;background:${co}"></div></div><span class="crv" style="color:${co}">${as}</span></div><div style="display:flex;gap:6px;align-items:center"><span style="width:50px;font-size:9px;color:var(--t3)">危険度</span><div class="crt"><div class="crf" style="width:${(al/10)*100}%;background:${co};opacity:.6"></div></div><span class="crv" style="color:${co}">${al}</span></div></div>`}).join('');
-  document.getElementById('sStr').innerHTML=sStrHtml;
+  if(typeof renderComDeptAnalysis==='function')renderComDeptAnalysis(fd,document.getElementById('cDeptAn'),document.getElementById('cDeptAn_full'));
 
   // Suggestions
   let sg='';
