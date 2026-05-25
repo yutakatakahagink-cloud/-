@@ -154,7 +154,12 @@
     var lines=requests.map(function(r){
       var st=REQ_ST[r.status]||r.status||'未対応';
       var body=String(r.content||'').replace(/\s+/g,' ').trim();
-      return '['+st+'] '+(r.date||'—')+' '+esc(r.name||'—')+'（'+esc(r.dept||'—')+'）— '+esc(body);
+      var line='['+st+'] '+(r.date||'—')+' '+esc(r.name||'—')+'（'+esc(r.dept||'—')+'）— '+esc(body);
+      if(r.status==='resolved'){
+        var res=String(r.resolution||'').replace(/\s+/g,' ').trim();
+        line+=res?' — 対策：'+esc(res):' — <span style="color:var(--yl)">（対策未記入）</span>';
+      }
+      return line;
     });
     var limit=compact?5:lines.length;
     var h='<ul style="margin:0;padding-left:18px;font-size:'+(compact?'11':'12')+'px;line-height:1.65;color:var(--t2)">';
