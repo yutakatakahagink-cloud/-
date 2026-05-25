@@ -221,12 +221,58 @@
     if(type.indexOf('image/')===0)return true;
     return /\.(jpe?g|jfif|png|gif|webp|bmp|heic|heif)$/i.test(file.name||'');
   }
+  function filterReportsByExp(reports,expFilter){
+    if(!reports||!reports.length)return[];
+    if(!expFilter||expFilter==='all')return reports.slice();
+    return reports.filter(function(r){
+      return (r.e||[]).some(function(e){
+        return e===expFilter||e.startsWith(String(expFilter).substring(0,2));
+      });
+    });
+  }
+  function collectPhotosFromReports(reports){
+    var photos=[];
+    (reports||[]).forEach(function(r){
+      normalizePhotoList(r.photos).forEach(function(p){photos.push(p);});
+    });
+    return photos;
+  }
+  function ensurePhotosForReports(reports,cb){
+    reports=reports||[];
+    if(!reports.length){if(typeof cb==='function')cb(reports);return;}
+    function finish(){
+      reports.forEach(function(r){r.photos=normalizePhotoList(r.photos);});
+      if(typeof cb==='function')cb(reports);
+    }
+    if(typeof HHDB!=='undefined'&&HHDB.loadPhotos){
+      HHDB.loadPhotos(reports,function(){
+        reports.forEach(attachPhotosFromStorage);
+        finish();
+      });
+      return;
+    }
+    if(typeof loadPhotos==='function')loadPhotos();
+    reports.forEach(attachPhotosFromStorage);
+    finish();
+  }
+  function buildCausePhotosDetailHtml(cause,reports){
+    var photos=collectPhotosFromReports(reports);
+    var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+escAttr(cause)+'」の現場写真</strong></div>';
+    h+='<p style="margin-bottom:12px">'+photos.length+'枚（'+(reports||[]).length+'件の報告）</p>';
+    if(photos.length)h+=photosHtml(photos);
+    else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';
+    h+='</div>';
+    return h;
+  }
   global.hhReportDetail={
     arrJoin:arrJoin,
     normalizePhotoList:normalizePhotoList,
     photosHtml:photosHtml,
     buildDetailHtml:buildDetailHtml,
     ensurePhotos:ensurePhotos,
+    ensurePhotosForReports:ensurePhotosForReports,
+    buildCausePhotosDetailHtml:buildCausePhotosDetailHtml,
+    filterReportsByExp:filterReportsByExp,
     compressPhotoDataUrl:compressPhotoDataUrl,
     processImageFileToDataUrl:processImageFileToDataUrl,
     isImageFile:isImageFile,

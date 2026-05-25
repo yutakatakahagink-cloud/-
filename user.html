@@ -1104,7 +1104,7 @@ input[type="file"].photo-input{display:none}
 <script src="config.js?v=20260501-12" onerror="console.warn('config.js load failed')"></script>
 <script src="hh-data.js?v=20260525-heic"></script>
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-<script src="hh-report-detail.js?v=20260525-heic"></script>
+<script src="hh-report-detail.js?v=20260525-cause-photos"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
 <script src="disaster-email-notify.js?v=20260408-412" onerror="console.warn('disaster-email-notify.js load failed')"></script>
@@ -2526,17 +2526,18 @@ function rCom(){
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showComDetail(title,content){document.getElementById('mT').textContent=title;document.getElementById('mI').innerHTML=content;document.getElementById('modal').classList.add('show');}
 function showCauseReporters(cause){
-  loadPhotos();
-  var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});
-  var photos=[];fd.forEach(function(r){
-    var list=(typeof hhReportDetail!=='undefined'?hhReportDetail.normalizePhotoList(r.photos):r.photos)||[];
-    list.forEach(function(p){photos.push(p)});
-  });
-  var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';
-  if(photos.length&&typeof hhReportDetail!=='undefined')h+=hhReportDetail.photosHtml(photos);
-  else if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';
-  else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';
-  h+='</div>';showComDetail('発生原因：'+cause,h);
+  var fd=getF();
+  if(typeof curExpFilter!=='undefined'&&curExpFilter&&curExpFilter!=='all'){
+    fd=typeof hhReportDetail!=='undefined'&&hhReportDetail.filterReportsByExp?hhReportDetail.filterReportsByExp(fd,curExpFilter):fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
+  }
+  fd=fd.filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});
+  showComDetail('発生原因：'+cause,'<p style="color:var(--t3);font-size:12px;padding:16px">写真を読み込み中…</p>');
+  function openModal(reports){
+    var h=typeof hhReportDetail!=='undefined'&&hhReportDetail.buildCausePhotosDetailHtml?hhReportDetail.buildCausePhotosDetailHtml(cause,reports):'<p style="color:var(--t3);font-size:12px">写真はありません</p>';
+    showComDetail('発生原因：'+cause,h);
+  }
+  if(typeof hhReportDetail!=='undefined'&&hhReportDetail.ensurePhotosForReports){hhReportDetail.ensurePhotosForReports(fd,openModal);return}
+  loadPhotos();openModal(fd);
 }
 function showLawDetailByIdx(type,i){var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);var l=arr[i];if(!l)return;var headShort=esc(l.short||l.law);var h='<div class="com-detail"><div class="com-section"><p style="margin:0;font-size:13px;line-height:1.5;word-break:break-word"><span style="color:var(--t3);font-size:11px">改正の要点：</span><strong>'+headShort+'</strong><span style="color:var(--t2)">　'+esc(l.law)+'　</span><span style="color:var(--t3)">施行日 '+esc(l.date)+'</span></p></div><div class="com-section"><strong>改正内容</strong><p>'+esc(l.desc)+'</p></div><div class="com-section"><strong>現場への影響</strong><p>'+esc(l.impact)+'</p></div>';if(l.action)h+='<div class="com-section"><strong>取るべき対応</strong><p>'+esc(l.action)+'</p></div>';if(l.ref)h+='<div class="com-section"><strong>参照条文等</strong><p>'+esc(l.ref)+'</p></div>';h+='</div>';showComDetail((l.short||l.law)+' — '+l.law+'（'+l.date+'）',h);}
 function showByExpReportDetail(expIdx,rIdx){

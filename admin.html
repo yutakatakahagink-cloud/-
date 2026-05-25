@@ -327,7 +327,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260525-photos2"></script>
-<script src="hh-report-detail.js?v=20260525-photos2"></script>
+<script src="hh-report-detail.js?v=20260525-cause-photos"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -901,18 +901,18 @@ function showComDetail(title,content){
   document.getElementById('modal').classList.add('show');
 }
 function showCauseReporters(cause){
-  loadPhotos();
-  var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});
-  var photos=[];fd.forEach(function(r){
-    var list=(typeof hhReportDetail!=='undefined'?hhReportDetail.normalizePhotoList(r.photos):r.photos)||[];
-    list.forEach(function(p){photos.push(p)});
-  });
-  var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';
-  if(photos.length&&typeof hhReportDetail!=='undefined')h+=hhReportDetail.photosHtml(photos);
-  else if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';
-  else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';
-  h+='</div>';
-  showComDetail('発生原因：'+cause,h);
+  var fd=getF();
+  if(typeof curExpFilter!=='undefined'&&curExpFilter&&curExpFilter!=='all'){
+    fd=typeof hhReportDetail!=='undefined'&&hhReportDetail.filterReportsByExp?hhReportDetail.filterReportsByExp(fd,curExpFilter):fd.filter(function(r){return (r.e||[]).some(function(e){return e===curExpFilter||e.startsWith(curExpFilter.substring(0,2))})});
+  }
+  fd=fd.filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});
+  showComDetail('発生原因：'+cause,'<p style="color:var(--t3);font-size:12px;padding:16px">写真を読み込み中…</p>');
+  function openModal(reports){
+    var h=typeof hhReportDetail!=='undefined'&&hhReportDetail.buildCausePhotosDetailHtml?hhReportDetail.buildCausePhotosDetailHtml(cause,reports):'<p style="color:var(--t3);font-size:12px">写真はありません</p>';
+    showComDetail('発生原因：'+cause,h);
+  }
+  if(typeof hhReportDetail!=='undefined'&&hhReportDetail.ensurePhotosForReports){hhReportDetail.ensurePhotosForReports(fd,openModal);return}
+  loadPhotos();openModal(fd);
 }
 function showLawDetailByIdx(type,i){
   var arr=type==='enacted'?(window.comLawEnacted||[]):(window.comLawUpcoming||[]);
