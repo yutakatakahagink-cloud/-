@@ -317,7 +317,7 @@ select,input,textarea,button{color:var(--t1)}
 <!-- ANALYTICS -->
 <div class="pg" id="pA">
   <div class="period-flt" id="pfAnl"></div>
-  <div class="tps" id="aT"><button class="tp on" data-t="simple">単純集計</button><button class="tp" data-t="byexp">体験別分析</button><button class="tp" data-t="resil">レジリエンス</button><button class="tp" data-t="acts">活動分析</button></div>
+  <div class="tps" id="aT"><button class="tp on" data-t="simple">単純集計</button><button class="tp" data-t="byexp">体験別分析</button><button class="tp" data-t="behind">ストレス・職場</button><button class="tp" data-t="resil">レジリエンス</button><button class="tp" data-t="acts">活動分析</button></div>
   <div class="dept-flt" id="dfAnl"></div>
   <div class="cs" id="aC"></div>
 </div>
@@ -363,6 +363,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="hh-data.js?v=20260525-photos2"></script>
 <script src="hh-report-detail.js?v=20260525-cause-photos"></script>
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
+<script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
 <script src="hh-com-disaster.js?v=20260525-dis-notitle"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
@@ -754,7 +755,7 @@ function sDt(id){openHhReportDetail(id)}
 function setSS(id,s){const r=DB.find(x=>x.id===id);if(r)r.ss=s;saveDB();document.getElementById('modal').classList.remove('show');rDash();if(typeof rCom==='function')rCom()}
 function showFullPhotoSrc(src){var ov=document.createElement('div');ov.className='photo-full-overlay';ov.innerHTML='<img src="'+src+'">';ov.onclick=function(){document.body.removeChild(ov)};document.body.appendChild(ov)}
 
-// ===== ANALYTICS (NO behind tab) =====
+// ===== ANALYTICS =====
 var curExpFilter='all';
 function rAnl(type){
   buildPeriodFilter('pfAnl');
@@ -762,8 +763,13 @@ function rAnl(type){
   const ct=document.getElementById('aC');
   if(type==='simple')ct.innerHTML=anlSimple();
   else if(type==='byexp'){curExpFilter='all';ct.innerHTML=anlByExp()}
+  else if(type==='behind')ct.innerHTML=anlBehind();
   else if(type==='resil')ct.innerHTML=anlResil();
   else ct.innerHTML=anlActs();
+}
+function anlBehind(){
+  if(typeof buildAnlStressWorkplaceHtml==='function')return buildAnlStressWorkplaceHtml(getF(),{showLock:true});
+  return'<p style="color:var(--t3);font-size:12px">分析モジュールが読み込まれていません。</p>';
 }
 function anlByExp(){
   var fd=getF();
