@@ -81,27 +81,56 @@
     });
     return parts.slice(0,2).join('。');
   }
-  function buildExpParagraph(exp,sub){
-    if(!sub.length)return '';
-    var short=expShort(exp);
-    var parts=[];
-    parts.push('【'+short+'】は'+sub.length+'件報告されています。');
-    var details=summarizeField(sub,'d',3);
-    if(details.length){
-      parts.push('体験内容の例として、'+details.map(function(t,i){return '（'+(i+1)+'）'+t}).join('')+'。');
+  function buildExpData(exp,sub){
+    return {
+      short:expShort(exp),
+      count:sub.length,
+      details:summarizeField(sub,'d',3),
+      works:summarizeField(sub,'wk',2),
+      causes:topCauseText(sub),
+      measures:summarizeField(sub,'m',3),
+      expMeasure:EXP_TO_MEASURE[exp]||'',
+      causeM:causeMeasuresText(sub),
+      hiCount:sub.filter(function(r){return+r.l>=7}).length
+    };
+  }
+  function expRowHtml(label,content,opts){
+    opts=opts||{};
+    if(!content||(Array.isArray(content)&&!content.length))return '';
+    var inner;
+    if(Array.isArray(content)){
+      inner='<ul class="com-exp-ul">'+content.map(function(t){return '<li>'+esc(t)+'</li>'}).join('')+'</ul>';
+    }else{
+      inner='<p class="com-exp-txt">'+esc(content)+'</p>';
     }
-    var works=summarizeField(sub,'wk',2);
-    if(works.length)parts.push('関連作業では「'+works.join('」「')+'」などが挙がっています。');
-    var causes=topCauseText(sub);
-    if(causes)parts.push('発生原因は「'+causes+'」が多く見られます。');
-    var measures=summarizeField(sub,'m',3);
-    if(measures.length)parts.push('報告者の対策案として「'+measures.join('」「')+'」が示されています。');
-    if(EXP_TO_MEASURE[exp])parts.push('体験タイプ別の推奨対策は、'+EXP_TO_MEASURE[exp]+'です。');
-    var causeM=causeMeasuresText(sub);
-    if(causeM)parts.push('原因別には'+causeM+'が有効です。');
-    var hi=sub.filter(function(r){return+r.l>=7}).length;
-    if(hi)parts.push('うち災害レベルLv.7以上は'+hi+'件で、優先的な対策検討が必要です。');
-    return parts.join('');
+    var cls='com-exp-row'+(opts.highlight?' com-exp-highlight':'');
+    return '<div class="'+cls+'"><div class="com-exp-label">'+label+'</div><div class="com-exp-body">'+inner+'</div></div>';
+  }
+  function buildExpCardHtml(exp,sub,compact){
+    var d=buildExpData(exp,sub);
+    var head='<div class="com-exp-head"><span class="com-exp-title">'+esc(d.short)+'</span><span class="com-exp-badge">'+d.count+'件</span></div>';
+    if(compact){
+      var body='';
+      if(d.expMeasure){
+        body+='<p class="com-exp-lead"><span class="com-exp-lead-tag">推奨</span>'+esc(d.expMeasure)+'</p>';
+      }
+      if(d.causes){
+        body+='<p class="com-exp-meta">原因：'+esc(d.causes)+'</p>';
+      }
+      if(d.hiCount){
+        body+='<p class="com-exp-warn-sm">Lv.7+ '+d.hiCount+'件</p>';
+      }
+      return '<div class="com-exp-card com-exp-compact">'+head+body+'</div>';
+    }
+    var rows='';
+    rows+=expRowHtml('体験例',d.details);
+    rows+=expRowHtml('関連作業',d.works);
+    rows+=expRowHtml('発生原因',d.causes);
+    rows+=expRowHtml('報告者の対策',d.measures);
+    rows+=expRowHtml('推奨対策',d.expMeasure,{highlight:true});
+    rows+=expRowHtml('原因別の有効策',d.causeM);
+    var warn=d.hiCount?'<p class="com-exp-warn">⚠ 災害レベル Lv.7 以上 '+d.hiCount+'件 — 優先的な対策検討が必要</p>':'';
+    return '<div class="com-exp-card">'+head+'<div class="com-exp-body-wrap">'+rows+'</div>'+warn+'</div>';
   }
   function buildComByExpSummaryHtml(reports,compact){
     reports=reports||[];
@@ -110,19 +139,14 @@
     if(!seCom.length){
       return '<p style="color:var(--t3);font-size:12px;padding:4px 0">該当期間に体験別の報告データがありません。</p>';
     }
-    if(compact){
-      var intro='<p style="font-size:10px;color:var(--t3);margin-bottom:8px">'+seCom.length+'種類の体験・計'+reports.length+'件を文章で要約（タップで全文）</p>';
-      return intro+seCom.slice(0,3).map(function(exp){
-        var sub=reportsForExp(reports,exp);
-        var text=buildExpParagraph(exp,sub);
-        var clip=text.length>160?text.substring(0,160)+'…':text;
-        return '<p style="font-size:11px;line-height:1.65;margin-bottom:10px;color:var(--t2)">'+esc(clip)+'</p>';
-      }).join('')+(seCom.length>3?'<p style="font-size:10px;color:var(--t3)">他 '+(seCom.length-3)+' 種類 — タップで全文</p>':'');
-    }
-    return seCom.map(function(exp){
-      var sub=reportsForExp(reports,exp);
-      return '<div class="com-section"><p style="font-size:12px;line-height:1.8;margin:0 0 14px;text-align:justify;color:var(--t2)">'+esc(buildExpParagraph(exp,sub))+'</p></div>';
+    var list=seCom.slice(0,compact?3:seCom.length);
+    var cards=list.map(function(exp){
+      return buildExpCardHtml(exp,reportsForExp(reports,exp),!!compact);
     }).join('');
+    var wrapCls=compact?'com-exp-grid com-exp-grid-card':'com-exp-list';
+    var intro=compact?'<p class="com-exp-intro">'+seCom.length+'種類・計'+reports.length+'件（タップで全文）</p>':'';
+    var more=compact&&seCom.length>3?'<p class="com-exp-more">他 '+(seCom.length-3)+' 種類 — タップで全文</p>':'';
+    return intro+'<div class="'+wrapCls+'">'+cards+'</div>'+more;
   }
   function renderComByExpSummary(reports,cardEl,fullEl){
     var card=buildComByExpSummaryHtml(reports,true);
