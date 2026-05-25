@@ -326,7 +326,8 @@ select,input,textarea,button{color:var(--t1)}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
-<script src="hh-data.js?v=20260525-photos"></script>
+<script src="hh-data.js?v=20260525-photos2"></script>
+<script src="hh-report-detail.js?v=20260525-photos2"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
@@ -402,7 +403,29 @@ function saveDB(){
   }catch(e){console.warn('localStorage save failed',e)}
 }
 function loadPhotos(){
-  try{var s=localStorage.getItem('hh_photos');if(s){var ph=JSON.parse(s);DB.forEach(function(r){if(ph[r.id])r.photos=ph[r.id]})}}catch(e){}
+  try{
+    var s=localStorage.getItem('hh_photos');if(!s)return;
+    var ph=JSON.parse(s);
+    var norm=(typeof HHDB!=='undefined'&&HHDB.normalizePhotoList)?HHDB.normalizePhotoList:(typeof hhReportDetail!=='undefined'?hhReportDetail.normalizePhotoList:null);
+    DB.forEach(function(r){
+      if(!r||r.id==null)return;
+      var raw=ph[r.id]!=null?ph[r.id]:ph[String(r.id)];
+      if(raw)r.photos=norm?norm(raw):raw;
+    });
+  }catch(e){}
+}
+function openHhReportDetail(id){
+  var r=DB.find(function(x){return String(x.id)===String(id)});if(!r)return;
+  hideDisExportToolbar();
+  var modal=document.getElementById('modal');var mbd=modal&&modal.querySelector('.mbd');if(mbd)mbd.classList.remove('dis-detail-wide');
+  function renderDetail(rep){
+    var e0=(typeof hhReportDetail!=='undefined'?hhReportDetail.arrJoin(rep.e):((rep.e||[]).join('、')||'')).split('、')[0]||'報告';
+    document.getElementById('mT').textContent=e0+' — 詳細';
+    document.getElementById('mI').innerHTML=(typeof hhReportDetail!=='undefined'&&hhReportDetail.buildDetailHtml)?hhReportDetail.buildDetailHtml(rep,{showAdminActions:true,showStress:false,showOwnerDelete:false}):'';
+    document.getElementById('modal').classList.add('show');
+  }
+  if(typeof hhReportDetail!=='undefined'&&hhReportDetail.ensurePhotos){hhReportDetail.ensurePhotos(r,renderDetail)}
+  else{loadPhotos();renderDetail(r);}
 }
 function loadReqDis(cb){
   function wfThen(fn){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){fn()});else fn()}
@@ -681,29 +704,7 @@ function showDisDetail(id){
 }
 
 // ===== DETAIL (admin always sees stress data) =====
-function _arrJoin(v){return (Array.isArray(v)?v.join('、'):'')||'—'}
-function sDt(id){
-  const r=DB.find(x=>x.id===id);if(!r)return;
-  hideDisExportToolbar();
-  const e0=(Array.isArray(r.e)?r.e[0]:'')||(r.e!==null&&r.e&&typeof r.e==='object'?Object.values(r.e)[0]:'')||'報告';
-  document.getElementById('mT').textContent=e0+' — 詳細';
-  const sl=r.ss==='new'?'新規':r.ss==='review'?'確認中':'完了';
-  let h=`
-    <div class="dl"><span class="dk">部署</span><span class="dv">${r.dept||'—'}</span></div>
-    <div class="dl"><span class="dk">日時・場所</span><span class="dv">${r.w||r.date||'—'}</span></div>
-    <div class="dl"><span class="dk">災害レベル</span><span class="dv" style="color:${r.l>=7?'var(--rd)':r.l>=4?'var(--yl)':'var(--gn)'}">Lv.${r.l||0}</span></div>
-    <div class="dl"><span class="dk">ステータス</span><span class="dv">${sl}</span></div>
-    <div class="dbk"><div class="dbt">体験</div><div class="dbtx">${_arrJoin(r.e)}</div></div>
-    <div class="dbk"><div class="dbt">詳細</div><div class="dbtx">${r.d||'—'}</div></div>
-    <div class="dbk"><div class="dbt">原因</div><div class="dbtx">${_arrJoin(r.c)}</div></div>
-    <div class="dbk"><div class="dbt">対策</div><div class="dbtx">${r.m||'—'}</div></div>
-    ${r.photos&&r.photos.length?'<div class="dbk"><div class="dbt">現場写真（'+r.photos.length+'枚）</div><div class="modal-photos">'+r.photos.map(p=>'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">').join('')+'</div></div>':''}
-    <div class="dbk"><div class="dbt">回避できなかった理由</div><div class="dbtx">${_arrJoin(r.av)}</div></div>
-    <div class="dbk"><div class="dbt">回避に役立つ活動</div><div class="dbtx">${_arrJoin(r.ac)}</div></div>`;
-  h+=`<div class="abs"><button class="ab abr" onclick="setSS(${r.id},'review')">確認中</button><button class="ab abd" onclick="setSS(${r.id},'done')">対策完了</button></div>`;
-  document.getElementById('mI').innerHTML=h;
-  document.getElementById('modal').classList.add('show');
-}
+function sDt(id){openHhReportDetail(id)}
 function setSS(id,s){const r=DB.find(x=>x.id===id);if(r)r.ss=s;saveDB();document.getElementById('modal').classList.remove('show');rDash();if(typeof rCom==='function')rCom()}
 function showFullPhotoSrc(src){var ov=document.createElement('div');ov.className='photo-full-overlay';ov.innerHTML='<img src="'+src+'">';ov.onclick=function(){document.body.removeChild(ov)};document.body.appendChild(ov)}
 
@@ -900,11 +901,15 @@ function showComDetail(title,content){
   document.getElementById('modal').classList.add('show');
 }
 function showCauseReporters(cause){
+  loadPhotos();
   var fd=getF().filter(function(r){return Array.isArray(r.c)&&r.c.indexOf(cause)>=0});
-  var photos=[];
-  fd.forEach(function(r){if(r.photos&&r.photos.length)r.photos.forEach(function(p){photos.push(p)})});
+  var photos=[];fd.forEach(function(r){
+    var list=(typeof hhReportDetail!=='undefined'?hhReportDetail.normalizePhotoList(r.photos):r.photos)||[];
+    list.forEach(function(p){photos.push(p)});
+  });
   var h='<div class="com-detail"><div class="com-section"><strong>発生原因「'+cause+'」の現場写真</strong></div><p style="margin-bottom:12px">'+photos.length+'枚</p>';
-  if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';
+  if(photos.length&&typeof hhReportDetail!=='undefined')h+=hhReportDetail.photosHtml(photos);
+  else if(photos.length)h+='<div class="modal-photos">'+photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div>';
   else h+='<p style="color:var(--t3);font-size:12px">写真はありません</p>';
   h+='</div>';
   showComDetail('発生原因：'+cause,h);
@@ -924,20 +929,23 @@ function showByExpReportDetail(expIdx,rIdx){
   var data=window.comByExpData;var expM=window.comExpToMeasure;var causeM=window.comCauseToMeasure;
   if(!data||!data[expIdx])return;var item=data[expIdx];var r=item.sub[rIdx];if(!r)return;
   var exp=item.exp;var expShort=exp.replace('しそうになった','').replace('そうになった','').replace('してきた','').replace('になりそうだった','');
-  var h='<div class="com-detail">';
-  h+='<div class="com-section"><strong>【自由記述】</strong></div>';
-  if(r.w){h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(r.w)+'</p></div>';}
-  if(r.wk){h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(r.wk)+'</p></div>';}
-  if(r.d){h+='<div class="com-section"><strong>内容</strong><p>'+esc(r.d).replace(/\n/g,'<br>')+'</p></div>';}
-  if(r.m){h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(r.m).replace(/\n/g,'<br>')+'</p></div>';}
-  if(r.photos&&r.photos.length){h+='<div class="com-section"><strong>現場写真（'+r.photos.length+'枚）</strong><div class="modal-photos">'+r.photos.map(function(p){return'<img src="'+p+'" onclick="showFullPhotoSrc(this.src)">'}).join('')+'</div></div>';}
-  h+='<div class="com-section"><strong>対策提案（詳細）</strong>';
-  var props=[];if(r.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(r.m).replace(/\n/g,'<br>')+'</p>');
-  if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');
-  if(r.c&&r.c.length){var causeStr=r.c.map(function(c){return causeM[c]||''}).filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}
-  h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';
-  h+='</div></div>';
-  showComDetail(expShort+' の対策案',h);
+  function renderDetail(rep){
+    var h='<div class="com-detail"><div class="com-section"><strong>【自由記述】</strong></div>';
+    if(rep.w)h+='<div class="com-section"><strong>いつ・どこで</strong><p>'+esc(rep.w)+'</p></div>';
+    if(rep.wk)h+='<div class="com-section"><strong>どのような作業で</strong><p>'+esc(rep.wk)+'</p></div>';
+    if(rep.d)h+='<div class="com-section"><strong>内容</strong><p>'+esc(rep.d).replace(/\n/g,'<br>')+'</p></div>';
+    if(rep.m)h+='<div class="com-section"><strong>報告者の対策</strong><p>'+esc(rep.m).replace(/\n/g,'<br>')+'</p></div>';
+    if(typeof hhReportDetail!=='undefined')h+=hhReportDetail.photosHtml(rep.photos);
+    h+='<div class="com-section"><strong>対策提案（詳細）</strong>';
+    var props=[];if(rep.m)props.push('<p style="margin-bottom:8px"><b>①報告者提案:</b> '+esc(rep.m).replace(/\n/g,'<br>')+'</p>');
+    if(expM[exp])props.push('<p style="margin-bottom:8px"><b>②体験タイプ別の推奨対策:</b> '+expM[exp]+'</p>');
+    if(rep.c&&rep.c.length){var causeStr=rep.c.map(function(c){return causeM[c]||''}).filter(Boolean).join('、');if(causeStr)props.push('<p style="margin-bottom:8px"><b>③原因別対策:</b> '+causeStr+'</p>');}
+    h+=props.join('')||'<p>上記自由記述を踏まえ、現場に合った対策を検討してください。</p>';
+    h+='</div></div>';
+    showComDetail(expShort+' の対策案',h);
+  }
+  if(typeof hhReportDetail!=='undefined'&&hhReportDetail.ensurePhotos){hhReportDetail.ensurePhotos(r,renderDetail)}
+  else{loadPhotos();renderDetail(r);}
 }
 
 // Initial render (dashboard will show after login)

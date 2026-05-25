@@ -16,6 +16,38 @@
   function getDisasterRef(){return db?db.ref(DB_PATH+'/hh_disaster_reports'):null}
   function getDisasterWfRef(){return db?db.ref(DB_PATH+'/hh_disaster_workflow'):null}
 
+  function hhValidPhotoUrl(u){
+    if(u==null||u==='')return false;
+    u=String(u);
+    if(/^data:image\/heic/i.test(u)||/^data:image\/heif/i.test(u))return false;
+    return /^data:image\//i.test(u)||/^https?:\/\//i.test(u)||/^blob:/i.test(u);
+  }
+  function hhNormalizePhotoList(raw){
+    if(raw==null)return[];
+    var arr=[];
+    if(Array.isArray(raw))arr=raw.slice();
+    else if(typeof raw==='object'){
+      Object.keys(raw).sort(function(a,b){
+        var na=Number(a),nb=Number(b);
+        if(!isNaN(na)&&!isNaN(nb))return na-nb;
+        return String(a).localeCompare(String(b));
+      }).forEach(function(k){arr.push(raw[k]);});
+    }
+    return arr.filter(hhValidPhotoUrl);
+  }
+  function hhPhotoForId(ph,id){
+    if(!ph||id==null)return null;
+    return ph[id]!=null?ph[id]:(ph[String(id)]!=null?ph[String(id)]:null);
+  }
+  function hhAttachPhotosToReports(reports,ph){
+    if(!Array.isArray(reports)||!ph)return;
+    reports.forEach(function(r){
+      if(!r||r.id==null)return;
+      var raw=hhPhotoForId(ph,r.id);
+      if(raw)r.photos=hhNormalizePhotoList(raw);
+    });
+  }
+
   /** localStorage 用：画像 base64 を除き容量超過を防ぐ */
   function hhStripDisasterReportsForStorage(arr){
     if(!Array.isArray(arr))return[];
@@ -245,17 +277,34 @@
       if(!useFirebase||!db){
         try{
           var s=localStorage.getItem('hh_photos');
-          if(s){var ph=JSON.parse(s);reports.forEach(function(r){if(ph[r.id])r.photos=ph[r.id]})}
+          if(s)hhAttachPhotosToReports(reports,JSON.parse(s));
         }catch(e){}
-        onLoaded();
+        if(typeof onLoaded==='function')onLoaded();
         return;
       }
       getPhotosRef().once('value',function(snap){
-        var ph=snap.val()||{};
-        reports.forEach(function(r){if(ph[r.id])r.photos=ph[r.id]});
-        onLoaded();
-      },function(){onLoaded();});
+        hhAttachPhotosToReports(reports,snap.val()||{});
+        if(typeof onLoaded==='function')onLoaded();
+      },function(){if(typeof onLoaded==='function')onLoaded();});
     },
+    loadPhotoForReport:function(reportId,onLoaded){
+      function finish(list){
+        if(typeof onLoaded==='function')onLoaded(hhNormalizePhotoList(list));
+      }
+      if(reportId==null||reportId===''){finish([]);return;}
+      var sid=String(reportId);
+      if(!useFirebase||!db){
+        try{
+          var ph=JSON.parse(localStorage.getItem('hh_photos')||'{}');
+          finish(hhPhotoForId(ph,reportId));
+        }catch(e){finish([]);}
+        return;
+      }
+      getPhotosRef().child(sid).once('value',function(snap){
+        finish(snap.val());
+      },function(){finish([]);});
+    },
+    normalizePhotoList:hhNormalizePhotoList,
     savePhotos:function(reports){
       if(!reports||!reports.length)return;
       if(!useFirebase||!db){
