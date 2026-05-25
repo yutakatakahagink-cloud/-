@@ -5,6 +5,23 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
    複数サービスでデフォルト以外を使うときは、サービス「編集」画面に出る service_xxxxx を使う。
 3) templateId … Email Templates → 新規テンプレート作成後の Template ID
 
+■ Service ID にメールアドレスを入れないでください（文字数制限があり、そもそも用途が違います）
+  - Service ID は EmailJS 内部用の短い識別子です（例: service_xxxx や default_service）。長いメールアドレスは入力できません。
+  - 「どのメールから送るか」は、サービス編集画面の「Outlook Connect」で接続したアカウントが決まります。
+  - 送信元を yutaka_takahagi@nissinkohgyo.onmicrosoft.com に変える手順:
+    (1) 編集画面で「Disconnect」し、現在の anzensystem@outlook.com との接続を切る
+    (2) 再度 Outlook / Microsoft 365 で接続し、**社用アドレスでサインイン**して許可する
+    (3) Service ID は短いまま（既存のまま or EmailJS が出す形式）でよい。変えた場合は config.js の serviceId をその文字列に合わせる
+  - アプリ側の送信元表示・Reply-To は config.js の fromEmail / replyToEmail を社用アドレスにそろえる（既に変更済みのことがある）
+
+■ 送信済みメールの「差出人」が古い anzensystem@outlook.com のまま／Reply-To だけ新社用になる
+  - EmailJS のテンプレート「From」欄が **固定アドレス**のままになっていることが多い。次に直す:
+    Email Templates → 該当テンプレ → Settings（またはメールの送信者設定）で
+    **From email を {{from_email}}**、**From name を {{from_name}}** にする（固定文字列にしない）。
+  - コードは from_email / fromEmail / from / sender / reply_to / sender_email を渡す。テンプレ側の変数名と一致させる。
+  - さらに **Email Services** で Outlook を **yutaka_takahagi@nissinkohgyo.onmicrosoft.com で再接続**済みか確認（接続が古いと実送信アカウントが残る）。
+  - owner.html の「災害報告メールの送信元」も新社用に保存すると、mailto 本文フッタと Firebase 上の表示が揃う。
+
 テンプレート例（変数名は disaster-email-notify.js と一致）:
   To: {{to_email}}  ← EmailJS の「To Email」欄に必須。空のままや固定メールのみだと送信できない。
      コード側は email / to / user_email / recipient_email にも同じ宛先を渡すので、テンプレで {{email}} 等でも可。
@@ -20,13 +37,22 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
   セキュリティは Public Key 流出リスクがあるため、問題あれば EmailJS 有料化やサーバー経由送信を検討。
 
 ■ 本番テスト: 必ず https の GitHub Pages（HH_BASE_URL）から試す。file:// や古いキャッシュでは EmailJS が動かず Outlook（mailto）に落ちることが多い。
+■ config.js を更新したのにブラウザ版 Outlook の下書きだけ開く: HTML が古いクエリ（例: config.js?v=20260403-2）のままだとブラウザが旧 config をキャッシュしたままになり、workflowNotifyVia: mailto が残っているように見える。user.html 等の config.js の ?v= を更新して再デプロイし、Ctrl+Shift+R する。
+■ HH_EMAILJS に workflowNotifyVia: 'emailjs' を明示すると自動送信が確実（省略時も通常は EmailJS。composeMode: 'outlookWeb' は付けない＝失敗時に OWA が開く）。
 ■ Edge の「トラッキング防止」: コンソールに “Tracking Prevention blocked access to storage” が出る環境では、
   jsDelivr 経由の SDK が不安定になることがある。リポジトリ同梱の email.min.js を GitHub Pages と同じ階層にデプロイし、
   disaster-email-notify.js が同一オリジンから読み込む（既定）。デプロイ対象に email.min.js を含める（deploy-paths.txt 参照）。
   加えて EmailJS SDK のレート制限用 localStorage を使わず、メモリ上の storageProvider で init するようコード側で対策済み。
   user.html がサブパス（例: …//-/user.html）のみのときは config.js の HH_BASE_URL をサイトのルート（email.min.js がある階層の URL）に合わせると、SDK を正しい URL で読み込める。
 ■ 提出後、コンソールに [disaster-email] EmailJS 送信リクエスト成功 と出れば API は受理済み。届かない場合は迷惑メール・別テンプレ・別 templateId を確認。
-■ 配信不能 550 5.7.520 / AS(4810)「content identified as spam」: 受信側 Microsoft 365 が本文・件名・URL をスパム扱い。対処: (1) テナント管理者が送信元 anzensystem@outlook.com を許可リストへ (2) EmailJS テンプレの本文を短くし、{{message}} 以外に長いURLや重複リンクを置かない (3) 会社ドメインのメールを EmailJS に接続し from を社用にする。コード側は件名・本文を簡素化済みのことがあるので再デプロイ後に再テスト。
+■ 配信不能 550 5.7.520 / AS(4810)「content identified as spam」: 受信側 Microsoft 365 が第三者経由・Outlook.com 送信をスパム扱いすることが多い。
+  コード・テンプレだけでは直らない場合の実用的な対処:
+  (A) config.js の HH_EMAILJS に workflowNotifyVia: 'mailto' を入れる（本リポジトリの config.js は既定で有効化済みのことがある）
+      → 提出・承認のたびにデスクトップ Outlook の作成画面が開くので、会社アカウントで「送信」する（社内ドメイン同士は届きやすい）。
+  (B) テナント管理者が送信元を許可リストへ（可能なら）
+  (C) 会社ドメインのメールだけを EmailJS の Service に接続し、from を社用にして workflowNotifyVia を外して自動送信に戻す
+  (D) Power Automate（HH_WEBHOOK_NOTIFY.powerAutomateUrl）で社内メール送信
+  テンプレは {{subject}} {{message}} のみ・URL 重複なし推奨。
 ■ 送信元の「送信済み」には載るが、会社の Microsoft 365（@…onmicrosoft.com 等）の受信トレイにだけ届かない:
   第三者経由（EmailJS）とデスクトップ Outlook 直送ではヘッダー・経路が異なり、テナント側の隔離・スパム・ATP に掛かることがあります（アプリのバグではなく受信側ポリシー）。
   対処: config.js の HH_EMAILJS に workflowNotifyVia: 'mailto' を追加すると、災害WFの通知は EmailJS を使わず OS の既定メーラー（手元の Outlook）で開き、手動送信します（Outlook から直接テストしたときと同じ経路）。
@@ -36,4 +62,4 @@ EmailJS（ブラウザで実施）→ 次の3つを config.js の window.HH_EMAI
 ■ Outlook が開くとき: F12 コンソールの [disaster-email] EmailJS を確認。EmailJS → アカウント → セキュリティ の「秘密鍵の使用」はブラウザ送信で失敗しうる → オフ推奨。
 ■ コンソールで window.disasterHasEmailJsConfigured() が true か、Network で config.js に HH_EMAILJS 全文が載っているか確認。月間上限は無料で約200通。
 
-所有者画面（owner.html）→「災害報告メールの送信元」= anzensystem@outlook.com で保存
+所有者画面（owner.html）→「災害報告メールの送信元」= config の fromEmail（例: yutaka_takahagi@nissinkohgyo.onmicrosoft.com）と揃えて保存

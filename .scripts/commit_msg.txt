@@ -1,0 +1,7 @@
+fix: 災害発生報告の承認画面で全項目を表示
+
+- disaster-detail-html.js: showAllFields オプションを追加。
+  工事件名・被災者・現認者・病院名・携帯フォーム項目など
+  簡略表示から除外していた項目を承認画面向けに復元。
+- disaster-approver.html: disasterBuildDetailHtml(r, { showAllFields: true })
+  で呼び出し。使用者・管理者画面の簡略表示は変更なし。

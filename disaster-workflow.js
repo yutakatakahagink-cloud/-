@@ -72,7 +72,10 @@
       if (!Array.isArray(arr)) return '';
       for (var i = 0; i < arr.length; i++) {
         var a = arr[i];
-        if (a && normEmail(a.email) === need) {
+        if (!a) continue;
+        var em = normEmail(a.email);
+        var idEm = normEmail(a.id);
+        if (em === need || (!em && idEm === need)) {
           var nm = String(a.name || '').trim();
           if (nm) return nm;
         }
@@ -439,19 +442,30 @@
     var byResolved = resolveApproverByName(nameForResolve, emStore);
     if (!byResolved) byResolved = nameForResolve;
     if (!byResolved && emStore) byResolved = emStore;
+    var displayName = byResolved;
+    if (displayName && displayName.indexOf('@') !== -1) {
+      var nm2 = resolveApproverByName('（メールリンク）', emStore);
+      if (nm2) displayName = nm2;
+    }
+    if (displayName && displayName.indexOf('@') !== -1) {
+      var stCur = steps[r.wf.step];
+      var wfLab = stCur && String(stCur.label || '').trim();
+      if (wfLab) displayName = wfLab;
+    }
     var entry = {
       at: now,
-      by: byResolved,
+      by: displayName,
       role: '承認者追記（' + stepLab + '）',
       text: t,
     };
     if (fk) entry.field = fk;
     if (emStore) entry.approver_email = emStore;
+    if (displayName && displayName.indexOf('@') === -1) entry.approver_display_name = displayName;
     r.wf.report_addenda.push(entry);
     r.wf.history.push({
       type: 'approver_note',
       at: now,
-      by: byResolved,
+      by: displayName,
       note: '報告書に追記（' + stepLab + '）',
     });
     disasterSaveReports(DIS_LIST, id);
