@@ -3,52 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>安全衛生管理システム</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(180deg,#E8F5E9,#C8E6C9);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-h1{font-size:20px;color:#1B5E20;margin-bottom:24px;text-align:center}
-.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:600px}
-.card{background:#fff;border:2px solid #81C784;border-radius:16px;padding:24px;min-width:160px;text-align:center;text-decoration:none;color:#1B5E20;transition:all .2s;box-shadow:0 4px 12px rgba(46,125,50,.15)}
+h1{font-size:20px;color:#1B5E20;margin-bottom:8px;text-align:center}
+.sub{font-size:12px;color:#558B2F;margin-bottom:24px;text-align:center}
+.cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:720px}
+.card{background:#fff;border:2px solid #81C784;border-radius:16px;padding:24px;min-width:160px;flex:1;max-width:220px;text-align:center;text-decoration:none;color:#1B5E20;transition:all .2s;box-shadow:0 4px 12px rgba(46,125,50,.15)}
 .card:hover,.card:active{background:#E8F5E9;border-color:#2E7D32;transform:translateY(-2px);box-shadow:0 6px 20px rgba(46,125,50,.25)}
 .card .ico{font-size:36px;margin-bottom:12px}
 .card .ttl{font-size:14px;font-weight:700;margin-bottom:6px}
 .card .desc{font-size:11px;color:#558B2F;line-height:1.5}
-.url-list{background:#fff;border:1px solid #A5D6A7;border-radius:12px;padding:16px;margin-top:20px;max-width:600px;width:100%}
+.url-list{background:#fff;border:1px solid #A5D6A7;border-radius:12px;padding:16px;margin-top:20px;max-width:720px;width:100%}
 .url-list h2{font-size:13px;color:#1B5E20;margin-bottom:12px}
 .url-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
 .url-item:last-child{margin-bottom:0}
 .url-item a{color:#0277BD;word-break:break-all;flex:1}
 .url-item .copy{padding:4px 10px;font-size:10px;background:#E8F5E9;border:1px solid #81C784;border-radius:8px;color:#1B5E20;cursor:pointer;white-space:nowrap}
 .url-item .copy:active{background:#C8E6C9}
-.note{font-size:11px;color:#558B2F;margin-top:24px;text-align:center;max-width:400px}
+.note{font-size:11px;color:#558B2F;margin-top:24px;text-align:center;max-width:520px;line-height:1.6}
 </style>
 </head>
 <body>
 <h1>安全衛生管理システム</h1>
+<p class="sub">利用する画面を選択してください</p>
 <div class="cards">
-  <a href="kensaibou_hiyarihatto_v3.html" class="card">
-    <div class="ico">⚠</div>
-    <div class="ttl">安全衛生管理</div>
-    <div class="desc">使用者・管理者・所有者はログイン画面で選択</div>
+  <a href="user.html?v=20260526" class="card" id="cardUser">
+    <div class="ico">👤</div>
+    <div class="ttl">使用者</div>
+    <div class="desc">報告・要望・災害・委員会</div>
+  </a>
+  <a href="admin.html?v=20260526" class="card" id="cardAdmin">
+    <div class="ico">📊</div>
+    <div class="ttl">管理者</div>
+    <div class="desc">一覧・分析・委員会</div>
+  </a>
+  <a href="owner.html?v=20260526" class="card" id="cardOwner">
+    <div class="ico">⚙</div>
+    <div class="ttl">所有者</div>
+    <div class="desc">設定・QRコード・管理者登録</div>
   </a>
 </div>
 <div class="url-list">
-  <h2>📱 携帯・他PCから開くURL（コピーして共有）</h2>
-  <div class="url-item">
-    <a href="kensaibou_hiyarihatto_v3.html" id="urlUser">-</a>
-    <button class="copy" onclick="copyUrl('urlUser')">コピー</button>
-  </div>
+  <h2>📱 携帯・PCから開くURL（コピーして共有）</h2>
+  <div class="url-item"><span style="min-width:52px;color:#33691E">使用者</span><a href="user.html?v=20260526" id="urlUser">-</a><button class="copy" onclick="copyUrl('urlUser')">コピー</button></div>
+  <div class="url-item"><span style="min-width:52px;color:#33691E">管理者</span><a href="admin.html?v=20260526" id="urlAdmin">-</a><button class="copy" onclick="copyUrl('urlAdmin')">コピー</button></div>
+  <div class="url-item"><span style="min-width:52px;color:#33691E">所有者</span><a href="owner.html?v=20260526" id="urlOwner">-</a><button class="copy" onclick="copyUrl('urlOwner')">コピー</button></div>
 </div>
-<p class="note">※ 複数端末（携帯・PC）で同一データを表示するには、<b>Firebaseの設定</b>が必要です。所有者ログイン後、設定タブで手順を確認してください。<br>※ 全ての端末で<b>同じURL</b>（GitHub Pages等）から開いてください。</p>
+<p class="note">※ 複数端末で同一データを表示するには <b>Firebase の設定</b> が必要です。<br>※ 古い画面が出る場合は <b>Ctrl+Shift+R</b>（強制再読み込み）してください。<br>※ 旧URL（kensaibou_hiyarihatto_v3.html）は自動でこのページへ移動します。</p>
 <script>
 (function(){
   var base=location.href.replace(/[^\/]*$/,'');
-  var url=base+'kensaibou_hiyarihatto_v3.html';
-  document.getElementById('urlUser').href=url;document.getElementById('urlUser').textContent=url;
+  var v='?v=20260526';
+  [['urlUser','user.html'],['urlAdmin','admin.html'],['urlOwner','owner.html']].forEach(function(x){
+    var url=base+x[1]+v;
+    var a=document.getElementById(x[0]);
+    if(a){a.href=url;a.textContent=url}
+  });
+  [['cardUser','user.html'],['cardAdmin','admin.html'],['cardOwner','owner.html']].forEach(function(x){
+    var el=document.getElementById(x[0]);if(el)el.href=base+x[1]+v;
+  });
 })();
-function copyUrl(id){var a=document.getElementById(id);var url=a.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){alert('URLをコピーしました: '+url)})}else{var t=document.createElement('input');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('URLをコピーしました: '+url)}}
+function copyUrl(id){var a=document.getElementById(id);var url=a.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){alert('URLをコピーしました:\n'+url)})}else{var t=document.createElement('input');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('URLをコピーしました:\n'+url)}}
 </script>
 </body>
 </html>
