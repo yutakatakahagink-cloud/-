@@ -745,23 +745,33 @@ input[type="file"].photo-input{display:none}
         });
         if(countEl)countEl.textContent=window[storageKey].length>0?window[storageKey].length+'/5\u679a':'';
       }
-      function isHeic(file){
-        var name=(file.name||'').toLowerCase();
-        var type=(file.type||'').toLowerCase();
-        return name.endsWith('.heic')||name.endsWith('.heif')||type==='image/heic'||type==='image/heif';
-      }
-      function readUrl(blob){return new Promise(function(ok,ng){var r=new FileReader();r.onload=function(){ok(r.result)};r.onerror=ng;r.readAsDataURL(blob)})}
       function addPhoto(dataUrl,fileName,phId){
         var ph=phId?document.getElementById(phId):null;if(ph)ph.remove();
         if(window[storageKey].length<5){window[storageKey].push(dataUrl);window[storageKey+'_names'].push(fileName);render()}
       }
-      function showLoading(fileName){
+      function showLoading(){
         if(empty)empty.style.display='none';
         var id='_dld_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
         var d=document.createElement('div');d.className='photo-thumb';d.id=id;
         d.style.display='flex';d.style.alignItems='center';d.style.justifyContent='center';d.style.background='#e2e8f0';
-        d.innerHTML='<div style="text-align:center;padding:8px"><div style="width:24px;height:24px;border:3px solid #81C784;border-top-color:transparent;border-radius:50%;animation:_spin 0.8s linear infinite;margin:0 auto"></div><div style="font-size:9px;color:#558B2F;margin-top:6px">HEIC\u5909\u63db\u4e2d...</div></div>';
+        d.innerHTML='<div style="text-align:center;padding:8px"><div style="width:24px;height:24px;border:3px solid #81C784;border-top-color:transparent;border-radius:50%;animation:_spin 0.8s linear infinite;margin:0 auto"></div><div style="font-size:9px;color:#558B2F;margin-top:6px">\u753b\u50cf\u51e6\u7406\u4e2d...</div></div>';
         preview.appendChild(d);return id;
+      }
+      function processOne(file,phId){
+        var outName=(file.name||'\u753b\u50cf').replace(/\.(heic|heif)$/i,'.jpg');
+        var done=function(dataUrl){
+          if(!dataUrl){alert('\u753b\u50cf\u306e\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557\u3057\u307e\u3057\u305f');return;}
+          addPhoto(dataUrl,outName,phId);
+        };
+        if(typeof hhReportDetail!=='undefined'&&hhReportDetail.processImageFileToDataUrl){
+          hhReportDetail.processImageFileToDataUrl(file).then(done).catch(function(){
+            var el=phId?document.getElementById(phId):null;if(el)el.remove();
+            alert('HEIC\u753b\u50cf\u306e\u5909\u63db\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002JPEG/PNG\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002');
+          });
+          return;
+        }
+        var r=new FileReader();r.onload=function(){done(r.result)};r.onerror=function(){var el=phId?document.getElementById(phId):null;if(el)el.remove()};
+        r.readAsDataURL(file);
       }
       function handle(files){
         if(!files||!files.length)return;
@@ -769,14 +779,8 @@ input[type="file"].photo-input{display:none}
         arr=arr.slice(0,5-window[storageKey].length);
         if(!arr.length)return;
         arr.forEach(function(file){
-          if(isHeic(file)&&typeof heic2any!=='undefined'){
-            var phId=showLoading(file.name);
-            heic2any({blob:file,toType:'image/jpeg',quality:0.85}).then(function(jpegBlob){return readUrl(jpegBlob)}).then(function(dataUrl){
-              addPhoto(dataUrl,file.name.replace(/\.heic$/i,'.jpg').replace(/\.heif$/i,'.jpg'),phId);
-            }).catch(function(){var r=new FileReader();r.onload=function(){addPhoto(r.result,file.name,phId)};r.readAsDataURL(file)});
-          }else{
-            var r=new FileReader();r.onload=function(){addPhoto(r.result,file.name)};r.readAsDataURL(file);
-          }
+          var phId=showLoading();
+          processOne(file,phId);
         });
       }
       btn.addEventListener('click',function(e){e.stopPropagation();inp.value='';inp.click()});
@@ -926,7 +930,6 @@ input[type="file"].photo-input{display:none}
     </div>
     <div class="photo-count" id="photoCount"></div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script>
   (function(){
     var dz=document.getElementById('hhDropZone');
@@ -951,56 +954,45 @@ input[type="file"].photo-input{display:none}
       });
       if(countEl)countEl.textContent=window._hhPhotos.length>0?window._hhPhotos.length+'/5\u679a':'';
     }
-    function isHeic(file){
-      var name=(file.name||'').toLowerCase();
-      var type=(file.type||'').toLowerCase();
-      return name.endsWith('.heic')||name.endsWith('.heif')||type==='image/heic'||type==='image/heif';
-    }
-    function readAsDataUrl(blob){
-      return new Promise(function(resolve,reject){
-        var r=new FileReader();r.onload=function(){resolve(r.result)};r.onerror=reject;r.readAsDataURL(blob);
-      });
-    }
     function addPhoto(dataUrl,fileName,placeholderId){
-      var push=function(url){
-        var max=5;
-        var ph=placeholderId?document.getElementById(placeholderId):null;
-        if(ph)ph.remove();
-        if(window._hhPhotos.length<max){window._hhPhotos.push(url);window._hhPhotoNames.push(fileName);render()}
-      };
-      if(typeof hhReportDetail!=='undefined'&&hhReportDetail.compressPhotoDataUrl){
-        hhReportDetail.compressPhotoDataUrl(dataUrl,push);
-      }else push(dataUrl);
+      var ph=placeholderId?document.getElementById(placeholderId):null;if(ph)ph.remove();
+      if(window._hhPhotos.length<5){window._hhPhotos.push(dataUrl);window._hhPhotoNames.push(fileName);render()}
     }
-    function showLoading(fileName){
+    function showLoading(){
       if(empty)empty.style.display='none';
       var id='_ld_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
       var d=document.createElement('div');d.className='photo-thumb';d.id=id;
       d.style.display='flex';d.style.alignItems='center';d.style.justifyContent='center';d.style.background='#e2e8f0';
-      d.innerHTML='<div style="text-align:center;padding:8px"><div style="width:24px;height:24px;border:3px solid #81C784;border-top-color:transparent;border-radius:50%;animation:_spin 0.8s linear infinite;margin:0 auto"></div><div style="font-size:9px;color:#558B2F;margin-top:6px">HEIC\u5909\u63db\u4e2d...</div></div>';
+      d.innerHTML='<div style="text-align:center;padding:8px"><div style="width:24px;height:24px;border:3px solid #81C784;border-top-color:transparent;border-radius:50%;animation:_spin 0.8s linear infinite;margin:0 auto"></div><div style="font-size:9px;color:#558B2F;margin-top:6px">\u753b\u50cf\u51e6\u7406\u4e2d...</div></div>';
       preview.appendChild(d);
       return id;
+    }
+    function processOne(file,phId){
+      var outName=(file.name||'\u753b\u50cf').replace(/\.(heic|heif)$/i,'.jpg');
+      var done=function(dataUrl){
+        if(!dataUrl){alert('\u753b\u50cf\u306e\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557\u3057\u307e\u3057\u305f: '+file.name);return;}
+        addPhoto(dataUrl,outName,phId);
+      };
+      if(typeof hhReportDetail!=='undefined'&&hhReportDetail.processImageFileToDataUrl){
+        hhReportDetail.processImageFileToDataUrl(file).then(done).catch(function(){
+          var el=phId?document.getElementById(phId):null;if(el)el.remove();
+          alert('HEIC/JPEG\u753b\u50cf\u306e\u5909\u63db\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002\u5199\u771f\u30a2\u30d7\u30ea\u3067\u300c\u6700\u3082\u4e92\u6027\u306e\u3042\u308b\u5f62\u5f0f\u300d\u3092JPEG\u306b\u3057\u3066\u304b\u3089\u9078\u629e\u3059\u308b\u304b\u3001JPEG/PNG\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002');
+        });
+        return;
+      }
+      var r=new FileReader();
+      r.onload=function(){done(r.result)};
+      r.onerror=function(){var el=phId?document.getElementById(phId):null;if(el)el.remove();alert('\u753b\u50cf\u306e\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557\u3057\u307e\u3057\u305f')};
+      r.readAsDataURL(file);
     }
     function handle(files){
       if(!files||!files.length)return;
       var arr=[];for(var i=0;i<files.length;i++)arr.push(files[i]);
-      var max=5;
-      arr=arr.slice(0,max-window._hhPhotos.length);
+      arr=arr.slice(0,5-window._hhPhotos.length);
       if(!arr.length)return;
       arr.forEach(function(file){
-        if(isHeic(file)&&typeof heic2any!=='undefined'){
-          var phId=showLoading(file.name);
-          heic2any({blob:file,toType:'image/jpeg',quality:0.85}).then(function(jpegBlob){
-            return readAsDataUrl(jpegBlob);
-          }).then(function(dataUrl){
-            addPhoto(dataUrl,file.name.replace(/\.heic$/i,'.jpg').replace(/\.heif$/i,'.jpg'),phId);
-          }).catch(function(){
-            var el=phId?document.getElementById(phId):null;if(el)el.remove();
-            alert('HEIC画像の変換に失敗しました。JPEG/PNG形式の写真を選択してください。');
-          });
-        }else{
-          var r=new FileReader();r.onload=function(){addPhoto(r.result,file.name)};r.onerror=function(){alert('画像の読み込みに失敗しました: '+file.name)};r.readAsDataURL(file);
-        }
+        var phId=showLoading();
+        processOne(file,phId);
       });
     }
     var hhPhotoBtn=document.getElementById('hhPhotoBtn');
@@ -1110,8 +1102,9 @@ input[type="file"].photo-input{display:none}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260501-12" onerror="console.warn('config.js load failed')"></script>
-<script src="hh-data.js?v=20260525-photos2"></script>
-<script src="hh-report-detail.js?v=20260525-photos2"></script>
+<script src="hh-data.js?v=20260525-heic"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="hh-report-detail.js?v=20260525-heic"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
 <script src="disaster-email-notify.js?v=20260408-412" onerror="console.warn('disaster-email-notify.js load failed')"></script>

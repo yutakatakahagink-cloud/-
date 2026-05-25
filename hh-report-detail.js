@@ -125,16 +125,101 @@
     img.onerror=function(){cb(dataUrl);};
     img.src=dataUrl;
   }
+  function readAsDataUrl(blob){
+    return new Promise(function(resolve,reject){
+      if(!blob){reject(new Error('empty blob'));return;}
+      var r=new FileReader();
+      r.onload=function(){resolve(r.result)};
+      r.onerror=function(){reject(new Error('read failed'))};
+      r.readAsDataURL(blob);
+    });
+  }
+  function isHeicFile(file){
+    if(!file)return false;
+    var name=(file.name||'').toLowerCase();
+    var type=(file.type||'').toLowerCase();
+    if(/\.(heic|heif)$/i.test(name))return true;
+    if(/heic|heif/.test(type))return true;
+    return false;
+  }
+  function sniffHeicFile(file){
+    return new Promise(function(resolve){
+      if(!file||!file.size||file.size<12){resolve(false);return;}
+      try{
+        var fr=new FileReader();
+        fr.onload=function(){
+          try{
+            var v=new Uint8Array(fr.result);
+            var ftyp='';
+            for(var i=4;i<8;i++)ftyp+=String.fromCharCode(v[i]);
+            if(ftyp!=='ftyp'){resolve(false);return;}
+            var brand='';
+            for(var j=8;j<12;j++)brand+=String.fromCharCode(v[j]);
+            resolve(/heic|heix|hevc|hevx|heim|heis|mif1|msf1/i.test(brand));
+          }catch(e){resolve(false);}
+        };
+        fr.onerror=function(){resolve(false)};
+        fr.readAsArrayBuffer(file.slice(0,16));
+      }catch(e){resolve(false);}
+    });
+  }
+  function heic2anyToBlob(file){
+    if(typeof heic2any==='undefined')return Promise.reject(new Error('heic2any missing'));
+    var src=file;
+    if(!file.type||file.type==='application/octet-stream'){
+      try{src=new Blob([file],{type:'image/heic'})}catch(e){src=file}
+    }
+    function run(opts){
+      return heic2any(Object.assign({blob:src},opts)).then(function(result){
+        if(Array.isArray(result)){
+          if(!result.length)throw new Error('heic2any empty');
+          return result[0];
+        }
+        return result;
+      });
+    }
+    return run({toType:'image/jpeg',quality:0.85}).catch(function(){
+      return run({toType:'image/jpeg',quality:0.92});
+    }).catch(function(){
+      return run({toType:'image/png'});
+    });
+  }
+  function convertHeicFileToDataUrl(file){
+    return heic2anyToBlob(file).then(readAsDataUrl);
+  }
+  function processImageFileToDataUrl(file){
+    return new Promise(function(resolve,reject){
+      if(!file){reject(new Error('no file'));return;}
+      function finish(url){
+        if(!url){reject(new Error('empty'));return;}
+        compressPhotoDataUrl(url,function(out){resolve(out||url)});
+      }
+      function tryHeic(){
+        convertHeicFileToDataUrl(file).then(finish).catch(function(err){
+          reject(err||new Error('HEIC convert failed'));
+        });
+      }
+      function tryNormal(){
+        readAsDataUrl(file).then(function(dataUrl){
+          if(/^data:image\/heic/i.test(dataUrl)||/^data:image\/heif/i.test(dataUrl)){
+            tryHeic();
+            return;
+          }
+          finish(dataUrl);
+        }).catch(reject);
+      }
+      if(isHeicFile(file)){tryHeic();return;}
+      sniffHeicFile(file).then(function(isHeic){
+        if(isHeic)tryHeic();
+        else tryNormal();
+      });
+    });
+  }
   function isImageFile(file){
     if(!file)return false;
     var type=(file.type||'').toLowerCase();
     if(type.indexOf('image/')===0)return true;
-    return /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(file.name||'');
-  }
-  function isHeicFile(file){
-    var name=(file.name||'').toLowerCase();
-    var type=(file.type||'').toLowerCase();
-    return /\.heic$/i.test(name)||/\.heif$/i.test(name)||type==='image/heic'||type==='image/heif';
+    return /\.(jpe?g|jfif|png|gif|webp|bmp|heic|heif)$/i.test(file.name||'');
   }
   global.hhReportDetail={
     arrJoin:arrJoin,
@@ -143,6 +228,7 @@
     buildDetailHtml:buildDetailHtml,
     ensurePhotos:ensurePhotos,
     compressPhotoDataUrl:compressPhotoDataUrl,
+    processImageFileToDataUrl:processImageFileToDataUrl,
     isImageFile:isImageFile,
     isHeicFile:isHeicFile
   };
