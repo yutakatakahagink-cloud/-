@@ -738,7 +738,7 @@ function disasterDoApproverNote(id){
 }
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
-  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r,{formFormat:true}):'';
+  var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r,{formFormat:true,hideVictim:true}):'';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
   var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
   document.getElementById('mT').textContent='災害発生報告 詳細';

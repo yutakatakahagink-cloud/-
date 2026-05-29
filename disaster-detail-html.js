@@ -12,6 +12,7 @@
     var exportMode = !!opts.exportMode;
     /** 所有者・承認画面：入力様式どおりの災害事故発生報告書フォーマット */
     var formFormat = !!opts.formFormat;
+    var hideVictim = !!opts.hideVictim;
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -266,17 +267,19 @@
       leftCol += row('災害日時', V(r.datetime || ''));
       leftCol += row('災害場所', V(r.basho || r.place || ''));
       leftCol += row('住所', cellWithApprovals('basho_jusho', r.basho_jusho || ''));
-      leftCol += gs('被災者又は<br>事故者');
-      leftCol += sub('住所', V(r.jusho || ''));
-      leftCol += sub('氏名', V(r.victim || ''));
-      var birthAge = [];
-      if (r.birth) birthAge.push(String(r.birth));
-      if (r.age != null && r.age !== '') birthAge.push(String(r.age) + '才');
-      leftCol += sub('生年月日・年齢', V(birthAge.join('　')));
-      leftCol += sub('職種', V(r.victim_dept || ''));
-      leftCol += sub('雇入年月日', V(r.hire_date || ''));
-      leftCol += sub('経験年数', V(r.exp || ''));
-      leftCol += ge;
+      if (!hideVictim) {
+        leftCol += gs('被災者又は<br>事故者');
+        leftCol += sub('住所', V(r.jusho || ''));
+        leftCol += sub('氏名', V(r.victim || ''));
+        var birthAge = [];
+        if (r.birth) birthAge.push(String(r.birth));
+        if (r.age != null && r.age !== '') birthAge.push(String(r.age) + '才');
+        leftCol += sub('生年月日・年齢', V(birthAge.join('　')));
+        leftCol += sub('職種', V(r.victim_dept || ''));
+        leftCol += sub('雇入年月日', V(r.hire_date || ''));
+        leftCol += sub('経験年数', V(r.exp || ''));
+        leftCol += ge;
+      }
       leftCol += gs('被災(事故)の<br>程度');
       leftCol += sub('傷病名<br>(損害状況)', cellWithApprovals('shobyomei', r.shobyomei || ''));
       leftCol += sub('病院名・後遺症', V([r.byoin, r.koui ? '後遺症:' + r.koui : ''].filter(Boolean).join('　')));
