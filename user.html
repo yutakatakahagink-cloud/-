@@ -634,11 +634,11 @@ input[type="file"].photo-input{display:none}
   <a href="javascript:void(0)" class="back" id="disBack" onclick="goTo('pMenu')">← 戻る</a>
   <div id="disFormArea">
   <div id="disWfUserWrap" class="dis-wf-user-block" style="margin:0 0 16px;padding:12px;background:rgba(106,27,154,.06);border:1px solid rgba(106,27,154,.28);border-radius:8px">
-    <div class="sd" style="margin-top:0">承認ワークフロー（任意）</div>
-    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者のメールを1件以上入れると、<b>最終承認まで「確定済み」一覧に表示されません</b>。承認者は管理者画面で、<b>ここに入力したメール</b>と一致するアカウント（または所有者）でログインし、<b>差戻し・追記・訂正・承認</b>ができます。<br><b>ここが空のとき</b>は、所有者画面で保存した<b>既定の承認者メール</b>が使われます（災害の多段承認設定）。<br><strong>送信者メール</strong>は、この報告をワークフローに載せる際の<b>連絡先（差戻し通知の宛先）</b>です。入れておくと差戻し時にもこのアドレスへ通知されます（EmailJS／メール作成のいずれでも利用）。<br><strong>提出時の通知:</strong> <code style="font-size:10px">config.js</code> に <code style="font-size:10px">HH_EMAILJS</code>（EmailJS）があると承認者へ自動でメール送信されます。未設定の場合は提出直後にメール作成画面が開くので、<b>送信ボタンで送ってください</b>。メール本文には <b>ログイン不要で開く承認用URL</b>（<code style="font-size:10px">disaster-approver.html?id=…&t=…</code>）が含まれます。<code style="font-size:10px">HH_BASE_URL</code> を設定すると、そのURLが本番アドレスになります。</p>
+    <div class="sd" style="margin-top:0">承認ワークフロー</div>
+    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者を選択してください。名前を選ぶとメールアドレスが自動で設定されます。</p>
     <div id="disWfUserSteps"></div>
     <button type="button" class="fp" style="margin-top:6px;font-size:11px;padding:8px 12px;border-radius:8px" onclick="disWfUserAddApproverRow()">＋ 承認段階を追加</button>
-    <div class="fg" style="margin-top:12px;margin-bottom:0"><label class="fl">送信者メール（任意）</label><input class="fi" type="email" id="f_wf_sender_email" placeholder="ワークフロー連絡・差戻し通知の宛先"></div>
+    <div class="fg" style="margin-top:12px;margin-bottom:0"><label class="fl">送信者メール</label><input class="fi" type="email" id="f_wf_sender_email" placeholder="ログイン氏名から自動設定" readonly style="background:#e8e8e8"></div>
   </div>
   <div class="dis-form-mobile">
   <div class="sd">事業場情報</div>
@@ -1590,13 +1590,145 @@ function updateDisExp(){
   if(y&&m){var hire=new Date(parseInt(y,10),parseInt(m,10)-1,1);if(!isNaN(hire.getTime())){var today=new Date();var months=(today.getFullYear()-hire.getFullYear())*12+(today.getMonth()-hire.getMonth());ey.value=Math.max(0,Math.floor(months/12));em.value=Math.max(0,months%12)}else{ey.value='';em.value=''}}
   else{ey.value='';em.value=''}
 }
+var DIS_EMAIL_BOOK=[
+['河野孝夫','takao_kawano@nissinkohgyo.co.jp'],
+['河野世師子','yoshiko_kawano@nissinkohgyo.co.jp'],
+['吉川真人','makoto_yoshikawa@nissinkohgyo.co.jp'],
+['日高義幸','yoshiyuki_hidaka@nissinkohgyo.co.jp'],
+['久保尚男','hisao_kubo@nissinkohgyo.co.jp'],
+['中村安男','yasuo_nakamura@nissinkohgyo.co.jp'],
+['川名哲也','tetsuya_kawana@nissinkohgyo.co.jp'],
+['甲斐緑','midori_kai@nissinkohgyo.co.jp'],
+['甲斐亮三','ryozo_kai@nissinkohgyo.co.jp'],
+['増田祥子','syoko_tomoi@nissinkohgyo.co.jp'],
+['瀧口裕子','yuko_takiguchi@nissinkohgyo.co.jp'],
+['松本有紗','arisa_matsumoto@nissinkohgyo.co.jp'],
+['髙萩泰','yutaka_takahagi@nissinkohgyo.co.jp'],
+['成岡弘二','koji_narioka@nissinkohgyo.co.jp'],
+['佐藤豊明','toyoaki_sato2@nissinkohgyo.co.jp'],
+['中根直人','naohito_nakane@nissinkohgyo.co.jp'],
+['下田かつ子','katsuko_shimoda@nissinkohgyo.co.jp'],
+['工藤晃子','akiko_kudo@nissinkohgyo.co.jp'],
+['吉田美幸','miyuki_yoshida@nissinkohgyo.co.jp'],
+['志田和弘','kazuhiro_shida@nissinkohgyo.co.jp'],
+['黒田義隆','yoshitaka_kuroda@nissinkohgyo.co.jp'],
+['山田誠吾','seigo_yamada@nissinkohgyo.co.jp'],
+['児玉大佑','daisuke_kodama@nissinkohgyo.co.jp'],
+['佐藤ブライアン','brian_sato@nissinkohgyo.co.jp'],
+['尾前伸樹','nobuki_omae@nissinkohgyo.co.jp'],
+['山田晃也','koya_yamada@nissinkohgyo.co.jp'],
+['日髙奈央','nao_hidaka@nissinkohgyo.co.jp'],
+['柏田汰玖','taku_kashiwada@nissinkohgyo.co.jp'],
+['甲斐優太','yuta_kai@nissinkohgyo.co.jp'],
+['橋倉孝空','takaaki_hashikura@nissinkohgyo.co.jp'],
+['土田悠暉','yuki_tsuchida@nissinkohgyo.co.jp'],
+['田島禾楓','kaede_tajima@nissinkohgyo.co.jp'],
+['中尾麻椰','maya_nakao@nissinkohgyo.co.jp'],
+['倉田月渚','runa_kurata@nissinkohgyo.co.jp'],
+['友清恵','megumi_tomokiyo@nissinkohgyo.co.jp'],
+['境田琉梨','ruri_sakaida@nissinkohgyo.co.jp'],
+['伊東和華','nodoka_ito@nissinkohgyo.co.jp'],
+['荻野幸美','yukimi_ogino@nissinkohgyo.co.jp'],
+['海田稔之','noriyuki_kaita@nissinkohgyo.co.jp'],
+['渡邊祐児','masashi_watanabe@nissinkohgyo.co.jp'],
+['牧田健作','kensaku_makita@nissinkohgyo.co.jp'],
+['花岡英隆','hidetaka_hanaoka@nissinkohgyo.co.jp'],
+['梅田誠二','seiji_umeda@nissinkohgyo.co.jp'],
+['佐藤宗近','munechika_sato@nissinkohgyo.co.jp'],
+['吉本幸夫','yukio_yoshimoto@nissinkohgyo.co.jp'],
+['請関智','satoru_ukezeki@nissinkohgyo.co.jp'],
+['金﨑煌明','komei_kanasaki@nissinkohgyo.co.jp'],
+['忍賀俊治','toshiharu_oshiga@nissinkohgyo.co.jp'],
+['戸野口政弘','masahiro_tonoguchi@nissinkohgyo.co.jp'],
+['飯干徳善','noriyoshi_iihoshi@nissinkohgyo.co.jp'],
+['橋本修','osamu_hashimoto@nissinkohgyo.co.jp'],
+['廣木早苗','sanae_hiroki@nissinkohgyo.co.jp'],
+['土田香織','kaori_tsuchida@nissinkohgyo.co.jp'],
+['波口泉','izumi_namiguchi@nissinkohgyo.co.jp'],
+['田邉雅文','masafumi_tanabe@nissinkohgyo.co.jp'],
+['佐藤千恵美','chiemi_sato@nissinkohgyo.co.jp'],
+['畦原愛子','aiko_unehara@nissinkohgyo.co.jp'],
+['池田奈々恵','nanae_ikeda@nissinkohgyo.co.jp'],
+['町田建也','tatsuya_machida@nissinkohgyo.co.jp'],
+['渡辺伸一','shinichi_watanabe@nissinkohgyo.co.jp'],
+['佐々木隆介','ryusuke_sasaki@nissinkohgyo.co.jp'],
+['柏田純奈','ayana_kidani@nissinkohgyo.co.jp'],
+['中城俊昭','toshiaki_nakajo@nissinkohgyo.co.jp'],
+['甲斐聡史','satoshi_kai@nissinkohgyo.co.jp'],
+['川井田正太','shota_kawaida@nissinkohgyo.co.jp'],
+['大山瑠美','rumi_oyama@nissinkohgyo.co.jp'],
+['内八重俊哉','toshiya_uchibae@nissinkohgyo.co.jp'],
+['佐藤寛','hiroshi_sato@nissinkohgyo.co.jp'],
+['那須亮太','ryota_nasu@nissinkohgyo.co.jp'],
+['横山正樹','masaki_yokoyama@nissinkohgyo.co.jp'],
+['田中美姫','miki_tanaka@nissinkohgyo.co.jp'],
+['飯田夏美','natsumi_iida@nissinkohgyo.co.jp'],
+['上原瑶子','yoko_uehara@nissinkohgyo.co.jp'],
+['福島洋幸','hiroyuki_fukushima@nissinkohgyo.co.jp'],
+['大石寛','hiroshi_oishi@nissinkohgyo.co.jp'],
+['菅原さおり','saori_sugawara@nissinkohgyo.co.jp'],
+['小濵一晴','issei_obama@nissinkohgyo.co.jp'],
+['下和田保','tamotsu_shimowada@nissinkohgyo.co.jp'],
+['福元麻子','asako_fukumoto@nissinkohgyo.co.jp'],
+['甲斐淳林','jyunki_kai@nissinkohgyo.co.jp'],
+['松葉和敏','kazutoshi_matsuba@nissinkohgyo.co.jp'],
+['中河主昌','kazumasa_nakagawa@nissinkohgyo.co.jp'],
+['野中裕二','yuji_nonaka@nissinkohgyo.co.jp'],
+['吉木史','fumito_yoshiki@nissinkohgyo.co.jp'],
+['田﨑浩久','hirohisa_tazaki@nissinkohgyo.co.jp'],
+['立石義文','yoshifumi_tateishi@nissinkohgyo.co.jp'],
+['竹田絢香','ayaka_takeda@nissinkohgyo.co.jp'],
+['木田寛士','hiroshi_kida@nissinkohgyo.co.jp'],
+['永友努','tsutomu_nagatomo@nissinkohgyo.co.jp'],
+['星村俊文','toshifumi_hoshimura@nissinkohgyo.co.jp'],
+['佐藤史崇','fumitaka_sato@nissinkohgyo.co.jp'],
+['水谷政治','masaharu_mizutani@nissinkohgyo.co.jp'],
+['太田智道','tomomichi_ota@nissinkohgyo.co.jp'],
+['和田憲昌','norimasa_wada@nissinkohgyo.co.jp'],
+['宮﨑渉一郎','shoichiro_miyazaki@nissinkohgyo.co.jp'],
+['神田孝介','kosuke_kanda@nissinkohgyo.co.jp'],
+['川路速豊','hayato_kawaji@nissinkohgyo.co.jp'],
+['三町将樹','masaki_mimachi@nissinkohgyo.co.jp'],
+['古川仁子','hiroko_furukawa@nissinkohgyo.co.jp'],
+['岩本郷子','kyoko_iwamoto@nissinkohgyo.co.jp'],
+['藤崎有香','yuka_fujisaki@nissinkohgyo.co.jp'],
+['土山美奈子','minako_tsuchiyama@nissinkohgyo.co.jp'],
+['大場裕実','hiromi_oba@nissinkohgyo.co.jp']
+];
+function disEmailForName(name){
+  if(!name)return '';
+  var n=String(name).trim();
+  for(var i=0;i<DIS_EMAIL_BOOK.length;i++){if(DIS_EMAIL_BOOK[i][0]===n)return DIS_EMAIL_BOOK[i][1];}
+  return '';
+}
+function disWfBuildNameOptions(){
+  return '<option value="">-- 承認者を選択 --</option>'+DIS_EMAIL_BOOK.map(function(p){return '<option value="'+p[0]+'">'+p[0]+'</option>'}).join('');
+}
 function disWfUserAddApproverRow(){
   var box=document.getElementById('disWfUserSteps');if(!box)return;
   var n=box.querySelectorAll('.dis-wf-u-row').length+1;
   var div=document.createElement('div');
   div.className='dis-wf-u-row';
   div.style.cssText='display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px';
-  div.innerHTML='<input class="fi dis-wf-u-lab" type="text" placeholder="承認者名・段階名（例:現場長・氏名）" value="第'+n+'承認" style="flex:1;min-width:90px;margin:0"><input class="fi dis-wf-u-em" type="email" placeholder="承認者メール" style="flex:2;min-width:160px;margin:0"><button type="button" class="fp" style="padding:6px 10px;font-size:11px;border-radius:8px" onclick="this.parentElement.remove()">削除</button>';
+  var labEl=document.createElement('input');
+  labEl.className='fi dis-wf-u-lab';
+  labEl.type='text';labEl.readOnly=true;labEl.value='第'+n+'承認';
+  labEl.style.cssText='flex:0 0 70px;min-width:70px;margin:0;background:#e8e8e8;font-weight:600;text-align:center';
+  var sel=document.createElement('select');
+  sel.className='fi dis-wf-u-sel';
+  sel.style.cssText='flex:1;min-width:120px;margin:0;padding:8px 6px;font-size:12px';
+  sel.innerHTML=disWfBuildNameOptions();
+  var emEl=document.createElement('input');
+  emEl.className='fi dis-wf-u-em';
+  emEl.type='email';emEl.readOnly=true;emEl.placeholder='名前を選ぶと自動入力';
+  emEl.style.cssText='flex:2;min-width:160px;margin:0;background:#e8e8e8';
+  sel.addEventListener('change',function(){emEl.value=disEmailForName(sel.value)});
+  var btn=document.createElement('button');
+  btn.type='button';btn.className='fp';
+  btn.style.cssText='padding:6px 10px;font-size:11px;border-radius:8px';
+  btn.textContent='削除';
+  btn.addEventListener('click',function(){div.remove()});
+  div.appendChild(labEl);div.appendChild(sel);div.appendChild(emEl);div.appendChild(btn);
   box.appendChild(div);
 }
 function collectDisUserApproverSteps(){
@@ -1605,6 +1737,7 @@ function collectDisUserApproverSteps(){
   box.querySelectorAll('.dis-wf-u-row').forEach(function(row){
     var lab=(row.querySelector('.dis-wf-u-lab')||{}).value||'';
     var em=(row.querySelector('.dis-wf-u-em')||{}).value||'';
+    if(!String(em).trim())return;
     out.push({label:String(lab).trim(),email:String(em).trim()});
   });
   return out;
@@ -1662,6 +1795,8 @@ function resetDisasterFormMobile(){
 function fillDisFormDefaults(){
   if(!CUR)return;
   ensureDisWfUserRows();
+  var senderEmail=disEmailForName(CUR.name);
+  var wse=document.getElementById('f_wf_sender_email');if(wse&&senderEmail)wse.value=senderEmail;
   document.getElementById('f_datetime').value=new Date().toISOString().slice(0,16);
   var rpc=document.getElementById('f_reporter_pc');if(rpc)rpc.value=CUR.name;
   var vpc=document.getElementById('f_victim_dept_pc');if(vpc)vpc.value='';
@@ -1851,6 +1986,21 @@ function fillDisFormFromReturnedEdit(){
     setv('f_sekininsha_pc',r.sekininsha||(CUR?CUR.name:''));
     var wse=document.getElementById('f_wf_sender_email');
     if(wse)wse.value=(r.wf_sender_email!=null?String(r.wf_sender_email):'');
+    if(r.wf&&Array.isArray(r.wf.steps)&&r.wf.steps.length){
+      var wBox=document.getElementById('disWfUserSteps');if(wBox)wBox.innerHTML='';
+      r.wf.steps.forEach(function(st){
+        disWfUserAddApproverRow();
+        var rows=document.querySelectorAll('#disWfUserSteps .dis-wf-u-row');
+        var lastRow=rows[rows.length-1];if(!lastRow)return;
+        var selEl=lastRow.querySelector('.dis-wf-u-sel');
+        var emEl=lastRow.querySelector('.dis-wf-u-em');
+        if(selEl){
+          var matched=DIS_EMAIL_BOOK.find(function(p){return p[1]===String(st.email||'').trim()});
+          if(matched)selEl.value=matched[0];
+        }
+        if(emEl)emEl.value=String(st.email||'');
+      });
+    }
     window._disPhotosPC=(r.situation_imgs&&r.situation_imgs.length?r.situation_imgs.slice():(r.situation_img?[r.situation_img]:[]));
     window._disPhotosPC_names=window._disPhotosPC.map(function(_,i){return'画像'+(i+1)});
     if(window._disPhotosPC_render)window._disPhotosPC_render();
