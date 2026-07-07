@@ -1,15 +1,15 @@
 /**
  * 安全衛生委員会議事録.xlsx テンプレートへ値を流し込む（JSZip + sheet1.xml 直接編集）
- * SheetJS 無料版はセルスタイルを書き出せないため、様式保持にはテンプレート ZIP 方式を使う。
  */
 (function (global) {
   'use strict';
 
-  var TEMPLATE_PATH = '安全衛生委員会議事録.xlsx';
+  var TEMPLATE_FILES = ['committee_minutes_template.xlsx', '安全衛生委員会議事録.xlsx'];
   var SHEET_PATH = 'xl/worksheets/sheet1.xml';
 
   function escXml(s) {
     return String(s)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -23,7 +23,7 @@
     if (v === '') return xml;
 
     var selfClose = new RegExp('<c\\s+r="' + addr + '"([^/>]*)\\s*/>');
-    var openClose = new RegExp('<c\\s+r="' + addr + '"([^>]*?)>([\\s\\S]*?)</c>');
+    var openClose = new RegExp('<c\\s+r="' + addr + '"([^>]*?)>([^<]*(?:<(?!c\\s)[^<]*)*?)</c>');
 
     var inner = type === 'n' ? '<v>' + v + '</v>' : '<is><t xml:space="preserve">' + v + '</t></is>';
 
@@ -87,6 +87,38 @@
     setStr(ref, cols.disc, d.discussions || '');
   }
 
+  function assetBase() {
+    if (typeof global.HH_BASE_URL === 'string' && global.HH_BASE_URL) {
+      return global.HH_BASE_URL.replace(/\/?$/, '/');
+    }
+    try {
+      var s = document.querySelector('script[src*="hh-com-xlsx-fill"]');
+      if (s && s.src) return s.src.replace(/[^/]+$/, '');
+    } catch (e) {}
+    try {
+      var p = global.location && global.location.pathname ? global.location.pathname : '';
+      return p.replace(/[^/]+$/, '');
+    } catch (e2) {}
+    return '';
+  }
+
+  global.comMinutesTemplateUrls = function () {
+    var base = assetBase();
+    var urls = [];
+    TEMPLATE_FILES.forEach(function (name) {
+      urls.push(base + encodeURIComponent(name));
+      urls.push(base + name);
+      urls.push(name);
+      urls.push('./' + name);
+    });
+    var seen = {};
+    return urls.filter(function (u) {
+      if (!u || seen[u]) return false;
+      seen[u] = true;
+      return true;
+    });
+  };
+
   global.comMinutesFillSheet1Xml = function (sheetXml, prvData, curData, pYM, curYM, ymLabelFn, buildAgendaForYM) {
     if (!sheetXml) return sheetXml;
     var ref = { s: sheetXml };
@@ -106,22 +138,35 @@
     });
   };
 
+  function fetchTemplateBuffer(urls, idx) {
+    if (idx >= urls.length) {
+      return Promise.reject(new Error('議事録テンプレートを取得できません。GitHub Pages から開いているか確認してください。'));
+    }
+    return fetch(urls[idx], { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' (' + urls[idx] + ')');
+        return res.arrayBuffer();
+      })
+      .catch(function () { return fetchTemplateBuffer(urls, idx + 1); });
+  }
+
   global.comMinutesDownloadExcel = function (prvData, curData, pYM, curYM, ymLabelFn, buildAgendaForYM) {
     if (typeof global.JSZip === 'undefined') {
       alert('JSZipが読み込まれていません');
       return Promise.reject(new Error('JSZip missing'));
     }
-    return fetch(encodeURI(TEMPLATE_PATH))
-      .then(function (res) {
-        if (!res.ok) throw new Error('テンプレート「' + TEMPLATE_PATH + '」を取得できません（' + res.status + '）');
-        return res.arrayBuffer();
-      })
+    var urls = global.comMinutesTemplateUrls();
+    return fetchTemplateBuffer(urls, 0)
       .then(function (buf) { return global.JSZip.loadAsync(buf); })
       .then(function (zip) {
         return global.comMinutesFillTemplateZip(zip, prvData, curData, pYM, curYM, ymLabelFn, buildAgendaForYM);
       })
       .then(function (zip) {
-        return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+        return zip.generateAsync({
+          type: 'blob',
+          compression: 'DEFLATE',
+          compressionOptions: { level: 6 }
+        });
       })
       .then(function (blob) {
         var url = URL.createObjectURL(blob);

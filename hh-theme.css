@@ -1,0 +1,322 @@
+/* 勤怠管理システム（kintai-theme）に合わせた安全衛生管理システム共通テーマ */
+:root {
+  --bg: #ffffff;
+  --bg2: #eef3f9;
+  --bg3: #1a2a4a;
+  --bg4: #152040;
+  --bg5: #0f1830;
+  --ac: #00d4ff;
+  --ac2: #33ddff;
+  --acg: rgba(0, 212, 255, 0.12);
+  --yl: #ffa502;
+  --rd: #ff4757;
+  --gn: #2ed573;
+  --bl: #29b6f6;
+  --pr: #a78bfa;
+  --t1: #f2f5fb;
+  --t2: #d8e4f4;
+  --t3: #a8b8d8;
+  --bd: rgba(0, 212, 255, 0.25);
+  --card: rgba(21, 32, 64, 0.55);
+  --card2: rgba(26, 42, 74, 0.75);
+  --input: #1a2a4a;
+  --r: 12px;
+  --rs: 8px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+body.hh-sora {
+  font-family: "Noto Sans JP", "Segoe UI", Meiryo, sans-serif;
+  background: var(--bg) !important;
+  color: var(--t1);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.hh-sora select,
+body.hh-sora input,
+body.hh-sora textarea,
+body.hh-sora button {
+  color: var(--t1);
+}
+
+/* ナビ・ヘッダー */
+body.hh-sora .nav {
+  background: rgba(15, 24, 48, 0.96) !important;
+  border-color: var(--bd) !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+}
+
+body.hh-sora .ni {
+  color: var(--t3);
+}
+
+body.hh-sora .ni.on {
+  color: var(--ac);
+}
+
+body.hh-sora .ni.on::before {
+  background: var(--ac) !important;
+}
+
+body.hh-sora .hdr {
+  background: linear-gradient(180deg, rgba(21, 32, 64, 0.95), rgba(15, 24, 48, 0.92)) !important;
+  border-bottom-color: var(--bd) !important;
+}
+
+body.hh-sora .hdr-t,
+body.hh-sora .lt,
+body.hh-sora .mh,
+body.hh-sora .cht,
+body.hh-sora .fl {
+  color: var(--t1) !important;
+}
+
+body.hh-sora .hdr-s,
+body.hh-sora .sl,
+body.hh-sora .rm,
+body.hh-sora .dk,
+body.hh-sora .dbt {
+  color: var(--t3) !important;
+}
+
+body.hh-sora .logo {
+  background: linear-gradient(135deg, #0099bb, #00d4ff) !important;
+  box-shadow: 0 2px 12px rgba(0, 212, 255, 0.35) !important;
+}
+
+/* カード・一覧 */
+body.hh-sora .cb,
+body.hh-sora .ic,
+body.hh-sora .rc,
+body.hh-sora .sc,
+body.hh-sora .url-list,
+body.hh-sora .login-box,
+body.hh-sora .period-flt,
+body.hh-sora .com-exp-card,
+body.hh-sora .lki {
+  background: var(--card) !important;
+  border-color: var(--bd) !important;
+  color: var(--t1);
+  box-shadow: var(--shadow);
+}
+
+body.hh-sora .rc {
+  border-left-color: var(--ac) !important;
+}
+
+body.hh-sora .rc:hover {
+  border-left-color: var(--ac2) !important;
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.15);
+}
+
+body.hh-sora .rde,
+body.hh-sora .lkl,
+body.hh-sora .dv,
+body.hh-sora .dbtx {
+  color: var(--t2) !important;
+}
+
+/* 入力 */
+body.hh-sora .fi,
+body.hh-sora .fs,
+body.hh-sora .ft,
+body.hh-sora .login-inp,
+body.hh-sora .login-sel,
+body.hh-sora .period-flt select {
+  background: var(--input) !important;
+  border-color: var(--bd) !important;
+  color: var(--t1) !important;
+}
+
+body.hh-sora .fi:focus,
+body.hh-sora .fs:focus,
+body.hh-sora .ft:focus,
+body.hh-sora .login-inp:focus,
+body.hh-sora .login-sel:focus {
+  border-color: var(--ac) !important;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2) !important;
+}
+
+body.hh-sora .fs {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23a8b8d8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+}
+
+/* チップ・ボタン */
+body.hh-sora .ch,
+body.hh-sora .ck,
+body.hh-sora .lb,
+body.hh-sora .fp,
+body.hh-sora .dfp,
+body.hh-sora .tp {
+  background: rgba(26, 42, 74, 0.65) !important;
+  border-color: var(--bd) !important;
+  color: var(--t2) !important;
+}
+
+body.hh-sora .ch.on,
+body.hh-sora .ck.on,
+body.hh-sora .lb.on,
+body.hh-sora .dfp.on,
+body.hh-sora .tp.on {
+  background: var(--acg) !important;
+  border-color: var(--ac) !important;
+  color: var(--ac) !important;
+}
+
+body.hh-sora .sub,
+body.hh-sora .login-btn {
+  background: linear-gradient(135deg, #0099bb, #00d4ff) !important;
+  border: 1px solid var(--ac) !important;
+  color: #061018 !important;
+  box-shadow: 0 4px 16px rgba(0, 212, 255, 0.25) !important;
+}
+
+body.hh-sora .sub:hover {
+  background: linear-gradient(135deg, #00b8d4, #33ddff) !important;
+}
+
+body.hh-sora .fp:hover {
+  border-color: var(--ac) !important;
+  color: var(--ac) !important;
+}
+
+body.hh-sora .sd {
+  color: var(--ac) !important;
+}
+
+body.hh-sora .sd::after {
+  background: linear-gradient(90deg, var(--bd), transparent) !important;
+}
+
+/* 統計・グラフ */
+body.hh-sora .htk,
+body.hh-sora .crt,
+body.hh-sora .lkdt {
+  background: rgba(15, 24, 48, 0.6) !important;
+}
+
+body.hh-sora .hl,
+body.hh-sora .crl,
+body.hh-sora .tl2 {
+  color: var(--t3) !important;
+}
+
+body.hh-sora .sc.co .sv { color: var(--ac) !important; }
+
+/* モーダル */
+body.hh-sora .mbg {
+  background: rgba(6, 10, 20, 0.72) !important;
+}
+
+body.hh-sora .mbd {
+  background: rgba(21, 32, 64, 0.98) !important;
+  border: 1px solid var(--bd);
+  color: var(--t1);
+}
+
+body.hh-sora .dl {
+  border-bottom-color: var(--bd) !important;
+}
+
+body.hh-sora .mp {
+  background: var(--bd) !important;
+}
+
+body.hh-sora .tst {
+  background: linear-gradient(135deg, #0099bb, #00d4ff) !important;
+  color: #061018 !important;
+}
+
+/* 委員会議事録フォーム */
+body.hh-sora .cm-col {
+  background: var(--card2) !important;
+  border-color: var(--bd) !important;
+}
+
+body.hh-sora .cm-title {
+  background: rgba(0, 212, 255, 0.08) !important;
+  color: var(--t1) !important;
+}
+
+body.hh-sora .cm-title.cm-confirmed {
+  background: linear-gradient(135deg, #0099bb, #00d4ff) !important;
+  color: #061018 !important;
+}
+
+body.hh-sora .cm-sh,
+body.hh-sora .cm-lbl {
+  color: var(--ac) !important;
+}
+
+body.hh-sora .cm-fi,
+body.hh-sora .cm-ta {
+  background: var(--input) !important;
+  border-color: var(--bd) !important;
+  color: var(--t1) !important;
+}
+
+body.hh-sora .cm-section {
+  border-bottom-color: var(--bd) !important;
+}
+
+/* 入口 index.html */
+body.hh-sora.index-page {
+  background: linear-gradient(160deg, #f8fafc 0%, #e8eef6 50%, #dbeafe 100%) !important;
+  color: #152040;
+}
+
+body.hh-sora.index-page h1 {
+  color: #152040 !important;
+  font-family: "Orbitron", "Noto Sans JP", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+body.hh-sora.index-page .sub,
+body.hh-sora.index-page .note {
+  color: #475569 !important;
+}
+
+body.hh-sora.index-page .card {
+  background: rgba(21, 32, 64, 0.72) !important;
+  border-color: rgba(0, 212, 255, 0.35) !important;
+  color: var(--t1) !important;
+  box-shadow: var(--shadow);
+}
+
+body.hh-sora.index-page .card:hover {
+  border-color: var(--ac) !important;
+  box-shadow: 0 8px 28px rgba(0, 212, 255, 0.25);
+}
+
+body.hh-sora.index-page .card .ttl {
+  color: var(--t1) !important;
+}
+
+body.hh-sora.index-page .card .desc {
+  color: var(--t3) !important;
+}
+
+body.hh-sora.index-page .url-list {
+  background: rgba(21, 32, 64, 0.55) !important;
+}
+
+body.hh-sora.index-page .url-list h2 {
+  color: var(--t1) !important;
+}
+
+body.hh-sora.index-page .url-item a {
+  color: var(--ac) !important;
+}
+
+body.hh-sora.index-page .url-item .copy {
+  background: rgba(26, 42, 74, 0.8) !important;
+  border-color: var(--bd) !important;
+  color: var(--t2) !important;
+}
+
+/* 白背景固定の印刷・PDF用はそのまま */
+body.hh-sora .report-wrapper,
+body.hh-sora .dis-print-area {
+  background: #fff !important;
+  color: #000 !important;
+}
