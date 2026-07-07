@@ -379,75 +379,119 @@
     return lines.join('\n').trim()||'（データなし）';
   }
 
-  function buildColRows(d,ym){
-    var rows=[];
-    var pYm=ym.split('-');
-    var title=d&&d.confirmed?ymLabel(ym)+' 安全衛生委員会 議事録':ymLabel(ym)+' 安全衛生委員会 報告事項';
-    rows.push([title]);
-    rows.push(['']);
-    rows.push(['開催日',d&&d.date||'','','場所',d&&d.place||'']);
-    rows.push(['時間',(d&&d.time_from||'')+'～'+(d&&d.time_to||'')]);
-    rows.push(['']);
-    rows.push(['出席者']);
-    (d&&d.attendees||'').split(/[、,\n]/).forEach(function(s){if(s.trim())rows.push(['  '+s.trim()])});
-    rows.push(['']);
-    rows.push(['欠席者']);
-    (d&&d.absentees||'').split(/[、,\n]/).forEach(function(s){if(s.trim())rows.push(['  '+s.trim()])});
-    if(!d||!d.absentees)rows.push(['  （なし）']);
-    rows.push(['']);
-    rows.push(['参加者']);
-    (d&&d.participants||'').split(/[、,\n]/).forEach(function(s){if(s.trim())rows.push(['  '+s.trim()])});
-    if(!d||!d.participants)rows.push(['  （なし）']);
-    rows.push(['']);
-    rows.push(['議案（定例報告）']);
-    var agText=(d&&d.yearMonth&&d.agenda_text!=null)?d.agenda_text:buildAgendaForYM(pYm[0],pYm[1]);
-    agText.split('\n').forEach(function(line){rows.push([line])});
-    rows.push(['']);
-    rows.push(['その他報告事項']);
-    if(d&&d.other_reports){d.other_reports.split('\n').forEach(function(l){rows.push([l])})}
-    else rows.push(['  （なし）']);
-    rows.push(['']);
-    rows.push(['協議事項']);
-    if(d&&d.discussions){d.discussions.split('\n').forEach(function(l){rows.push([l])})}
-    else rows.push(['  （なし）']);
-    rows.push(['']);
-    if(d&&d.attachment_names&&d.attachment_names.length){
-      rows.push(['付随書類']);
-      d.attachment_names.forEach(function(n){rows.push(['  📎 '+n])});
-      rows.push(['']);
-    }
-    return rows;
+  function agendaText(d,ym){
+    var p=ym.split('-');
+    if(d&&d.yearMonth&&d.agenda_text!=null)return d.agenda_text;
+    return buildAgendaForYM(p[0],p[1]);
+  }
+  function buildAgendaBlock(d,ym){
+    var lines=[];
+    lines.push(agendaText(d,ym));
+    if(d&&d.other_reports){lines.push('');lines.push('【その他報告事項】');lines.push(d.other_reports)}
+    if(d&&d.discussions){lines.push('');lines.push('【協議事項】');lines.push(d.discussions)}
+    return lines.join('\n');
   }
 
   global.downloadComMinutesExcel=function(){
     if(typeof XLSX==='undefined'){alert('SheetJSが読み込まれていません');return}
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
     var curData=Object.assign({},window._comMinutesData||{},collectCurrentFormData());
-
     loadMinutes(pYM,function(prvData){
       prvData=prvData||{};
       var wb=XLSX.utils.book_new();
-      var pRows=buildColRows(prvData,pYM);
-      var cRows=buildColRows(curData,curYM);
-      var mx=Math.max(pRows.length,cRows.length);
-      var combined=[];
-      for(var i=0;i<mx;i++){
-        var pCols=pRows[i]||[];
-        var cCols=cRows[i]||[];
-        var row=[];
-        for(var j=0;j<8;j++)row.push(pCols[j]||'');
-        row.push('');
-        for(var k=0;k<8;k++)row.push(cCols[k]||'');
-        combined.push(row);
+      var e='';
+      var pL=ymLabel(pYM),cL=ymLabel(curYM);
+      var pDt=(prvData.date||'')+(prvData.time_from?' '+prvData.time_from:'');
+      var pTo=prvData.time_to||'';
+      var cDt=(curData.date||'')+(curData.time_from?' '+curData.time_from:'');
+      var cTo=curData.time_to||'';
+      var att4=function(s){var a=(s||'').split(/[、,\n]/).map(function(x){return x.trim()}).filter(Boolean);while(a.length<4)a.push('');return a};
+      var pAtt=att4(prvData.attendees);var cAtt=att4(curData.attendees);
+      var abs3=function(s){var a=(s||'').split(/[、,\n]/).map(function(x){return x.trim()}).filter(Boolean);while(a.length<3)a.push('');return a};
+      var pAbs=abs3(prvData.absentees);var cAbs=abs3(curData.absentees);
+      var pPart=(prvData.participants||'');var cPart=(curData.participants||'');
+      var pAg=buildAgendaBlock(prvData,pYM);var cAg=buildAgendaBlock(curData,curYM);
+
+      var rows=[];
+      rows.push(['安全衛生委員会会議記録',e,e,e,e,e,e,e, '安全衛生委員会会議記録',e,e,e,e,e,e,e]);
+      rows.push([pL,e,e,e,e,e,e,e, cL,e,e,e,e,e,e,e]);
+      rows.push(['日時',e,pDt,e,'～',pTo,'開催場所',prvData.place||'', '日時',e,cDt,e,'～',cTo,'開催場所',curData.place||'']);
+      rows.push(['出席者',pAtt[0],pAtt[1],e,e,pAtt[2],pAtt[3],e, '出席者',cAtt[0],cAtt[1],e,e,cAtt[2],cAtt[3],e]);
+      for(var ai=4;ai<Math.max(pAtt.length,cAtt.length);ai+=4){
+        rows.push([e,pAtt[ai]||'',pAtt[ai+1]||'',e,e,pAtt[ai+2]||'',pAtt[ai+3]||'',e, e,cAtt[ai]||'',cAtt[ai+1]||'',e,e,cAtt[ai+2]||'',cAtt[ai+3]||'',e]);
       }
-      var ws=XLSX.utils.aoa_to_sheet(combined);
-      ws['!cols']=[
-        {wch:14},{wch:16},{wch:4},{wch:8},{wch:20},{wch:10},{wch:10},{wch:10},
-        {wch:2},
-        {wch:14},{wch:16},{wch:4},{wch:8},{wch:20},{wch:10},{wch:10},{wch:10}
+      rows.push(['欠席者',pAbs[0],pAbs[1],e,e,pAbs[2]||'',e,e, '欠席者',cAbs[0],cAbs[1],e,e,cAbs[2]||'',e,e]);
+      rows.push(['参加者',pPart,e,e,e,e,e,e, '参加者',cPart,e,e,e,e,e,e]);
+      rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
+      var agRow=rows.length;
+      rows.push(['議案',e,e,e,e,e,e,e, '議案',e,e,e,e,e,e,e]);
+      var pLines=pAg.split('\n');var cLines=cAg.split('\n');
+      var mx=Math.max(pLines.length,cLines.length,20);
+      for(var i=0;i<mx;i++){
+        rows.push([pLines[i]||'',e,e,e,e,e,e,e, cLines[i]||'',e,e,e,e,e,e,e]);
+      }
+
+      var ws=XLSX.utils.aoa_to_sheet(rows);
+
+      var thin={style:'thin',color:{rgb:'000000'}};
+      var med={style:'medium',color:{rgb:'000000'}};
+      var hair={style:'hair',color:{rgb:'000000'}};
+      function setB(ref,t,b,l,r){
+        if(!ws[ref])ws[ref]={v:'',t:'s'};
+        ws[ref].s=ws[ref].s||{};
+        ws[ref].s.border={top:t?{style:t,color:{rgb:'000000'}}:undefined,bottom:b?{style:b,color:{rgb:'000000'}}:undefined,left:l?{style:l,color:{rgb:'000000'}}:undefined,right:r?{style:r,color:{rgb:'000000'}}:undefined};
+      }
+      function setS(ref,opts){
+        if(!ws[ref])ws[ref]={v:'',t:'s'};
+        ws[ref].s=Object.assign(ws[ref].s||{},opts);
+      }
+
+      var titleStyle={font:{name:'MS Gothic',sz:20,bold:true},alignment:{horizontal:'center',vertical:'center'},border:{top:med,bottom:med,left:med,right:med}};
+      ['A1','I1'].forEach(function(r){setS(r,titleStyle)});
+      var subTitleStyle={font:{sz:11,bold:true},alignment:{horizontal:'center',vertical:'center'},border:{left:med,right:med,bottom:thin}};
+      ['A2','I2'].forEach(function(r){setS(r,subTitleStyle)});
+
+      var hdrStyle={font:{sz:11},alignment:{horizontal:'center',vertical:'center'},border:{top:thin,bottom:thin,left:thin,right:thin}};
+      ['A3','F3','I3','N3','A4','I4'].forEach(function(r){setS(r,hdrStyle)});
+      var absRow=rows.length-mx-3;
+      ['A'+String(absRow+1),'I'+String(absRow+1)].forEach(function(r){if(ws[r])setS(r,hdrStyle)});
+      var partRow=absRow+1;
+      ['A'+String(partRow+1),'I'+String(partRow+1)].forEach(function(r){if(ws[r])setS(r,hdrStyle)});
+
+      var agHdr={font:{sz:13,bold:true},alignment:{horizontal:'center',vertical:'center'},border:{top:thin,bottom:hair,left:thin,right:med}};
+      ['A'+String(agRow+1),'I'+String(agRow+1)].forEach(function(r){setS(r,agHdr)});
+
+      for(var col=0;col<16;col++){
+        for(var rr=0;rr<rows.length;rr++){
+          var cr=XLSX.utils.encode_cell({r:rr,c:col});
+          if(!ws[cr])ws[cr]={v:'',t:'s'};
+          ws[cr].s=ws[cr].s||{};
+          ws[cr].s.border=ws[cr].s.border||{};
+          if(col===0||col===8)ws[cr].s.border.left=ws[cr].s.border.left||med;
+          if(col===7||col===15)ws[cr].s.border.right=ws[cr].s.border.right||med;
+          if(rr===0)ws[cr].s.border.top=ws[cr].s.border.top||med;
+          if(rr===rows.length-1)ws[cr].s.border.bottom=ws[cr].s.border.bottom||med;
+          ws[cr].s.alignment=ws[cr].s.alignment||{vertical:'top',wrapText:true};
+        }
+      }
+
+      ws['!merges']=[
+        {s:{r:0,c:0},e:{r:0,c:7}},{s:{r:0,c:8},e:{r:0,c:15}},
+        {s:{r:1,c:0},e:{r:1,c:7}},{s:{r:1,c:8},e:{r:1,c:15}},
+        {s:{r:2,c:6},e:{r:2,c:7}},{s:{r:2,c:14},e:{r:2,c:15}},
+        {s:{r:agRow,c:0},e:{r:agRow,c:7}},{s:{r:agRow,c:8},e:{r:agRow,c:15}},
+        {s:{r:agRow+1,c:0},e:{r:rows.length-1,c:7}},{s:{r:agRow+1,c:8},e:{r:rows.length-1,c:15}}
       ];
+
+      ws['!cols']=[
+        {wch:8},{wch:12},{wch:12},{wch:4},{wch:4},{wch:8},{wch:8},{wch:18},
+        {wch:8},{wch:12},{wch:12},{wch:4},{wch:4},{wch:8},{wch:8},{wch:18}
+      ];
+
+      ws['!rows']=[{hpt:36},{hpt:20}];
+
       XLSX.utils.book_append_sheet(wb,ws,'議事録');
-      XLSX.writeFile(wb,'committee_minutes_'+curYM+'.xlsx');
+      XLSX.writeFile(wb,'committee_minutes_'+curYM+'.xlsx',{cellStyles:true});
     });
   };
 
