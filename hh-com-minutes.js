@@ -169,13 +169,13 @@
     h+='<div class="cm-section"><div class="cm-sh">議案（定例報告）</div>';
     var ymParts=ym.split('-');
     var agText=d.agenda_text||buildAgendaForYM(ymParts[0],ymParts[1]);
-    h+='<div class="cm-agenda" id="'+prefix+'Agenda">'+esc(agText).replace(/\n/g,'<br>')+'</div></div>';
+    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Agenda" '+ro+' style="min-height:120px;'+roBg+';line-height:1.6" placeholder="報告データから自動生成">'+esc(agText)+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">その他報告事項</div>';
-    h+='<textarea class="ft cm-ta" id="'+prefix+'Other" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での報告事項">'+esc(d.other_reports||'')+'</textarea></div>';
+    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Other" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での報告事項">'+esc(d.other_reports||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">協議事項</div>';
-    h+='<textarea class="ft cm-ta" id="'+prefix+'Disc" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での協議事項">'+esc(d.discussions||'')+'</textarea></div>';
+    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Disc" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での協議事項">'+esc(d.discussions||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">付随書類</div>';
     if(isEditable){
@@ -223,8 +223,9 @@
     h+='.cm-lbl{font-size:11px;font-weight:600;color:var(--t2);width:40px;flex-shrink:0}';
     h+='.cm-fi{padding:6px 8px!important;font-size:12px!important}';
     h+='.cm-ta{font-size:11px!important;padding:6px 8px!important;line-height:1.5}';
-    h+='.cm-agenda{font-size:11px;line-height:1.6;color:var(--t1);background:var(--bg);padding:8px 10px;border-radius:var(--rs);white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto}';
+    h+='.cm-auto{overflow:hidden;resize:none}';
     h+='</style>';
+    h+='<script>setTimeout(function(){document.querySelectorAll(".cm-auto").forEach(function(ta){function grow(){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"}ta.addEventListener("input",grow);grow()})},50)<\/script>';
     h+='<div class="cm-wrap">';
     h+=buildColumnHtml('cmP',prvYM,prvData,false,false);
     h+=buildColumnHtml('cmC',curYM,curData,true,isOwner);
@@ -318,6 +319,7 @@
       time_from:el('cmCTimeFrom'),time_to:el('cmCTimeTo'),
       attendees:el('cmCAtt'),absentees:el('cmCAbs'),
       participants:el('cmCParts'),
+      agenda_text:el('cmCAgenda'),
       other_reports:el('cmCOther'),discussions:el('cmCDisc'),
       attachment_names:(window._cmPendingFiles||[]).map(function(f){return f.name})
     };
@@ -330,8 +332,7 @@
     data.confirmed=!!existing.confirmed;
     data.confirmed_at=existing.confirmed_at||null;
     data.confirmed_by=existing.confirmed_by||null;
-    var ymP=ym.split('-');
-    data.agenda_text=buildAgendaForYM(ymP[0],ymP[1]);
+    if(!data.agenda_text){var ymP=ym.split('-');data.agenda_text=buildAgendaForYM(ymP[0],ymP[1])}
     saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
@@ -357,8 +358,7 @@
       data.confirmed_at=new Date().toISOString();
       data.confirmed_by=(typeof CUR!=='undefined'&&CUR)?CUR.name:'所有者';
     }
-    var ymP2=ym.split('-');
-    data.agenda_text=buildAgendaForYM(ymP2[0],ymP2[1]);
+    if(!data.agenda_text){var ymP2=ym.split('-');data.agenda_text=buildAgendaForYM(ymP2[0],ymP2[1])}
     saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
