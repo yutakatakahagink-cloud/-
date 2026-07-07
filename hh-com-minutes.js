@@ -332,7 +332,6 @@
     data.confirmed=!!existing.confirmed;
     data.confirmed_at=existing.confirmed_at||null;
     data.confirmed_by=existing.confirmed_by||null;
-    if(!data.agenda_text){var ymP=ym.split('-');data.agenda_text=buildAgendaForYM(ymP[0],ymP[1])}
     saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
@@ -358,7 +357,6 @@
       data.confirmed_at=new Date().toISOString();
       data.confirmed_by=(typeof CUR!=='undefined'&&CUR)?CUR.name:'所有者';
     }
-    if(!data.agenda_text){var ymP2=ym.split('-');data.agenda_text=buildAgendaForYM(ymP2[0],ymP2[1])}
     saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
