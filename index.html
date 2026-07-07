@@ -10,23 +10,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(180deg,#E3F2FD,#BBDEFB);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-h1{font-size:20px;color:#0D47A1;margin-bottom:8px;text-align:center}
-.sub{font-size:12px;color:#558B2F;margin-bottom:24px;text-align:center}
+body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#F8FAFC 0%,#E2E8F0 50%,#CBD5E1 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+h1{font-size:22px;color:#1E293B;margin-bottom:6px;text-align:center;font-weight:700}
+.sub{font-size:13px;color:#64748B;margin-bottom:28px;text-align:center}
 .cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:720px}
-.card{background:#fff;border:2px solid #90CAF9;border-radius:16px;padding:24px;min-width:160px;flex:1;max-width:220px;text-align:center;text-decoration:none;color:#0D47A1;transition:all .2s;box-shadow:0 4px 12px rgba(21,101,192,.15)}
-.card:hover,.card:active{background:#E3F2FD;border-color:#1565C0;transform:translateY(-2px);box-shadow:0 6px 20px rgba(21,101,192,.25)}
-.card .ico{font-size:36px;margin-bottom:12px}
-.card .ttl{font-size:14px;font-weight:700;margin-bottom:6px}
-.card .desc{font-size:11px;color:#558B2F;line-height:1.5}
-.url-list{background:#fff;border:1px solid #90CAF9;border-radius:12px;padding:16px;margin-top:20px;max-width:720px;width:100%}
-.url-list h2{font-size:13px;color:#0D47A1;margin-bottom:12px}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:28px 24px;min-width:160px;flex:1;max-width:220px;text-align:center;text-decoration:none;color:#1E293B;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card:hover,.card:active{border-color:#2563EB;transform:translateY(-3px);box-shadow:0 8px 24px rgba(37,99,235,.12)}
+.card .ico{font-size:36px;margin-bottom:14px}
+.card .ttl{font-size:15px;font-weight:700;margin-bottom:6px;color:#1E293B}
+.card .desc{font-size:11px;color:#64748B;line-height:1.5}
+.url-list{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:18px 20px;margin-top:24px;max-width:720px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.url-list h2{font-size:13px;color:#1E293B;margin-bottom:12px;font-weight:700}
 .url-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
 .url-item:last-child{margin-bottom:0}
-.url-item a{color:#0277BD;word-break:break-all;flex:1}
-.url-item .copy{padding:4px 10px;font-size:10px;background:#E3F2FD;border:1px solid #90CAF9;border-radius:8px;color:#0D47A1;cursor:pointer;white-space:nowrap}
-.url-item .copy:active{background:#BBDEFB}
-.note{font-size:11px;color:#558B2F;margin-top:24px;text-align:center;max-width:520px;line-height:1.6}
+.url-item a{color:#2563EB;word-break:break-all;flex:1}
+.url-item .copy{padding:5px 12px;font-size:10px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;color:#475569;cursor:pointer;white-space:nowrap;font-weight:600;transition:all .15s}
+.url-item .copy:hover{border-color:#2563EB;color:#2563EB}
+.url-item .copy:active{background:#F0F4F8}
+.note{font-size:11px;color:#94A3B8;margin-top:28px;text-align:center;max-width:520px;line-height:1.7}
+.note b{color:#475569}
 </style>
 </head>
 <body>
@@ -51,9 +53,9 @@ h1{font-size:20px;color:#0D47A1;margin-bottom:8px;text-align:center}
 </div>
 <div class="url-list">
   <h2>📱 携帯・PCから開くURL（コピーして共有）</h2>
-  <div class="url-item"><span style="min-width:52px;color:#33691E">使用者</span><a href="user.html?v=20260526" id="urlUser">-</a><button class="copy" onclick="copyUrl('urlUser')">コピー</button></div>
-  <div class="url-item"><span style="min-width:52px;color:#33691E">管理者</span><a href="admin.html?v=20260526" id="urlAdmin">-</a><button class="copy" onclick="copyUrl('urlAdmin')">コピー</button></div>
-  <div class="url-item"><span style="min-width:52px;color:#33691E">所有者</span><a href="owner.html?v=20260526" id="urlOwner">-</a><button class="copy" onclick="copyUrl('urlOwner')">コピー</button></div>
+  <div class="url-item"><span style="min-width:52px;color:#475569;font-weight:600">使用者</span><a href="user.html?v=20260526" id="urlUser">-</a><button class="copy" onclick="copyUrl('urlUser')">コピー</button></div>
+  <div class="url-item"><span style="min-width:52px;color:#475569;font-weight:600">管理者</span><a href="admin.html?v=20260526" id="urlAdmin">-</a><button class="copy" onclick="copyUrl('urlAdmin')">コピー</button></div>
+  <div class="url-item"><span style="min-width:52px;color:#475569;font-weight:600">所有者</span><a href="owner.html?v=20260526" id="urlOwner">-</a><button class="copy" onclick="copyUrl('urlOwner')">コピー</button></div>
 </div>
 <p class="note">※ 複数端末で同一データを表示するには <b>Firebase の設定</b> が必要です。<br>※ 古い画面が出る場合は <b>Ctrl+Shift+R</b>（強制再読み込み）してください。<br>※ 旧URL（kensaibou_hiyarihatto_v3.html）は自動でこのページへ移動します。</p>
 <script>
