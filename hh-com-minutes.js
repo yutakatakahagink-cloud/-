@@ -223,7 +223,7 @@
     h+='.cm-lbl{font-size:11px;font-weight:600;color:var(--t2);width:40px;flex-shrink:0}';
     h+='.cm-fi{padding:6px 8px!important;font-size:12px!important}';
     h+='.cm-ta{font-size:11px!important;padding:6px 8px!important;line-height:1.5}';
-    h+='.cm-auto{overflow:hidden;resize:none}';
+    h+='.cm-auto{overflow:hidden;resize:vertical}';
     h+='</style>';
     h+='<script>setTimeout(function(){document.querySelectorAll(".cm-auto").forEach(function(ta){function grow(){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"}ta.addEventListener("input",grow);grow()})},50)<\/script>';
     h+='<div class="cm-wrap">';
