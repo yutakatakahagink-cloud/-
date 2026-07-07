@@ -16,6 +16,17 @@
     {role:'',name:'中城俊昭'},
     {role:'',name:'土田香織'}
   ];
+  var DEFAULT_PARTICIPANTS=[
+    {role:'建材本部',name:'木田寛'},
+    {role:'建材本部',name:'甲斐淳林'},
+    {role:'建材宮崎',name:'内八重俊哉'},
+    {role:'建材延岡',name:'中城俊昭'},
+    {role:'建材大分',name:'福島洋幸'},
+    {role:'建材鹿児島',name:'小濵一晴'},
+    {role:'土木本部',name:'成岡弘治'},
+    {role:'土木部',name:'児玉大祐'},
+    {role:'社長',name:'吉川真人'}
+  ];
 
   function fbRef(ym){
     if(typeof HHDB==='undefined'||!HHDB.useFirebase||!HHDB.useFirebase())return null;
@@ -53,6 +64,9 @@
   function defaultAttendeesText(){
     return DEFAULT_MEMBERS.map(function(m){return(m.role?m.role+'：':'')+m.name}).join('、');
   }
+  function defaultParticipantsText(){
+    return DEFAULT_PARTICIPANTS.map(function(m){return m.role+'：'+m.name}).join('、');
+  }
 
   function buildAgendaFromData(){return window._comAgendaText||'（報告データなし）'}
 
@@ -60,51 +74,63 @@
     var reports=(typeof DB!=='undefined'?DB:[])||[];
     var disList=(typeof DIS_LIST!=='undefined'?DIS_LIST:[])||[];
     var reqList=(typeof REQ_LIST!=='undefined'?REQ_LIST:[])||[];
-    var ym=y+'-'+m;
     var fd=reports.filter(function(r){var dt=r.date||'';return dt.substring(0,4)===y&&dt.substring(5,7)===m});
     var hi=fd.filter(function(r){return r.l>=7});
     var ec={};fd.forEach(function(r){(r.e||[]).forEach(function(e){ec[e]=(ec[e]||0)+1})});
     var te=Object.entries(ec).sort(function(a,b){return b[1]-a[1]})[0];
-    var lines=[];
-    lines.push('【ヒヤリハット報告】');
-    lines.push('・報告総数 '+fd.length+'件');
-    lines.push('・高レベル(Lv.7+) '+hi.length+'件');
-    if(te)lines.push('・最頻出体験: '+te[0]+'（'+te[1]+'件）');
+    var lines=[];var no=1;
+    lines.push(no+'．ヒヤリハット報告');no++;
+    lines.push('  ・報告総数 '+fd.length+'件');
+    lines.push('  ・高レベル(Lv.7+) '+hi.length+'件');
+    if(te)lines.push('  ・最頻出体験: '+te[0]+'（'+te[1]+'件）');
     var se=Object.entries(ec).sort(function(a,b){return b[1]-a[1]});
-    if(se.length){lines.push('');se.forEach(function(x){lines.push('・'+x[0]+': '+x[1]+'件')})}
+    if(se.length)se.forEach(function(x){lines.push('  ・'+x[0]+': '+x[1]+'件')});
     lines.push('');
     var cc={};fd.forEach(function(r){(r.c||[]).forEach(function(c){cc[c]=(cc[c]||0)+1})});
     var sc=Object.entries(cc).sort(function(a,b){return b[1]-a[1]});
-    if(sc.length){lines.push('【発生原因】');sc.forEach(function(x){lines.push('・'+x[0]+': '+x[1]+'件')});lines.push('')}
-    var dl=disList.filter(function(r){var dt=r.datetime||r.date||'';return dt.substring(0,4)===y&&dt.substring(5,7)===m});
-    if(dl.length){
-      lines.push('【災害報告】');
-      dl.forEach(function(r){
-        lines.push('・'+(r.datetime||r.date||'—')+' '+(r.place||r.basho||'—')+' '+(r.type||r.jiko||r.keigen||''));
-        if(r.situation||r.basho_detail)lines.push('  発生状況: '+(r.basho_detail||r.situation||'').substring(0,80));
-        if(r.taisaku||r.measure)lines.push('  対策: '+(r.taisaku||r.measure||'').substring(0,80));
-      });
+    if(sc.length){
+      lines.push(no+'．発生原因');no++;
+      sc.forEach(function(x){lines.push('  ・'+x[0]+': '+x[1]+'件')});
       lines.push('');
     }
+    var dl=disList.filter(function(r){var dt=r.datetime||r.date||'';return dt.substring(0,4)===y&&dt.substring(5,7)===m});
+    lines.push(no+'．災害報告'+(dl.length?'（'+dl.length+'件）':'（なし）'));no++;
+    if(dl.length){
+      dl.forEach(function(r){
+        lines.push('  ・'+(r.datetime||r.date||'—')+' '+(r.place||r.basho||'—')+' '+(r.type||r.jiko||r.keigen||''));
+        if(r.situation||r.basho_detail)lines.push('    発生状況: '+(r.basho_detail||r.situation||'').substring(0,80));
+        if(r.taisaku||r.measure)lines.push('    対策: '+(r.taisaku||r.measure||'').substring(0,80));
+      });
+    }
+    lines.push('');
     var rl=reqList.filter(function(r){return(r.date||'').substring(0,4)===y&&(r.date||'').substring(5,7)===m});
+    lines.push(no+'．安全衛生要望'+(rl.length?'（'+rl.length+'件）':'（なし）'));no++;
     if(rl.length){
-      lines.push('【安全衛生要望】');
       rl.forEach(function(r){
         var st=r.status==='resolved'?'解決済み':r.status==='in_progress'?'取り掛かり中':'未対応';
-        lines.push('・['+st+'] '+(r.name||'—')+'（'+(r.dept||'—')+'）: '+(r.content||''));
+        lines.push('  ・['+st+'] '+(r.name||'—')+'（'+(r.dept||'—')+'）: '+(r.content||''));
       });
-      lines.push('');
     }
+    lines.push('');
+    lines.push(no+'．背景要因・職場環境分析');no++;
+    var stData=fd.filter(function(r){return r.st&&Object.keys(r.st).length});
+    if(stData.length){
+      var stAvg={};var stCt=0;
+      stData.forEach(function(r){Object.entries(r.st||{}).forEach(function(e){stAvg[e[0]]=(stAvg[e[0]]||0)+e[1];stCt++})});
+      var stKeys=Object.keys(stAvg);if(stKeys.length){var n=stData.length;lines.push('  ストレス要因データ '+n+'件');var top=stKeys.sort(function(a,b){return stAvg[a]-stAvg[b]}).slice(0,3);top.forEach(function(k){lines.push('  ・'+k+': 平均'+(stAvg[k]/n).toFixed(1))})}
+    }else{lines.push('  （データなし）')}
+    lines.push('');
+    lines.push(no+'．法改正');no++;
+    var lawCount=0;
     if(typeof window.comLawEnacted!=='undefined'&&window.comLawEnacted&&window.comLawEnacted.length){
-      lines.push('【法改正（施行済み）】');
-      window.comLawEnacted.forEach(function(l){lines.push('・'+l.law+' '+l.short+' ('+l.date+')')});
-      lines.push('');
+      lines.push('  〔施行済み〕');
+      window.comLawEnacted.forEach(function(l){lines.push('  ・'+l.law+' '+l.short+' ('+l.date+')');lawCount++});
     }
     if(typeof window.comLawUpcoming!=='undefined'&&window.comLawUpcoming&&window.comLawUpcoming.length){
-      lines.push('【法改正（施行予定）】');
-      window.comLawUpcoming.forEach(function(l){lines.push('・'+l.law+' '+l.short+' ('+l.date+')')});
-      lines.push('');
+      lines.push('  〔施行予定〕');
+      window.comLawUpcoming.forEach(function(l){lines.push('  ・'+l.law+' '+l.short+' ('+l.date+')');lawCount++});
     }
+    if(!lawCount)lines.push('  （該当なし）');
     return lines.join('\n').trim();
   }
   global.buildAgendaForYM=buildAgendaForYM;
@@ -130,7 +156,8 @@
     h+='<textarea class="ft cm-ta" id="'+prefix+'Abs" '+ro+' style="min-height:30px;'+roBg+'" placeholder="欠席者名">'+esc(d.absentees||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">参加者</div>';
-    h+='<textarea class="ft cm-ta" id="'+prefix+'Parts" '+ro+' style="min-height:30px;'+roBg+'" placeholder="安全担当・その他参加者">'+esc(d.participants||'')+'</textarea></div>';
+    var parts=d.participants||(isEditable?defaultParticipantsText():'');
+    h+='<textarea class="ft cm-ta" id="'+prefix+'Parts" '+ro+' style="min-height:40px;'+roBg+'" placeholder="安全担当・その他参加者">'+esc(parts)+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">議案（定例報告）</div>';
     var ymParts=ym.split('-');
@@ -142,6 +169,25 @@
 
     h+='<div class="cm-section"><div class="cm-sh">協議事項</div>';
     h+='<textarea class="ft cm-ta" id="'+prefix+'Disc" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での協議事項">'+esc(d.discussions||'')+'</textarea></div>';
+
+    h+='<div class="cm-section"><div class="cm-sh">付随書類</div>';
+    if(isEditable){
+      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"></div>';
+    }
+    var files=(d.attachments||[]);
+    h+='<div id="'+prefix+'FileList">';
+    if(files.length){
+      files.forEach(function(f,i){
+        h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
+        h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+'</span>';
+        if(f.url)h+='<a href="'+esc(f.url)+'" download="'+esc(f.name)+'" style="color:var(--ac);font-size:10px;white-space:nowrap">ダウンロード</a>';
+        if(isEditable)h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
+        h+='</div>';
+      });
+    }else{
+      h+='<div style="font-size:10px;color:var(--t3);padding:4px 0">（なし）</div>';
+    }
+    h+='</div></div>';
 
     if(isEditable){
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
@@ -180,6 +226,45 @@
     return h;
   }
 
+  window._cmPendingFiles=[];
+
+  global.comMinutesAddFiles=function(input){
+    if(!input||!input.files)return;
+    var existing=window._cmPendingFiles||[];
+    Array.from(input.files).forEach(function(file){
+      var reader=new FileReader();
+      reader.onload=function(){
+        existing.push({name:file.name,url:reader.result,size:file.size});
+        refreshFileList();
+      };
+      reader.readAsDataURL(file);
+    });
+    window._cmPendingFiles=existing;
+    input.value='';
+  };
+
+  global.comMinutesRemoveFile=function(idx){
+    var files=window._cmPendingFiles||[];
+    files.splice(idx,1);
+    window._cmPendingFiles=files;
+    refreshFileList();
+  };
+
+  function refreshFileList(){
+    var list=document.getElementById('cmCFileList');if(!list)return;
+    var files=window._cmPendingFiles||[];
+    if(!files.length){list.innerHTML='<div style="font-size:10px;color:var(--t3);padding:4px 0">（なし）</div>';return}
+    var h='';
+    files.forEach(function(f,i){
+      h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
+      h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+'</span>';
+      if(f.url)h+='<a href="'+esc(f.url)+'" download="'+esc(f.name)+'" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
+      h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
+      h+='</div>';
+    });
+    list.innerHTML=h;
+  }
+
   function collectCurrentFormData(){
     var el=function(id){var e=document.getElementById(id);return e?e.value:''};
     return {
@@ -187,7 +272,8 @@
       time_from:el('cmCTimeFrom'),time_to:el('cmCTimeTo'),
       attendees:el('cmCAtt'),absentees:el('cmCAbs'),
       participants:el('cmCParts'),
-      other_reports:el('cmCOther'),discussions:el('cmCDisc')
+      other_reports:el('cmCOther'),discussions:el('cmCDisc'),
+      attachments:window._cmPendingFiles||[]
     };
   }
 
@@ -291,6 +377,7 @@
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
+        window._cmPendingFiles=(curData&&curData.attachments)||[];
         wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
       });
     });
@@ -301,6 +388,7 @@
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
+        window._cmPendingFiles=(curData&&curData.attachments)||[];
         var role=typeof ROLE!=='undefined'?ROLE:'user';
         wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
       });
