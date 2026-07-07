@@ -168,7 +168,7 @@
 
     h+='<div class="cm-section"><div class="cm-sh">議案（定例報告）</div>';
     var ymParts=ym.split('-');
-    var agText=d.agenda_text||buildAgendaForYM(ymParts[0],ymParts[1]);
+    var agText=(d.yearMonth&&d.agenda_text!=null)?d.agenda_text:buildAgendaForYM(ymParts[0],ymParts[1]);
     h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Agenda" '+ro+' style="min-height:250px;height:300px;'+roBg+';line-height:1.6" placeholder="報告データから自動生成">'+esc(agText)+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">その他報告事項</div>';
@@ -385,7 +385,7 @@
     if(typeof XLSX==='undefined'){alert('SheetJSが読み込まれていません');return}
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
     var curData=Object.assign({},window._comMinutesData||{},collectCurrentFormData());
-    var cP=curYM.split('-');curData.agenda_text=buildAgendaForYM(cP[0],cP[1]);
+    if(!curData.agenda_text){var cP=curYM.split('-');curData.agenda_text=buildAgendaForYM(cP[0],cP[1])}
     loadMinutes(pYM,function(prvData){
       prvData=prvData||{};
       var wb=XLSX.utils.book_new();var rows=[];var e='';
