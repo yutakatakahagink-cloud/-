@@ -151,50 +151,22 @@
     else{body.style.display='none';if(icon)icon.textContent='▶'}
   };
 
-  function grabText(id){
-    var full=document.getElementById(id+'_full');
-    if(full){
-      var t=(full.textContent||'').trim();
-      if(t)return t;
-    }
-    var el=document.getElementById(id);
-    if(!el)return '';
-    return (el.textContent||'').trim();
+  function getScreenAgendaText(){
+    return window._comAgendaText||'';
   }
 
-  function collectAgendaFromScreen(){
-    var sections=[];
-    var pairs=[
-      ['cS','報告状況'],
-      ['cByExp','体験別→対策提案'],
-      ['cDeptAn','本部別 背景要因・職場環境分析'],
-      ['cReq','安全衛生要望'],
-      ['cDisCom','災害報告'],
-      ['cLaw','法改正']
-    ];
-    pairs.forEach(function(p){
-      var txt=grabText(p[0]);
-      if(txt)sections.push({title:p[1],text:txt});
-    });
-    return sections;
-  }
-
-  function buildAgendaTextFromSections(sections,d){
+  function buildFullAgenda(d,screenText){
     var lines=[];
-    (sections||[]).forEach(function(s){
-      lines.push('【'+s.title+'】');
-      lines.push(s.text);
-      lines.push('');
-    });
+    if(screenText)lines.push(screenText);
     if(d&&d.other_reports){
+      lines.push('');
       lines.push('【その他報告事項】');
       lines.push(d.other_reports);
-      lines.push('');
     }
     if(d&&d.discussions){
+      lines.push('');
       lines.push('【協議事項】');
       lines.push(d.discussions);
-      lines.push('');
     }
     return lines.join('\n').trim();
   }
@@ -206,8 +178,7 @@
     data.confirmed=!!existing.confirmed;
     data.confirmed_at=existing.confirmed_at||null;
     data.confirmed_by=existing.confirmed_by||null;
-    data.agenda_sections=collectAgendaFromScreen();
-    data.agenda_text=buildAgendaTextFromSections(data.agenda_sections,data);
+    data.agenda_text=buildFullAgenda(data,getScreenAgendaText());
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
@@ -231,8 +202,7 @@
       data.confirmed_at=new Date().toISOString();
       data.confirmed_by=(typeof CUR!=='undefined'&&CUR)?CUR.name:'所有者';
     }
-    data.agenda_sections=collectAgendaFromScreen();
-    data.agenda_text=buildAgendaTextFromSections(data.agenda_sections,data);
+    data.agenda_text=buildFullAgenda(data,getScreenAgendaText());
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
@@ -245,11 +215,7 @@
 
   function buildAgendaForExcel(d){
     if(d&&d.agenda_text)return d.agenda_text;
-    if(d&&d.agenda_sections&&d.agenda_sections.length){
-      return buildAgendaTextFromSections(d.agenda_sections,d);
-    }
-    var sections=collectAgendaFromScreen();
-    return buildAgendaTextFromSections(sections,d);
+    return '（データ未保存）';
   }
 
   global.downloadComMinutesExcel=function(){
@@ -257,13 +223,7 @@
     var curYM=getSelectedComYM();
     var prvYM=prevYM(curYM);
     var curData=Object.assign({},window._comMinutesData||{},collectFormData());
-    var screenSections=collectAgendaFromScreen();
-    if(screenSections.length){
-      curData.agenda_sections=screenSections;
-      curData.agenda_text=buildAgendaTextFromSections(screenSections,curData);
-    }else if(!curData.agenda_text&&curData.agenda_sections){
-      curData.agenda_text=buildAgendaTextFromSections(curData.agenda_sections,curData);
-    }
+    curData.agenda_text=buildFullAgenda(curData,getScreenAgendaText());
 
     loadMinutes(prvYM,function(prvData){
       prvData=prvData||{};

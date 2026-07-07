@@ -912,6 +912,56 @@ function rCom(){
   }
   renderComDisPanel();
   if(typeof loadReqDis==='function')loadReqDis(function(){renderComDisPanel()});
+
+  var _agLines=[];
+  _agLines.push('【報告状況】');
+  _agLines.push('・報告総数 '+fd.length+'件');
+  _agLines.push('・高レベル(Lv.7+) '+hi.length+'件');
+  if(te)_agLines.push('・最頻出体験: '+te[0]+'（'+te[1]+'件）');
+  _agLines.push('');
+  _agLines.push('【体験別→対策提案】');
+  var _ec2=Object.entries(ec).sort(function(a,b){return b[1]-a[1]});
+  _ec2.forEach(function(x){_agLines.push('・'+x[0]+': '+x[1]+'件')});
+  _agLines.push('');
+  _agLines.push('【発生原因】');
+  var _cc2={};fd.forEach(function(r){(r.c||[]).forEach(function(c){_cc2[c]=(_cc2[c]||0)+1})});
+  Object.entries(_cc2).sort(function(a,b){return b[1]-a[1]}).forEach(function(x){_agLines.push('・'+x[0]+': '+x[1]+'件')});
+  _agLines.push('');
+  _agLines.push('【災害レベル分布】');
+  var _lc2={};fd.forEach(function(r){if(r.l){_lc2[r.l]=(_lc2[r.l]||0)+1}});
+  Object.keys(_lc2).sort(function(a,b){return Number(a)-Number(b)}).forEach(function(k){_agLines.push('・Lv.'+k+': '+_lc2[k]+'件')});
+  _agLines.push('');
+  var disList=typeof filterComDisasters==='function'?filterComDisasters(DIS_LIST,deptFilt,periodYear,periodMonth):(DIS_LIST||[]);
+  if(disList.length){
+    _agLines.push('【災害報告】');
+    disList.forEach(function(r){
+      _agLines.push('・'+(r.datetime||r.date||'—')+' '+(r.place||r.basho||'—')+' '+(r.type||r.jiko||r.keigen||''));
+      if(r.situation||r.basho_detail)_agLines.push('  発生状況: '+(r.basho_detail||r.situation||'').substring(0,80));
+      if(r.taisaku||r.measure)_agLines.push('  対策: '+(r.taisaku||r.measure||'').substring(0,80));
+    });
+    _agLines.push('');
+  }
+  var reqList=typeof filterComRequests==='function'?filterComRequests(REQ_LIST,deptFilt,periodYear,periodMonth):(REQ_LIST||[]);
+  if(reqList.length){
+    _agLines.push('【安全衛生要望】');
+    reqList.forEach(function(r){
+      var st=r.status==='resolved'?'解決済み':r.status==='in_progress'?'取り掛かり中':'未対応';
+      _agLines.push('・['+st+'] '+(r.date||'—')+' '+(r.name||'—')+'（'+(r.dept||'—')+'）: '+(r.content||''));
+      if(r.status==='resolved'&&r.resolution)_agLines.push('  対策: '+r.resolution);
+    });
+    _agLines.push('');
+  }
+  if(typeof window.comLawEnacted!=='undefined'&&window.comLawEnacted&&window.comLawEnacted.length){
+    _agLines.push('【法改正（施行済み）】');
+    window.comLawEnacted.forEach(function(l){_agLines.push('・'+l.law+' '+l.short+' ('+l.date+')')});
+    _agLines.push('');
+  }
+  if(typeof window.comLawUpcoming!=='undefined'&&window.comLawUpcoming&&window.comLawUpcoming.length){
+    _agLines.push('【法改正（施行予定）】');
+    window.comLawUpcoming.forEach(function(l){_agLines.push('・'+l.law+' '+l.short+' ('+l.date+')')});
+    _agLines.push('');
+  }
+  window._comAgendaText=_agLines.join('\n');
 }
 
 function showComDetail(title,content){
