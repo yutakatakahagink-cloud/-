@@ -124,12 +124,12 @@
   function buildDeptBlock(a,compact){
     if(!a.dataCount){
       if(compact){
-        return '<div style="margin-bottom:8px;padding:8px 10px;border-left:3px solid '+a.color+';background:rgba(46,125,50,.04);border-radius:var(--rs)"><div style="font-size:12px;font-weight:700;color:'+a.color+'">'+esc(a.name)+'</div><div style="font-size:10px;color:var(--t3);margin-top:4px">報告'+a.total+'件（背景要因・職場環境データなし）</div></div>';
+        return '<div style="margin-bottom:8px;padding:8px 10px;border-left:3px solid '+a.color+';background:rgba(21,101,192,.04);border-radius:var(--rs)"><div style="font-size:12px;font-weight:700;color:'+a.color+'">'+esc(a.name)+'</div><div style="font-size:10px;color:var(--t3);margin-top:4px">報告'+a.total+'件（背景要因・職場環境データなし）</div></div>';
       }
       return '<div class="com-section"><strong style="color:'+a.color+'">'+esc(a.name)+'</strong><p style="font-size:12px;color:var(--t3)">該当期間の報告'+a.total+'件（背景要因・職場環境の入力データなし）</p></div>';
     }
     if(compact){
-      return '<div style="margin-bottom:8px;padding:8px 10px;border-left:3px solid '+a.color+';background:rgba(46,125,50,.04);border-radius:var(--rs)"><div style="font-size:12px;font-weight:700;color:'+a.color+'">'+esc(a.name)+' <span style="font-weight:500;color:var(--t2)">（分析'+a.dataCount+'件）</span></div><div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.55">'+stressLevelText(a.stAll).replace(/<\/?strong[^>]*>/g,'')+' ／ '+workplaceLevelText(a.weAll).replace(/<\/?strong[^>]*>/g,'')+'</div></div>';
+      return '<div style="margin-bottom:8px;padding:8px 10px;border-left:3px solid '+a.color+';background:rgba(21,101,192,.04);border-radius:var(--rs)"><div style="font-size:12px;font-weight:700;color:'+a.color+'">'+esc(a.name)+' <span style="font-weight:500;color:var(--t2)">（分析'+a.dataCount+'件）</span></div><div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.55">'+stressLevelText(a.stAll).replace(/<\/?strong[^>]*>/g,'')+' ／ '+workplaceLevelText(a.weAll).replace(/<\/?strong[^>]*>/g,'')+'</div></div>';
     }
     var h='<div class="com-section" style="border-left:3px solid '+a.color+';padding-left:12px;margin-bottom:16px"><strong style="color:'+a.color+';font-size:14px">'+esc(a.name)+'</strong>';
     h+='<p style="font-size:11px;color:var(--t3);margin:6px 0 10px">報告'+a.total+'件（うち背景要因・職場環境データ '+a.dataCount+'件）・高レベル(Lv.7+) '+a.hiRisk+'件</p>';

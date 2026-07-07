@@ -72,7 +72,7 @@
     ['kaizen_kantoku', 'こうすればよかった(監督者)'],
     ['taisaku', '対策'],
     ['report_date', '記入日'],
-    ['sekininsha', '責任者'],
+    ['sekininsha', '記入者'],
     ['reporter', '報告者'],
     ['gyoshu', '（携帯）事業の種類'],
     ['jigyosho', '（携帯）事業場名'],
