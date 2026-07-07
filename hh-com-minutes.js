@@ -169,13 +169,13 @@
     h+='<div class="cm-section"><div class="cm-sh">議案（定例報告）</div>';
     var ymParts=ym.split('-');
     var agText=d.agenda_text||buildAgendaForYM(ymParts[0],ymParts[1]);
-    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Agenda" '+ro+' style="min-height:120px;'+roBg+';line-height:1.6" placeholder="報告データから自動生成">'+esc(agText)+'</textarea></div>';
+    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Agenda" '+ro+' style="min-height:250px;height:300px;'+roBg+';line-height:1.6" placeholder="報告データから自動生成">'+esc(agText)+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">その他報告事項</div>';
-    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Other" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での報告事項">'+esc(d.other_reports||'')+'</textarea></div>';
+    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Other" '+ro+' style="min-height:100px;height:120px;'+roBg+'" placeholder="委員会での報告事項">'+esc(d.other_reports||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">協議事項</div>';
-    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Disc" '+ro+' style="min-height:50px;'+roBg+'" placeholder="委員会での協議事項">'+esc(d.discussions||'')+'</textarea></div>';
+    h+='<textarea class="ft cm-ta cm-auto" id="'+prefix+'Disc" '+ro+' style="min-height:100px;height:120px;'+roBg+'" placeholder="委員会での協議事項">'+esc(d.discussions||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">付随書類</div>';
     if(isEditable){
@@ -223,7 +223,7 @@
     h+='.cm-lbl{font-size:11px;font-weight:600;color:var(--t2);width:40px;flex-shrink:0}';
     h+='.cm-fi{padding:6px 8px!important;font-size:12px!important}';
     h+='.cm-ta{font-size:11px!important;padding:6px 8px!important;line-height:1.5}';
-    h+='.cm-auto{overflow:hidden;resize:vertical}';
+    h+='.cm-auto{overflow-y:auto;resize:vertical}';
     h+='</style>';
     h+='<script>setTimeout(function(){document.querySelectorAll(".cm-auto").forEach(function(ta){function grow(){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"}ta.addEventListener("input",grow);grow()})},50)<\/script>';
     h+='<div class="cm-wrap">';
