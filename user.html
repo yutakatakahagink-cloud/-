@@ -1357,7 +1357,7 @@ function buildDeptFilter(containerId){
   document.getElementById(containerId).innerHTML=depts.map(d=>`<button class="dfp${d.v===deptFilt?' on':''}" data-d="${d.v}" onclick="setDeptF('${d.v}')">${d.l}</button>`).join('');
 }
 function setDeptF(d){deptFilt=d;document.querySelectorAll('.dfp').forEach(p=>p.classList.toggle('on',p.dataset.d===d));refreshCurrentPage()}
-function refreshCurrentPage(){const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom();if(pg?.id==='pDis')rDisList();if(pg?.id==='pReq')rReqList()}
+function refreshCurrentPage(){window._comMinutesInited=false;const pg=document.querySelector('.pg.on');if(pg?.id==='pD')rDash();if(pg?.id==='pA')rAnl(document.querySelector('#aT .tp.on')?.dataset.t||'simple');if(pg?.id==='pC')rCom();if(pg?.id==='pDis')rDisList();if(pg?.id==='pReq')rReqList()}
 function getF(){
   var d=deptFilt==='all'?DB:DB.filter(r=>(r.dept||'').startsWith(deptFilt));
   if(periodYear!=='all')d=d.filter(r=>{var dt=r.date||'';return dt.substring(0,4)===periodYear});
@@ -2661,8 +2661,10 @@ function anlActs(){
 function rCom(){
   buildPeriodFilter('pfCom');
   buildDeptFilter('dfCom');
-  if(typeof comMinutesInit==='function')comMinutesInit(ROLE||'user');
-  else if(typeof comMinutesReload==='function')comMinutesReload();
+  if(!window._comMinutesInited){
+    if(typeof comMinutesInit==='function')comMinutesInit(ROLE||'user');
+    window._comMinutesInited=true;
+  }
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
   let sm=`<div class="com-section"><strong>報告状況</strong><p>報告総数 ${fd.length}件、高レベル(Lv.7+) <span style="color:var(--rd);font-weight:700">${hi.length}件</span></p></div>`;

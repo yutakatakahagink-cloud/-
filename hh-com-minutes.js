@@ -135,18 +135,24 @@
   }
   global.buildAgendaForYM=buildAgendaForYM;
 
+  function todayStr(){return new Date().toISOString().slice(0,10)}
+
   function buildColumnHtml(prefix,ym,data,isEditable,isOwner){
     var d=data||{};var lbl=ymLabel(ym);
     var titleText=d.confirmed?lbl+' 安全衛生委員会 議事録':lbl+' 安全衛生委員会 報告事項';
     var ro=isEditable?'':'readonly';
     var roBg=isEditable?'':'background:#f5f5f5';
+    var dateVal=d.date||(isEditable?todayStr():'');
+    var placeVal=d.place||(isEditable?'WEB/本社1F会議室':'');
+    var tfVal=d.time_from||(isEditable?'09:00':'');
+    var ttVal=d.time_to||(isEditable?'10:00':'');
     var h='';
     h+='<div class="cm-col" id="'+prefix+'Col">';
     h+='<div class="cm-title'+(d.confirmed?' cm-confirmed':'')+'" id="'+prefix+'Title">'+esc(titleText)+'</div>';
 
-    h+='<div class="cm-section"><div class="cm-row"><div class="cm-lbl">開催日</div><input class="fi cm-fi" type="date" id="'+prefix+'Date" value="'+esc(d.date||'')+'" '+ro+' style="'+roBg+'"></div>';
-    h+='<div class="cm-row"><div class="cm-lbl">場所</div><input class="fi cm-fi" type="text" id="'+prefix+'Place" value="'+esc(d.place||'')+'" placeholder="WEB" '+ro+' style="'+roBg+'"></div>';
-    h+='<div class="cm-row"><div class="cm-lbl">時間</div><div style="display:flex;gap:4px;align-items:center;flex:1"><input class="fi cm-fi" type="time" id="'+prefix+'TimeFrom" value="'+esc(d.time_from||'')+'" '+ro+' style="'+roBg+'">～<input class="fi cm-fi" type="time" id="'+prefix+'TimeTo" value="'+esc(d.time_to||'')+'" '+ro+' style="'+roBg+'"></div></div></div>';
+    h+='<div class="cm-section"><div class="cm-row"><div class="cm-lbl">開催日</div><input class="fi cm-fi" type="date" id="'+prefix+'Date" value="'+esc(dateVal)+'" '+ro+' style="'+roBg+'"></div>';
+    h+='<div class="cm-row"><div class="cm-lbl">場所</div><input class="fi cm-fi" type="text" id="'+prefix+'Place" value="'+esc(placeVal)+'" placeholder="WEB" '+ro+' style="'+roBg+'"></div>';
+    h+='<div class="cm-row"><div class="cm-lbl">時間</div><div style="display:flex;gap:4px;align-items:center;flex:1"><input class="fi cm-fi" type="time" id="'+prefix+'TimeFrom" value="'+esc(tfVal)+'" '+ro+' style="'+roBg+'">～<input class="fi cm-fi" type="time" id="'+prefix+'TimeTo" value="'+esc(ttVal)+'" '+ro+' style="'+roBg+'"></div></div></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">出席者</div>';
     var att=d.attendees||(isEditable?defaultAttendeesText():'');
