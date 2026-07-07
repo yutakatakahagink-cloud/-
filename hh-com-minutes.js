@@ -179,9 +179,9 @@
 
     h+='<div class="cm-section"><div class="cm-sh">付随書類</div>';
     if(isEditable){
-      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"><span style="font-size:9px;color:var(--t3);margin-left:6px">※1ファイル5MBまで</span></div>';
+      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"></div>';
     }
-    var files=isEditable?(window._cmPendingFiles||[]):loadFilesFromLocal(ym);
+    var files=isEditable?(window._cmPendingFiles||[]):(window['_cmFiles_'+ym]||[]);
     h+='<div id="'+prefix+'FileList">';
     if(files.length){
       files.forEach(function(f,i){
@@ -233,14 +233,40 @@
     return h;
   }
 
-  var LS_FILES_KEY='hh_committee_files';
+  var IDB_NAME='hh_committee_files_db';
+  var IDB_STORE='files';
+  var IDB_VER=1;
   window._cmPendingFiles=[];
 
-  function saveFilesToLocal(ym,files){
-    try{var all=JSON.parse(localStorage.getItem(LS_FILES_KEY)||'{}');all[ym]=files;localStorage.setItem(LS_FILES_KEY,JSON.stringify(all))}catch(e){console.warn('ファイル保存失敗（容量超過の可能性）',e)}
+  function openIDB(cb){
+    if(!window.indexedDB){cb(null);return}
+    var req=indexedDB.open(IDB_NAME,IDB_VER);
+    req.onupgradeneeded=function(){req.result.createObjectStore(IDB_STORE)};
+    req.onsuccess=function(){cb(req.result)};
+    req.onerror=function(){cb(null)};
   }
-  function loadFilesFromLocal(ym){
-    try{return(JSON.parse(localStorage.getItem(LS_FILES_KEY)||'{}'))[ym]||[]}catch(e){return[]}
+  function saveFilesToLocal(ym,files){
+    openIDB(function(db){
+      if(!db)return;
+      try{var tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(files,ym)}catch(e){console.warn('IndexedDB save error',e)}
+    });
+  }
+  function loadFilesFromLocal(ym,cb){
+    if(typeof cb!=='function'){var sync=[];return sync}
+    openIDB(function(db){
+      if(!db){cb([]);return}
+      try{
+        var tx=db.transaction(IDB_STORE,'readonly');
+        var req=tx.objectStore(IDB_STORE).get(ym);
+        req.onsuccess=function(){cb(req.result||[])};
+        req.onerror=function(){cb([])};
+      }catch(e){cb([])}
+    });
+  }
+
+  function formatSize(bytes){
+    if(bytes>=1024*1024)return(bytes/(1024*1024)).toFixed(1)+'MB';
+    return Math.round(bytes/1024)+'KB';
   }
 
   global.comMinutesAddFiles=function(input){
@@ -251,7 +277,6 @@
     function next(){
       if(idx>=remaining.length){window._cmPendingFiles=existing;refreshFileList();return}
       var file=remaining[idx++];
-      if(file.size>5*1024*1024){alert(file.name+' は5MBを超えるため添付できません');next();return}
       var reader=new FileReader();
       reader.onload=function(){
         existing.push({name:file.name,url:reader.result,size:file.size});
@@ -278,7 +303,7 @@
     var h='';
     files.forEach(function(f,i){
       h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
-      h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+' <span style="color:var(--t3);font-size:9px">('+Math.round((f.size||0)/1024)+'KB)</span></span>';
+      h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+' <span style="color:var(--t3);font-size:9px">('+formatSize(f.size||0)+')</span></span>';
       if(f.url)h+='<a href="'+esc(f.url)+'" download="'+esc(f.name)+'" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
       h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
       h+='</div>';
@@ -393,28 +418,29 @@
     });
   };
 
-  global.comMinutesInit=function(role){
-    var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
+  function loadAllAndRender(wrap,role){
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
     wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">読み込み中…</div>';
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
-        window._cmPendingFiles=loadFilesFromLocal(curYM);
-        wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
+        loadFilesFromLocal(curYM,function(curFiles){
+          window._cmPendingFiles=curFiles||[];
+          loadFilesFromLocal(pYM,function(prvFiles){
+            window['_cmFiles_'+pYM]=prvFiles||[];
+            wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
+          });
+        });
       });
     });
+  }
+  global.comMinutesInit=function(role){
+    var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
+    loadAllAndRender(wrap,role);
   };
   global.comMinutesReload=function(){
     var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
-    var curYM=getSelectedComYM();var pYM=prevYM(curYM);
-    loadMinutes(pYM,function(prvData){
-      loadMinutes(curYM,function(curData){
-        window._comMinutesData=curData||{};
-        window._cmPendingFiles=loadFilesFromLocal(curYM);
-        var role=typeof ROLE!=='undefined'?ROLE:'user';
-        wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
-      });
-    });
+    var role=typeof ROLE!=='undefined'?ROLE:'user';
+    loadAllAndRender(wrap,role);
   };
 })(typeof window!=='undefined'?window:this);
