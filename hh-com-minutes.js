@@ -141,7 +141,7 @@
     var d=data||{};var lbl=ymLabel(ym);
     var titleText=d.confirmed?lbl+' 安全衛生委員会 議事録':lbl+' 安全衛生委員会 報告事項';
     var ro=isEditable?'':'readonly';
-    var roBg=isEditable?'':'background:#f5f5f5';
+    var roBg=isEditable?'':'background:var(--bg3,#2a3545)';
     var isSaved=!!d.yearMonth;
     var dateVal=d.date||(isEditable&&!isSaved?todayStr():'');
     var placeVal=(d.place!=null&&d.place!=='')?d.place:(isEditable&&!isSaved?'WEB/本社1F会議室':'');
@@ -213,9 +213,9 @@
     h+='<style>';
     h+='.cm-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}';
     h+='@media(max-width:767px){.cm-wrap{grid-template-columns:1fr}}';
-    h+='.cm-col{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}';
-    h+='.cm-title{font-size:14px;font-weight:700;text-align:center;padding:8px;border-radius:var(--rs);background:var(--bg2,#e8eef5);color:var(--t1)}';
-    h+='.cm-title.cm-confirmed{background:linear-gradient(135deg,#1d5bbf,#2563eb);color:#fff}';
+    h+='.cm-col{background:var(--card,#1e2836);border:1px solid var(--bd);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}';
+    h+='.cm-title{font-size:14px;font-weight:700;text-align:center;padding:8px;border-radius:var(--rs);background:var(--bg3,#222d3d);color:var(--t1,#eef2f7)}';
+    h+='.cm-title.cm-confirmed{background:linear-gradient(135deg,#3b7dd8,#6eb3ff);color:#0f1419}';
     h+='.cm-section{border-bottom:1px solid var(--bd);padding-bottom:8px}';
     h+='.cm-section:last-of-type{border-bottom:none}';
     h+='.cm-sh{font-size:11px;font-weight:700;color:var(--ac);margin-bottom:4px}';
