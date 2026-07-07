@@ -21,6 +21,7 @@ select,input,textarea,button{color:var(--t1)}
 .logo{width:28px;height:28px;background:linear-gradient(135deg,#2563EB,#3B82F6);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(37,99,235,.25)}
 .hdr-t{font-size:14px;font-weight:700}.hdr-s{font-size:9px;color:var(--t3);font-weight:500;margin-top:0}
 .pg{display:none;padding-bottom:72px;max-width:540px;margin:0 auto}.pg.on{display:block;animation:fi .25s ease}
+#pC.pg{max-width:1100px}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .fw{padding:0 16px 20px}
 .sd{font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.1em;margin:22px 0 12px;display:flex;align-items:center;gap:8px}
@@ -326,15 +327,10 @@ select,input,textarea,button{color:var(--t1)}
 <div class="pg" id="pC">
   <div class="period-flt" id="pfCom"></div>
   <div class="dept-flt" id="dfCom" style="display:none"></div>
-  <div class="cs">
+  <div class="cs" style="max-width:none;padding:6px">
     <div id="comMinutesWrap"></div>
-    <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
-    <div class="cb cb-wide com-card" onclick="openComByExpDetail(window._comByExpReports||[])"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
-    <div class="cb cb-wide com-card" onclick="showComDetail('🏢 本部別 背景要因・職場環境分析',document.getElementById('cDeptAn_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--pr)"></span>🏢 本部別 背景要因・職場環境分析</div><div id="cDeptAn"></div><div class="com-tap">タップで詳細を表示</div><div id="cDeptAn_full" style="display:none"></div></div>
-    <div class="cb cb-wide com-card" onclick="showComDetail('💬 安全衛生要望',document.getElementById('cReq_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--gn)"></span>💬 安全衛生要望</div><div id="cReq"></div><div class="com-tap">タップで詳細を表示</div><div id="cReq_full" style="display:none"></div></div>
-    <div class="cb cb-wide com-card" onclick="showComDetail('🚨 災害報告（発生状況・原因分類・対策）',document.getElementById('cDisCom_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--rd)"></span>🚨 災害報告（発生状況・原因分類・対策）</div><div id="cDisCom"></div><div class="com-tap">タップで詳細を表示</div><div id="cDisCom_full" style="display:none"></div></div>
-    <div class="cb cb-wide"><div class="cht"><span class="chd" style="background:var(--bl)"></span>📜 法改正</div><div id="cLaw"></div></div>
   </div>
+  <div style="display:none"><div id="cS"></div><div id="cS_full"></div><div id="cByExp"></div><div id="cByExp_full"></div><div id="cDeptAn"></div><div id="cDeptAn_full"></div><div id="cReq"></div><div id="cReq_full"></div><div id="cDisCom"></div><div id="cDisCom_full"></div><div id="cLaw"></div></div>
 </div>
 
 <!-- 安全衛生要望 -->
