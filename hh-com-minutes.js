@@ -151,31 +151,31 @@
     else{body.style.display='none';if(icon)icon.textContent='▶'}
   };
 
-  function grabCardText(id){
+  function grabText(id){
+    var full=document.getElementById(id+'_full');
+    if(full){
+      var t=(full.textContent||'').trim();
+      if(t)return t;
+    }
     var el=document.getElementById(id);
     if(!el)return '';
-    return (el.innerText||el.textContent||'').trim();
-  }
-  function grabFullCardText(id){
-    var el=document.getElementById(id);
-    if(!el)return '';
-    return (el.innerText||el.textContent||'').trim();
+    return (el.textContent||'').trim();
   }
 
   function collectAgendaFromScreen(){
     var sections=[];
-    var summary=grabCardText('cS');
-    if(summary)sections.push({title:'報告状況',text:summary});
-    var byexp=grabCardText('cByExp');
-    if(byexp)sections.push({title:'体験別→対策提案',text:byexp});
-    var deptAn=grabCardText('cDeptAn');
-    if(deptAn)sections.push({title:'本部別 背景要因・職場環境分析',text:deptAn});
-    var req=grabCardText('cReq');
-    if(req)sections.push({title:'安全衛生要望',text:req});
-    var dis=grabCardText('cDisCom');
-    if(dis)sections.push({title:'災害報告',text:dis});
-    var law=grabCardText('cLaw');
-    if(law)sections.push({title:'法改正',text:law});
+    var pairs=[
+      ['cS','報告状況'],
+      ['cByExp','体験別→対策提案'],
+      ['cDeptAn','本部別 背景要因・職場環境分析'],
+      ['cReq','安全衛生要望'],
+      ['cDisCom','災害報告'],
+      ['cLaw','法改正']
+    ];
+    pairs.forEach(function(p){
+      var txt=grabText(p[0]);
+      if(txt)sections.push({title:p[1],text:txt});
+    });
     return sections;
   }
 
@@ -256,9 +256,12 @@
     if(typeof XLSX==='undefined'){alert('SheetJSが読み込まれていません。');return}
     var curYM=getSelectedComYM();
     var prvYM=prevYM(curYM);
-    var curData=window._comMinutesData||{};
-    if(!curData.agenda_text){
-      curData.agenda_sections=collectAgendaFromScreen();
+    var curData=Object.assign({},window._comMinutesData||{},collectFormData());
+    var screenSections=collectAgendaFromScreen();
+    if(screenSections.length){
+      curData.agenda_sections=screenSections;
+      curData.agenda_text=buildAgendaTextFromSections(screenSections,curData);
+    }else if(!curData.agenda_text&&curData.agenda_sections){
       curData.agenda_text=buildAgendaTextFromSections(curData.agenda_sections,curData);
     }
 
