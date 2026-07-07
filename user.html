@@ -1118,6 +1118,7 @@ input[type="file"].photo-input{display:none}
   <div class="period-flt" id="pfCom"></div>
   <div class="dept-flt" id="dfCom" style="display:none"></div>
   <div class="cs">
+    <div id="comMinutesWrap"></div>
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="openComByExpDetail(window._comByExpReports||[])"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('🚨 災害報告（発生状況・原因分類・対策）',document.getElementById('cDisCom_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--rd)"></span>🚨 災害報告（発生状況・原因分類・対策）</div><div id="cDisCom"></div><div class="com-tap">タップで詳細を表示</div><div id="cDisCom_full" style="display:none"></div></div>
@@ -1147,6 +1148,8 @@ input[type="file"].photo-input{display:none}
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
+<script src="hh-com-minutes.js?v=20260707"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="hh-com-disaster.js?v=20260525-dis-notitle"></script>
 <script src="disaster-workflow.js?v=20260430-wf3" onerror="console.warn('disaster-workflow.js load failed')"></script>
 <script src="disaster-detail-html.js?v=20260331-exp" onerror="console.warn('disaster-detail-html.js load failed')"></script>
@@ -2659,6 +2662,8 @@ function anlActs(){
 function rCom(){
   buildPeriodFilter('pfCom');
   buildDeptFilter('dfCom');
+  if(typeof comMinutesInit==='function')comMinutesInit(ROLE||'user');
+  else if(typeof comMinutesReload==='function')comMinutesReload();
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
   let sm=`<div class="com-section"><strong>報告状況</strong><p>報告総数 ${fd.length}件、高レベル(Lv.7+) <span style="color:var(--rd);font-weight:700">${hi.length}件</span></p></div>`;

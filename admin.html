@@ -327,6 +327,7 @@ select,input,textarea,button{color:var(--t1)}
   <div class="period-flt" id="pfCom"></div>
   <div class="dept-flt" id="dfCom" style="display:none"></div>
   <div class="cs">
+    <div id="comMinutesWrap"></div>
     <div class="cb com-card" onclick="showComDetail('📋 安全衛生委員会サマリ',document.getElementById('cS_full').innerHTML)" id="cS_card"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📋 安全衛生委員会サマリ</div><div class="icb" id="cS"></div><div class="com-tap">タップで詳細を表示</div><div id="cS_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="openComByExpDetail(window._comByExpReports||[])"><div class="cht"><span class="chd" style="background:var(--ac)"></span>📊 体験別→対策提案</div><div id="cByExp"></div><div class="com-tap">タップで詳細を表示</div><div id="cByExp_full" style="display:none"></div></div>
     <div class="cb cb-wide com-card" onclick="showComDetail('🏢 本部別 背景要因・職場環境分析',document.getElementById('cDeptAn_full').innerHTML)"><div class="cht"><span class="chd" style="background:var(--pr)"></span>🏢 本部別 背景要因・職場環境分析</div><div id="cDeptAn"></div><div class="com-tap">タップで詳細を表示</div><div id="cDeptAn_full" style="display:none"></div></div>
@@ -365,6 +366,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
+<script src="hh-com-minutes.js?v=20260707"></script>
 <script src="hh-com-disaster.js?v=20260525-dis-notitle"></script>
 <script src="disaster-workflow.js?v=20260430-wf3"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
@@ -866,6 +868,8 @@ function anlActs(){
 function rCom(){
   buildPeriodFilter('pfCom');
   buildDeptFilter('dfCom');
+  if(typeof comMinutesInit==='function')comMinutesInit('admin');
+  else if(typeof comMinutesReload==='function')comMinutesReload();
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
   let sm=`<div class="com-section"><strong>報告状況</strong><p>報告総数 ${fd.length}件、高レベル(Lv.7+) <span style="color:var(--rd);font-weight:700">${hi.length}件</span></p></div>`;
