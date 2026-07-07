@@ -953,10 +953,10 @@ input[type="file"].photo-input{display:none}
   <div class="other-inp" id="otherInp"><input class="fi" type="text" id="f_other" placeholder="その他の内容を入力"></div>
 
   <div class="sd">自由記述</div>
-  <div class="fg"><label class="fl">いつ・どこで</label><input class="fi" type="text" id="f_ww" placeholder="例: 2/5 午前10時、3階足場"></div>
-  <div class="fg"><label class="fl">どのような作業で？</label><input class="fi" type="text" id="f_wk" placeholder="例: 鉄骨建方の補助作業中"></div>
+  <div class="fg"><label class="fl">いつ・どこで<span class="rq">*</span></label><input class="fi" type="text" id="f_ww" placeholder="例: 2/5 午前10時、3階足場"></div>
+  <div class="fg"><label class="fl">どのような作業で？<span class="rq">*</span></label><input class="fi" type="text" id="f_wk" placeholder="例: 鉄骨建方の補助作業中"></div>
   <div class="fg"><label class="fl">内容<span class="rq">*</span></label><textarea class="ft" id="f_desc" placeholder="何が起きたか具体的に"></textarea></div>
-  <div class="fg"><label class="fl">対策</label><textarea class="ft" id="f_msr" placeholder="再発防止策" style="min-height:60px"></textarea></div>
+  <div class="fg"><label class="fl">対策<span class="rq">*</span></label><textarea class="ft" id="f_msr" placeholder="再発防止策" style="min-height:60px"></textarea></div>
 
   <div class="sd">現場写真</div>
   <div class="fg" style="margin-bottom:10px">
@@ -1046,10 +1046,10 @@ input[type="file"].photo-input{display:none}
   })();
   </script>
 
-  <div class="sd">発生原因</div>
+  <div class="sd">発生原因<span class="rq">*</span></div>
   <div class="cg" id="cC"><div class="ch" data-v="設備・機械">設備・機械</div><div class="ch" data-v="工具・保護具">工具・保護具</div><div class="ch" data-v="作業環境">作業環境</div><div class="ch" data-v="作業方法">作業方法</div><div class="ch" data-v="連絡・連携ミス">連絡・連携ミス</div><div class="ch" data-v="確認不足">確認不足</div><div class="ch" data-v="不注意行動">不注意行動</div><div class="ch" data-v="考え事">考え事</div><div class="ch" data-v="視界不良">視界不良</div></div>
 
-  <div class="sd">災害レベル（1～10）</div>
+  <div class="sd">災害レベル（1～10）<span class="rq">*</span></div>
   <div class="lg" id="lvG"></div>
 
   <div class="sd">背後要因：あなたの状態</div>
@@ -1085,7 +1085,7 @@ input[type="file"].photo-input{display:none}
   <div class="sd">回避できなかった理由</div>
   <div class="cg" id="cAv"><div class="ch" data-v="注意不足">注意不足</div><div class="ch" data-v="経験不足">経験不足</div><div class="ch" data-v="知識不足">知識不足</div><div class="ch" data-v="焦り">焦り</div><div class="ch" data-v="慣れ・油断">慣れ・油断</div><div class="ch" data-v="疲労">疲労</div><div class="ch" data-v="連携不足">連携不足</div><div class="ch" data-v="設備確認不足">設備確認不足</div><div class="ch" data-v="判断の遅れ">判断の遅れ</div><div class="ch" data-v="周囲確認不足">周囲確認不足</div><div class="ch" data-v="体力低下">体力低下</div><div class="ch" data-v="過信">過信</div></div>
 
-  <div class="sd">回避に役立つ活動</div>
+  <div class="sd">回避に役立つ活動<span class="rq">*</span></div>
   <div class="cg" id="cAc"><div class="ck" data-v="HH体験">HH体験</div><div class="ck" data-v="同僚の話">同僚の話</div><div class="ck" data-v="安全教育">安全教育</div><div class="ck" data-v="朝礼夕礼">朝礼夕礼</div><div class="ck" data-v="現地MT">現地MT</div><div class="ck" data-v="KY活動">KY活動</div><div class="ck" data-v="KYT">KYT</div><div class="ck" data-v="RA">RA</div><div class="ck" data-v="災害事例">災害事例</div><div class="ck" data-v="パトロール">パトロール</div><div class="ck" data-v="危険体感">危険体感</div><div class="ck" data-v="見える化">見える化</div><div class="ck" data-v="安全標識">安全標識</div><div class="ck" data-v="4S">4S</div><div class="ck" data-v="避難訓練">避難訓練</div><div class="ck" data-v="作業監視">作業監視</div><div class="ck" data-v="状況把握">状況把握</div><div class="ck" data-v="目配り">目配り</div><div class="ck" data-v="設備点検">設備点検</div><div class="ck" data-v="手順書">手順書</div><div class="ck" data-v="コミュニケーション">コミュ</div><div class="ck" data-v="懇親会">懇親会</div><div class="ck" data-v="体操">体操</div><div class="ck" data-v="安全表彰">安全表彰</div><div class="ck" data-v="休憩">休憩</div><div class="ck" data-v="食事">食事</div><div class="ck" data-v="悩み相談">悩み相談</div><div class="ck" data-v="睡眠">睡眠</div></div>
 
   <button class="sub" id="btnSubmit">報告を送信する</button>
@@ -2368,8 +2368,23 @@ function doSubmit(){
   if(!CUR&&window.CUR)CUR=window.CUR;
   const ds=document.getElementById('f_desc').value.trim();
   const exp=[...document.querySelectorAll('#cExp .ch.on')].map(c=>c.dataset.v);
+  const ww=document.getElementById('f_ww').value.trim();
+  const wk=document.getElementById('f_wk').value.trim();
+  const msr=document.getElementById('f_msr').value.trim();
+  const causes=[...document.querySelectorAll('#cC .ch.on')].map(c=>c.dataset.v);
+  const lv=+(document.querySelector('.lb.on')?.dataset.v||0);
+  const acts=[...document.querySelectorAll('#cAc .ck.on')].map(c=>c.dataset.v);
   if(!CUR){alert('ログインしてください');return}
-  if(!ds||!exp.length){alert('必須項目を入力してください');return}
+  var missing=[];
+  if(!exp.length)missing.push('どのような体験か');
+  if(!ww)missing.push('いつ・どこで');
+  if(!wk)missing.push('どのような作業で？');
+  if(!ds)missing.push('内容');
+  if(!msr)missing.push('対策');
+  if(!causes.length)missing.push('発生原因');
+  if(!lv)missing.push('災害レベル');
+  if(!acts.length)missing.push('回避に役立つ活動');
+  if(missing.length){alert('以下の必須項目を入力してください：\n\n・'+missing.join('\n・'));return}
   const gL=id=>{const o={};document.querySelectorAll('#'+id+' .lkd').forEach(g=>{const sel=g.querySelector('.lkdt.on');o[g.dataset.f]=sel?parseInt(sel.dataset.v,10):0});return o};
   const otherText=document.getElementById('f_other').value;
   if(exp.includes('その他')&&otherText)exp[exp.indexOf('その他')]='その他:'+otherText;
