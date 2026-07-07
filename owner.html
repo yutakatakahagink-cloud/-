@@ -73,7 +73,7 @@ select,input,textarea,button{color:var(--t1)}
 .logo{width:28px;height:28px;background:linear-gradient(135deg,#2563EB,#3B82F6);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(37,99,235,.25)}
 .hdr-t{font-size:14px;font-weight:700}.hdr-s{font-size:9px;color:var(--t3);font-weight:500;margin-top:0}
 .pg{display:none;padding-bottom:72px;max-width:540px;margin:0 auto}.pg.on{display:block;animation:fi .25s ease}
-#pC.pg{max-width:1100px}
+#pC.pg{max-width:none}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .fw{padding:0 16px 20px}
 .sd{font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.1em;margin:22px 0 12px;display:flex;align-items:center;gap:8px}
@@ -652,7 +652,7 @@ document.getElementById('modal').onclick=e=>{if(e.target.id==='modal'){e.target.
 // ===== DATA (shared via localStorage) =====
 let DB=[],idc=0,cFi='all',deptFilt='all',REQ_LIST=[],DIS_LIST=[];
 window.getDisasterListForExport=function(){return DIS_LIST;};
-var periodYear='all',periodMonth='all';
+var _now=new Date();var periodYear=String(_now.getFullYear()),periodMonth=String(_now.getMonth()+1).padStart(2,'0');
 const FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
 var DEMO_DATA=[
 {n:'志田和弘',dept:'土木本部/土木部',ku:'土木',ar:'50~59歳',e:['墜落しそうになった'],d:'足場手すりが外れ、寄りかかった際にぐらついた。転落危険。',c:['確認不足','作業環境'],l:8,w:'2/5 AM10 3階足場',wk:'外壁仕上げ',m:'足場点検チェックリスト導入',st:{workload:3,overtime:3,hardwork:3,fatigue:3,exhausted:3,sluggish:2,tense:3,anxiety:2,restless:2,depressed:1,bothered:1,gloomy:1,appetite:1,sleep:2},we:{pace:2,autonomy:2,voice:1,boss_talk:2,peer_talk:3,boss_help:2,peer_help:3,boss_consult:1,peer_consult:2,vigor:2,pride:3,happiness:2},av:['注意不足','焦り'],ac:['KY活動','朝礼夕礼'],ss:'review'},

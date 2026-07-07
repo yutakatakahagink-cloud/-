@@ -25,7 +25,7 @@ select,input,textarea,button{color:var(--t1)}
 .logo{width:32px;height:32px;background:linear-gradient(135deg,#2563EB,#3B82F6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(37,99,235,.2)}
 .hdr-t{font-size:15px;font-weight:700;color:var(--t1)}.hdr-s{font-size:9px;color:var(--t3);font-weight:500;margin-top:1px}
 .pg{display:none;padding-bottom:72px;max-width:540px;margin:0 auto}.pg.on{display:block;animation:fi .3s ease}
-#pC.pg{max-width:1100px}
+#pC.pg{max-width:none}
 @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fw{padding:0 16px 20px}
 .sd{font-size:11px;font-weight:700;color:var(--ac);letter-spacing:.05em;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
@@ -1328,7 +1328,7 @@ document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
 
 // ===== DATA =====
 var DB=[],idc=0,cFi='all',deptFilt='all',curExpFilter='all';
-var periodYear='all',periodMonth='all';
+var _now=new Date();var periodYear=String(_now.getFullYear()),periodMonth=String(_now.getMonth()+1).padStart(2,'0');
 var REQ_LIST=[],DIS_LIST=[];
 var pendingPhotos=window._hhPhotos||[];var disPendingPhotos=[],disPendingPhotosPC=[];
 var FI=['all','new','review','done'],FL={all:'すべて',new:'新規',review:'確認中',done:'対策完了'};
