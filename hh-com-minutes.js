@@ -151,6 +151,54 @@
     else{body.style.display='none';if(icon)icon.textContent='▶'}
   };
 
+  function grabCardText(id){
+    var el=document.getElementById(id);
+    if(!el)return '';
+    return (el.innerText||el.textContent||'').trim();
+  }
+  function grabFullCardText(id){
+    var el=document.getElementById(id);
+    if(!el)return '';
+    return (el.innerText||el.textContent||'').trim();
+  }
+
+  function collectAgendaFromScreen(){
+    var sections=[];
+    var summary=grabCardText('cS');
+    if(summary)sections.push({title:'報告状況',text:summary});
+    var byexp=grabCardText('cByExp');
+    if(byexp)sections.push({title:'体験別→対策提案',text:byexp});
+    var deptAn=grabCardText('cDeptAn');
+    if(deptAn)sections.push({title:'本部別 背景要因・職場環境分析',text:deptAn});
+    var req=grabCardText('cReq');
+    if(req)sections.push({title:'安全衛生要望',text:req});
+    var dis=grabCardText('cDisCom');
+    if(dis)sections.push({title:'災害報告',text:dis});
+    var law=grabCardText('cLaw');
+    if(law)sections.push({title:'法改正',text:law});
+    return sections;
+  }
+
+  function buildAgendaTextFromSections(sections,d){
+    var lines=[];
+    (sections||[]).forEach(function(s){
+      lines.push('【'+s.title+'】');
+      lines.push(s.text);
+      lines.push('');
+    });
+    if(d&&d.other_reports){
+      lines.push('【その他報告事項】');
+      lines.push(d.other_reports);
+      lines.push('');
+    }
+    if(d&&d.discussions){
+      lines.push('【協議事項】');
+      lines.push(d.discussions);
+      lines.push('');
+    }
+    return lines.join('\n').trim();
+  }
+
   global.saveComMinutes=function(){
     var ym=getSelectedComYM();
     var data=collectFormData();
@@ -158,6 +206,8 @@
     data.confirmed=!!existing.confirmed;
     data.confirmed_at=existing.confirmed_at||null;
     data.confirmed_by=existing.confirmed_by||null;
+    data.agenda_sections=collectAgendaFromScreen();
+    data.agenda_text=buildAgendaTextFromSections(data.agenda_sections,data);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
@@ -181,6 +231,8 @@
       data.confirmed_at=new Date().toISOString();
       data.confirmed_by=(typeof CUR!=='undefined'&&CUR)?CUR.name:'所有者';
     }
+    data.agenda_sections=collectAgendaFromScreen();
+    data.agenda_text=buildAgendaTextFromSections(data.agenda_sections,data);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
@@ -191,51 +243,13 @@
     });
   };
 
-  function getSummaryText(){
-    var el=document.getElementById('cS');
-    if(!el)return '';
-    return el.innerText||el.textContent||'';
-  }
-  function getByExpText(){
-    var el=document.getElementById('cByExp');
-    if(!el)return '';
-    return el.innerText||el.textContent||'';
-  }
-  function getDisComText(){
-    var el=document.getElementById('cDisCom');
-    if(!el)return '';
-    return el.innerText||el.textContent||'';
-  }
-  function getLawText(){
-    var el=document.getElementById('cLaw');
-    if(!el)return '';
-    return el.innerText||el.textContent||'';
-  }
-
-  function buildAgendaText(d){
-    var lines=[];
-    lines.push('【報告状況】');
-    lines.push(getSummaryText());
-    lines.push('');
-    lines.push('【体験別→対策提案】');
-    lines.push(getByExpText());
-    lines.push('');
-    lines.push('【災害報告】');
-    lines.push(getDisComText());
-    lines.push('');
-    lines.push('【法改正】');
-    lines.push(getLawText());
-    if(d&&d.other_reports){
-      lines.push('');
-      lines.push('【その他報告事項】');
-      lines.push(d.other_reports);
+  function buildAgendaForExcel(d){
+    if(d&&d.agenda_text)return d.agenda_text;
+    if(d&&d.agenda_sections&&d.agenda_sections.length){
+      return buildAgendaTextFromSections(d.agenda_sections,d);
     }
-    if(d&&d.discussions){
-      lines.push('');
-      lines.push('【協議事項】');
-      lines.push(d.discussions);
-    }
-    return lines.join('\n');
+    var sections=collectAgendaFromScreen();
+    return buildAgendaTextFromSections(sections,d);
   }
 
   global.downloadComMinutesExcel=function(){
@@ -243,15 +257,22 @@
     var curYM=getSelectedComYM();
     var prvYM=prevYM(curYM);
     var curData=window._comMinutesData||{};
+    if(!curData.agenda_text){
+      curData.agenda_sections=collectAgendaFromScreen();
+      curData.agenda_text=buildAgendaTextFromSections(curData.agenda_sections,curData);
+    }
 
     loadMinutes(prvYM,function(prvData){
       prvData=prvData||{};
       var wb=XLSX.utils.book_new();
       var rows=[];
-      var TITLE='安全衛生委員会会議記録';
+      var prvLabel=ymLabel(prvYM);
+      var curLabel=ymLabel(curYM);
+      var TITLE_P='安全衛生委員会会議記録（'+prvLabel+'）';
+      var TITLE_C='安全衛生委員会会議記録（'+curLabel+'）';
       var e='';
 
-      rows.push([TITLE,e,e,e,e,e,e,e, TITLE,e,e,e,e,e,e,e]);
+      rows.push([TITLE_P,e,e,e,e,e,e,e, TITLE_C,e,e,e,e,e,e,e]);
       rows.push([e,e,e,e,e,e,e,e, e,e,e,e,e,e,e,e]);
 
       var pDt=(prvData.date||'')+(prvData.time_from?' '+prvData.time_from:'');
@@ -269,8 +290,8 @@
       rows.push([e,e,e,e,e,e,e,e, e,e,e,e,e,e,e,e]);
       rows.push([e,e,e,e,e,e,e,e, e,e,e,e,e,e,e,e]);
 
-      var prvAgenda=buildAgendaText(prvData);
-      var curAgenda=buildAgendaText(curData);
+      var prvAgenda=buildAgendaForExcel(prvData);
+      var curAgenda=buildAgendaForExcel(curData);
       rows.push(['議案',e,e,e,e,e,e,e, '議案',e,e,e,e,e,e,e]);
 
       var prvLines=prvAgenda.split('\n');
@@ -298,8 +319,8 @@
       ];
 
       ws['!cols']=[
-        {wch:10},{wch:6},{wch:12},{wch:8},{wch:4},{wch:8},{wch:8},{wch:8},
-        {wch:10},{wch:6},{wch:12},{wch:8},{wch:4},{wch:8},{wch:8},{wch:8}
+        {wch:10},{wch:6},{wch:14},{wch:10},{wch:4},{wch:10},{wch:10},{wch:10},
+        {wch:10},{wch:6},{wch:14},{wch:10},{wch:4},{wch:10},{wch:10},{wch:10}
       ];
 
       XLSX.utils.book_append_sheet(wb,ws,'議事録');
