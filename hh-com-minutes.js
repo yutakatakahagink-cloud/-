@@ -56,6 +56,59 @@
 
   function buildAgendaFromData(){return window._comAgendaText||'（報告データなし）'}
 
+  function buildAgendaForYM(y,m){
+    var reports=(typeof DB!=='undefined'?DB:[])||[];
+    var disList=(typeof DIS_LIST!=='undefined'?DIS_LIST:[])||[];
+    var reqList=(typeof REQ_LIST!=='undefined'?REQ_LIST:[])||[];
+    var ym=y+'-'+m;
+    var fd=reports.filter(function(r){var dt=r.date||'';return dt.substring(0,4)===y&&dt.substring(5,7)===m});
+    var hi=fd.filter(function(r){return r.l>=7});
+    var ec={};fd.forEach(function(r){(r.e||[]).forEach(function(e){ec[e]=(ec[e]||0)+1})});
+    var te=Object.entries(ec).sort(function(a,b){return b[1]-a[1]})[0];
+    var lines=[];
+    lines.push('【ヒヤリハット報告】');
+    lines.push('・報告総数 '+fd.length+'件');
+    lines.push('・高レベル(Lv.7+) '+hi.length+'件');
+    if(te)lines.push('・最頻出体験: '+te[0]+'（'+te[1]+'件）');
+    var se=Object.entries(ec).sort(function(a,b){return b[1]-a[1]});
+    if(se.length){lines.push('');se.forEach(function(x){lines.push('・'+x[0]+': '+x[1]+'件')})}
+    lines.push('');
+    var cc={};fd.forEach(function(r){(r.c||[]).forEach(function(c){cc[c]=(cc[c]||0)+1})});
+    var sc=Object.entries(cc).sort(function(a,b){return b[1]-a[1]});
+    if(sc.length){lines.push('【発生原因】');sc.forEach(function(x){lines.push('・'+x[0]+': '+x[1]+'件')});lines.push('')}
+    var dl=disList.filter(function(r){var dt=r.datetime||r.date||'';return dt.substring(0,4)===y&&dt.substring(5,7)===m});
+    if(dl.length){
+      lines.push('【災害報告】');
+      dl.forEach(function(r){
+        lines.push('・'+(r.datetime||r.date||'—')+' '+(r.place||r.basho||'—')+' '+(r.type||r.jiko||r.keigen||''));
+        if(r.situation||r.basho_detail)lines.push('  発生状況: '+(r.basho_detail||r.situation||'').substring(0,80));
+        if(r.taisaku||r.measure)lines.push('  対策: '+(r.taisaku||r.measure||'').substring(0,80));
+      });
+      lines.push('');
+    }
+    var rl=reqList.filter(function(r){return(r.date||'').substring(0,4)===y&&(r.date||'').substring(5,7)===m});
+    if(rl.length){
+      lines.push('【安全衛生要望】');
+      rl.forEach(function(r){
+        var st=r.status==='resolved'?'解決済み':r.status==='in_progress'?'取り掛かり中':'未対応';
+        lines.push('・['+st+'] '+(r.name||'—')+'（'+(r.dept||'—')+'）: '+(r.content||''));
+      });
+      lines.push('');
+    }
+    if(typeof window.comLawEnacted!=='undefined'&&window.comLawEnacted&&window.comLawEnacted.length){
+      lines.push('【法改正（施行済み）】');
+      window.comLawEnacted.forEach(function(l){lines.push('・'+l.law+' '+l.short+' ('+l.date+')')});
+      lines.push('');
+    }
+    if(typeof window.comLawUpcoming!=='undefined'&&window.comLawUpcoming&&window.comLawUpcoming.length){
+      lines.push('【法改正（施行予定）】');
+      window.comLawUpcoming.forEach(function(l){lines.push('・'+l.law+' '+l.short+' ('+l.date+')')});
+      lines.push('');
+    }
+    return lines.join('\n').trim();
+  }
+  global.buildAgendaForYM=buildAgendaForYM;
+
   function buildColumnHtml(prefix,ym,data,isEditable,isOwner){
     var d=data||{};var lbl=ymLabel(ym);
     var titleText=d.confirmed?lbl+' 安全衛生委員会 議事録':lbl+' 安全衛生委員会 報告事項';
@@ -80,7 +133,8 @@
     h+='<textarea class="ft cm-ta" id="'+prefix+'Parts" '+ro+' style="min-height:30px;'+roBg+'" placeholder="安全担当・その他参加者">'+esc(d.participants||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">議案（定例報告）</div>';
-    var agText=d.agenda_text||(isEditable?buildAgendaFromData():'');
+    var ymParts=ym.split('-');
+    var agText=d.agenda_text||buildAgendaForYM(ymParts[0],ymParts[1]);
     h+='<div class="cm-agenda" id="'+prefix+'Agenda">'+esc(agText).replace(/\n/g,'<br>')+'</div></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">その他報告事項</div>';
@@ -144,7 +198,8 @@
     data.confirmed=!!existing.confirmed;
     data.confirmed_at=existing.confirmed_at||null;
     data.confirmed_by=existing.confirmed_by||null;
-    data.agenda_text=buildAgendaFromData();
+    var ymP=ym.split('-');
+    data.agenda_text=buildAgendaForYM(ymP[0],ymP[1]);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
@@ -169,7 +224,8 @@
       data.confirmed_at=new Date().toISOString();
       data.confirmed_by=(typeof CUR!=='undefined'&&CUR)?CUR.name:'所有者';
     }
-    data.agenda_text=buildAgendaFromData();
+    var ymP2=ym.split('-');
+    data.agenda_text=buildAgendaForYM(ymP2[0],ymP2[1]);
     var st=document.getElementById('cmStatus');if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
       if(st)st.textContent=err?'保存失敗':data.confirmed?'議事録を確定しました':'確定を取り消しました';
@@ -181,9 +237,11 @@
     });
   };
 
-  function buildExcelAgenda(d){
+  function buildExcelAgenda(d,ym){
     var lines=[];
-    if(d&&d.agenda_text){lines.push(d.agenda_text);lines.push('')}
+    var agText=d&&d.agenda_text;
+    if(!agText&&ym){var pp=ym.split('-');agText=buildAgendaForYM(pp[0],pp[1])}
+    if(agText){lines.push(agText);lines.push('')}
     if(d&&d.other_reports){lines.push('【その他報告事項】');lines.push(d.other_reports);lines.push('')}
     if(d&&d.discussions){lines.push('【協議事項】');lines.push(d.discussions);lines.push('')}
     return lines.join('\n').trim()||'（データなし）';
@@ -193,7 +251,7 @@
     if(typeof XLSX==='undefined'){alert('SheetJSが読み込まれていません');return}
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
     var curData=Object.assign({},window._comMinutesData||{},collectCurrentFormData());
-    curData.agenda_text=buildAgendaFromData();
+    var cP=curYM.split('-');curData.agenda_text=buildAgendaForYM(cP[0],cP[1]);
     loadMinutes(pYM,function(prvData){
       prvData=prvData||{};
       var wb=XLSX.utils.book_new();var rows=[];var e='';
@@ -209,8 +267,8 @@
       rows.push(['参加者',e,prvData.participants||'',e,e,e,e,e,'参加者',e,curData.participants||'',e,e,e,e,e]);
       rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
       rows.push(['議案',e,e,e,e,e,e,e,'議案',e,e,e,e,e,e,e]);
-      var pA=buildExcelAgenda(prvData).split('\n');
-      var cA=buildExcelAgenda(curData).split('\n');
+      var pA=buildExcelAgenda(prvData,pYM).split('\n');
+      var cA=buildExcelAgenda(curData,curYM).split('\n');
       var mx=Math.max(pA.length,cA.length,30);
       for(var i=0;i<mx;i++)rows.push([pA[i]||'',e,e,e,e,e,e,e,cA[i]||'',e,e,e,e,e,e,e]);
       var ws=XLSX.utils.aoa_to_sheet(rows);
