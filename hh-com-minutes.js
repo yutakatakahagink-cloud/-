@@ -379,38 +379,73 @@
     return lines.join('\n').trim()||'（データなし）';
   }
 
+  function buildColRows(d,ym){
+    var rows=[];
+    var pYm=ym.split('-');
+    var title=d&&d.confirmed?ymLabel(ym)+' 安全衛生委員会 議事録':ymLabel(ym)+' 安全衛生委員会 報告事項';
+    rows.push([title]);
+    rows.push(['']);
+    rows.push(['開催日',d&&d.date||'','','場所',d&&d.place||'']);
+    rows.push(['時間',(d&&d.time_from||'')+'～'+(d&&d.time_to||'')]);
+    rows.push(['']);
+    rows.push(['出席者']);
+    (d&&d.attendees||'').split(/[、,\n]/).forEach(function(s){if(s.trim())rows.push(['  '+s.trim()])});
+    rows.push(['']);
+    rows.push(['欠席者']);
+    (d&&d.absentees||'').split(/[、,\n]/).forEach(function(s){if(s.trim())rows.push(['  '+s.trim()])});
+    if(!d||!d.absentees)rows.push(['  （なし）']);
+    rows.push(['']);
+    rows.push(['参加者']);
+    (d&&d.participants||'').split(/[、,\n]/).forEach(function(s){if(s.trim())rows.push(['  '+s.trim()])});
+    if(!d||!d.participants)rows.push(['  （なし）']);
+    rows.push(['']);
+    rows.push(['議案（定例報告）']);
+    var agText=(d&&d.yearMonth&&d.agenda_text!=null)?d.agenda_text:buildAgendaForYM(pYm[0],pYm[1]);
+    agText.split('\n').forEach(function(line){rows.push([line])});
+    rows.push(['']);
+    rows.push(['その他報告事項']);
+    if(d&&d.other_reports){d.other_reports.split('\n').forEach(function(l){rows.push([l])})}
+    else rows.push(['  （なし）']);
+    rows.push(['']);
+    rows.push(['協議事項']);
+    if(d&&d.discussions){d.discussions.split('\n').forEach(function(l){rows.push([l])})}
+    else rows.push(['  （なし）']);
+    rows.push(['']);
+    if(d&&d.attachment_names&&d.attachment_names.length){
+      rows.push(['付随書類']);
+      d.attachment_names.forEach(function(n){rows.push(['  📎 '+n])});
+      rows.push(['']);
+    }
+    return rows;
+  }
+
   global.downloadComMinutesExcel=function(){
     if(typeof XLSX==='undefined'){alert('SheetJSが読み込まれていません');return}
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
     var curData=Object.assign({},window._comMinutesData||{},collectCurrentFormData());
-    if(!curData.agenda_text){var cP=curYM.split('-');curData.agenda_text=buildAgendaForYM(cP[0],cP[1])}
+
     loadMinutes(pYM,function(prvData){
       prvData=prvData||{};
-      var wb=XLSX.utils.book_new();var rows=[];var e='';
-      var pL=ymLabel(pYM);var cL=ymLabel(curYM);
-      rows.push(['安全衛生委員会会議記録（'+pL+'）',e,e,e,e,e,e,e,'安全衛生委員会会議記録（'+cL+'）',e,e,e,e,e,e,e]);
-      rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
-      rows.push(['日時',e,(prvData.date||'')+(prvData.time_from?' '+prvData.time_from:''),e,'～',prvData.time_to||'','場所',prvData.place||'','日時',e,(curData.date||'')+(curData.time_from?' '+curData.time_from:''),e,'～',curData.time_to||'','場所',curData.place||'']);
-      rows.push(['出席者',e,prvData.attendees||'',e,e,e,e,e,'出席者',e,curData.attendees||'',e,e,e,e,e]);
-      rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
-      rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
-      rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
-      rows.push(['欠席者',e,prvData.absentees||'',e,e,e,e,e,'欠席者',e,curData.absentees||'',e,e,e,e,e]);
-      rows.push(['参加者',e,prvData.participants||'',e,e,e,e,e,'参加者',e,curData.participants||'',e,e,e,e,e]);
-      rows.push([e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e]);
-      rows.push(['議案',e,e,e,e,e,e,e,'議案',e,e,e,e,e,e,e]);
-      var pA=buildExcelAgenda(prvData,pYM).split('\n');
-      var cA=buildExcelAgenda(curData,curYM).split('\n');
-      var mx=Math.max(pA.length,cA.length,30);
-      for(var i=0;i<mx;i++)rows.push([pA[i]||'',e,e,e,e,e,e,e,cA[i]||'',e,e,e,e,e,e,e]);
-      var ws=XLSX.utils.aoa_to_sheet(rows);
-      ws['!merges']=[
-        {s:{r:0,c:0},e:{r:1,c:7}},{s:{r:0,c:8},e:{r:1,c:15}},
-        {s:{r:3,c:0},e:{r:6,c:0}},{s:{r:3,c:2},e:{r:6,c:5}},
-        {s:{r:3,c:8},e:{r:6,c:8}},{s:{r:3,c:10},e:{r:6,c:13}},
-        {s:{r:10,c:0},e:{r:10+mx,c:7}},{s:{r:10,c:8},e:{r:10+mx,c:15}}
+      var wb=XLSX.utils.book_new();
+      var pRows=buildColRows(prvData,pYM);
+      var cRows=buildColRows(curData,curYM);
+      var mx=Math.max(pRows.length,cRows.length);
+      var combined=[];
+      for(var i=0;i<mx;i++){
+        var pCols=pRows[i]||[];
+        var cCols=cRows[i]||[];
+        var row=[];
+        for(var j=0;j<8;j++)row.push(pCols[j]||'');
+        row.push('');
+        for(var k=0;k<8;k++)row.push(cCols[k]||'');
+        combined.push(row);
+      }
+      var ws=XLSX.utils.aoa_to_sheet(combined);
+      ws['!cols']=[
+        {wch:14},{wch:16},{wch:4},{wch:8},{wch:20},{wch:10},{wch:10},{wch:10},
+        {wch:2},
+        {wch:14},{wch:16},{wch:4},{wch:8},{wch:20},{wch:10},{wch:10},{wch:10}
       ];
-      ws['!cols']=[{wch:6},{wch:12},{wch:10},{wch:4},{wch:4},{wch:8},{wch:10},{wch:16},{wch:6},{wch:12},{wch:10},{wch:4},{wch:4},{wch:8},{wch:10},{wch:16}];
       XLSX.utils.book_append_sheet(wb,ws,'議事録');
       XLSX.writeFile(wb,'committee_minutes_'+curYM+'.xlsx');
     });
