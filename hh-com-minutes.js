@@ -142,10 +142,11 @@
     var titleText=d.confirmed?lbl+' 安全衛生委員会 議事録':lbl+' 安全衛生委員会 報告事項';
     var ro=isEditable?'':'readonly';
     var roBg=isEditable?'':'background:#f5f5f5';
-    var dateVal=d.date||(isEditable?todayStr():'');
-    var placeVal=d.place||(isEditable?'WEB/本社1F会議室':'');
-    var tfVal=d.time_from||(isEditable?'09:00':'');
-    var ttVal=d.time_to||(isEditable?'10:00':'');
+    var isSaved=!!d.yearMonth;
+    var dateVal=d.date||(isEditable&&!isSaved?todayStr():'');
+    var placeVal=(d.place!=null&&d.place!=='')?d.place:(isEditable&&!isSaved?'WEB/本社1F会議室':'');
+    var tfVal=d.time_from||(isEditable&&!isSaved?'09:00':'');
+    var ttVal=d.time_to||(isEditable&&!isSaved?'10:00':'');
     var h='';
     h+='<div class="cm-col" id="'+prefix+'Col">';
     h+='<div class="cm-title'+(d.confirmed?' cm-confirmed':'')+'" id="'+prefix+'Title">'+esc(titleText)+'</div>';
@@ -155,14 +156,14 @@
     h+='<div class="cm-row"><div class="cm-lbl">時間</div><div style="display:flex;gap:4px;align-items:center;flex:1"><input class="fi cm-fi" type="time" id="'+prefix+'TimeFrom" value="'+esc(tfVal)+'" '+ro+' style="'+roBg+'">～<input class="fi cm-fi" type="time" id="'+prefix+'TimeTo" value="'+esc(ttVal)+'" '+ro+' style="'+roBg+'"></div></div></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">出席者</div>';
-    var att=d.attendees||(isEditable?defaultAttendeesText():'');
+    var att=(d.attendees!=null&&d.attendees!=='')?d.attendees:(isEditable&&!d.yearMonth?defaultAttendeesText():'');
     h+='<textarea class="ft cm-ta" id="'+prefix+'Att" '+ro+' style="min-height:50px;'+roBg+'" placeholder="役割：氏名">'+esc(att)+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">欠席者</div>';
     h+='<textarea class="ft cm-ta" id="'+prefix+'Abs" '+ro+' style="min-height:30px;'+roBg+'" placeholder="欠席者名">'+esc(d.absentees||'')+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">参加者</div>';
-    var parts=d.participants||(isEditable?defaultParticipantsText():'');
+    var parts=(d.participants!=null&&d.participants!=='')?d.participants:(isEditable&&!d.yearMonth?defaultParticipantsText():'');
     h+='<textarea class="ft cm-ta" id="'+prefix+'Parts" '+ro+' style="min-height:40px;'+roBg+'" placeholder="安全担当・その他参加者">'+esc(parts)+'</textarea></div>';
 
     h+='<div class="cm-section"><div class="cm-sh">議案（定例報告）</div>';
@@ -178,9 +179,9 @@
 
     h+='<div class="cm-section"><div class="cm-sh">付随書類</div>';
     if(isEditable){
-      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"></div>';
+      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"><span style="font-size:9px;color:var(--t3);margin-left:6px">※1ファイル5MBまで</span></div>';
     }
-    var files=(d.attachments||[]);
+    var files=isEditable?(window._cmPendingFiles||[]):loadFilesFromLocal(ym);
     h+='<div id="'+prefix+'FileList">';
     if(files.length){
       files.forEach(function(f,i){
@@ -232,20 +233,34 @@
     return h;
   }
 
+  var LS_FILES_KEY='hh_committee_files';
   window._cmPendingFiles=[];
+
+  function saveFilesToLocal(ym,files){
+    try{var all=JSON.parse(localStorage.getItem(LS_FILES_KEY)||'{}');all[ym]=files;localStorage.setItem(LS_FILES_KEY,JSON.stringify(all))}catch(e){console.warn('ファイル保存失敗（容量超過の可能性）',e)}
+  }
+  function loadFilesFromLocal(ym){
+    try{return(JSON.parse(localStorage.getItem(LS_FILES_KEY)||'{}'))[ym]||[]}catch(e){return[]}
+  }
 
   global.comMinutesAddFiles=function(input){
     if(!input||!input.files)return;
     var existing=window._cmPendingFiles||[];
-    Array.from(input.files).forEach(function(file){
+    var remaining=Array.from(input.files);
+    var idx=0;
+    function next(){
+      if(idx>=remaining.length){window._cmPendingFiles=existing;refreshFileList();return}
+      var file=remaining[idx++];
+      if(file.size>5*1024*1024){alert(file.name+' は5MBを超えるため添付できません');next();return}
       var reader=new FileReader();
       reader.onload=function(){
         existing.push({name:file.name,url:reader.result,size:file.size});
-        refreshFileList();
+        next();
       };
+      reader.onerror=function(){alert(file.name+' の読み込みに失敗しました');next()};
       reader.readAsDataURL(file);
-    });
-    window._cmPendingFiles=existing;
+    }
+    next();
     input.value='';
   };
 
@@ -263,7 +278,7 @@
     var h='';
     files.forEach(function(f,i){
       h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
-      h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+'</span>';
+      h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+' <span style="color:var(--t3);font-size:9px">('+Math.round((f.size||0)/1024)+'KB)</span></span>';
       if(f.url)h+='<a href="'+esc(f.url)+'" download="'+esc(f.name)+'" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
       h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
       h+='</div>';
@@ -279,7 +294,7 @@
       attendees:el('cmCAtt'),absentees:el('cmCAbs'),
       participants:el('cmCParts'),
       other_reports:el('cmCOther'),discussions:el('cmCDisc'),
-      attachments:window._cmPendingFiles||[]
+      attachment_names:(window._cmPendingFiles||[]).map(function(f){return f.name})
     };
   }
 
@@ -292,6 +307,7 @@
     data.confirmed_by=existing.confirmed_by||null;
     var ymP=ym.split('-');
     data.agenda_text=buildAgendaForYM(ymP[0],ymP[1]);
+    saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
@@ -318,6 +334,7 @@
     }
     var ymP2=ym.split('-');
     data.agenda_text=buildAgendaForYM(ymP2[0],ymP2[1]);
+    saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');if(st)st.textContent='保存中…';
     saveMinutes(ym,data,function(err){
       if(st)st.textContent=err?'保存失敗':data.confirmed?'議事録を確定しました':'確定を取り消しました';
@@ -383,7 +400,7 @@
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
-        window._cmPendingFiles=(curData&&curData.attachments)||[];
+        window._cmPendingFiles=loadFilesFromLocal(curYM);
         wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
       });
     });
@@ -394,7 +411,7 @@
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
-        window._cmPendingFiles=(curData&&curData.attachments)||[];
+        window._cmPendingFiles=loadFilesFromLocal(curYM);
         var role=typeof ROLE!=='undefined'?ROLE:'user';
         wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
       });
