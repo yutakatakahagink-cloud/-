@@ -14,7 +14,7 @@
   --t1: #eef2f7;
   --t2: #c5d0de;
   --t3: #8b9cb0;
-  --bd: #3a4a5e;
+  --bd: #ffffff;
   --card: #1e2836;
   --card2: #252f3f;
   --input: #2a3545;
@@ -131,7 +131,7 @@ body.hh-sora .url-list {
   box-shadow: var(--shadow) !important;
 }
 
-body.hh-sora .rc { border-left-color: var(--ac) !important; }
+body.hh-sora .rc { border-left-color: var(--bd) !important; }
 body.hh-sora .rc:hover {
   background: var(--card2) !important;
   box-shadow: var(--shadow-md) !important;
@@ -139,7 +139,7 @@ body.hh-sora .rc:hover {
 
 body.hh-sora .com-detail {
   background: rgba(110, 179, 255, 0.08) !important;
-  border-left-color: var(--ac) !important;
+  border-left-color: var(--bd) !important;
   color: var(--t1) !important;
 }
 
@@ -257,8 +257,8 @@ body.hh-sora .bm { background: rgba(196, 181, 253, 0.2) !important; color: #ddd6
 body.hh-sora .bdr { background: rgba(56, 189, 248, 0.2) !important; color: #7dd3fc !important; }
 body.hh-sora .bcl { background: rgba(74, 222, 128, 0.2) !important; color: #86efac !important; }
 body.hh-sora .bo { background: rgba(139, 156, 176, 0.2) !important; color: var(--t2) !important; }
-body.hh-sora .abr { background: rgba(251, 191, 36, 0.15) !important; color: #fcd34d !important; border-color: rgba(251, 191, 36, 0.4) !important; }
-body.hh-sora .abd { background: rgba(74, 222, 128, 0.15) !important; color: #86efac !important; border-color: rgba(74, 222, 128, 0.4) !important; }
+body.hh-sora .abr { background: rgba(251, 191, 36, 0.15) !important; color: #fcd34d !important; border-color: var(--bd) !important; }
+body.hh-sora .abd { background: rgba(74, 222, 128, 0.15) !important; color: #86efac !important; border-color: var(--bd) !important; }
 
 /* 笏笏 繝｢繝ｼ繝繝ｫ 笏笏 */
 body.hh-sora .mbg { background: rgba(0, 0, 0, 0.65) !important; }
@@ -334,7 +334,7 @@ body.hh-sora.index-page .card {
 }
 
 body.hh-sora.index-page .card:hover {
-  border-color: var(--ac) !important;
+  border-color: var(--bd) !important;
   box-shadow: 0 8px 24px rgba(110, 179, 255, 0.15) !important;
 }
 
@@ -430,13 +430,13 @@ body.hh-sora #disWfUserWrap {
 
 body.hh-sora #disReturnedEditBanner {
   background: var(--card2) !important;
-  border-color: var(--ac) !important;
+  border-color: var(--bd) !important;
   color: var(--t1) !important;
 }
 
 body.hh-sora #disReturnedReturnNoteWrap {
   background: rgba(248, 113, 113, 0.12) !important;
-  border-color: rgba(248, 113, 113, 0.4) !important;
+  border-color: var(--bd) !important;
 }
 
 body.hh-sora #disReturnedReturnNoteBody,
@@ -446,12 +446,12 @@ body.hh-sora #disReturnedLooseApproverBody {
 
 body.hh-sora #disReturnedLooseApproverWrap {
   background: rgba(251, 191, 36, 0.12) !important;
-  border-color: rgba(251, 191, 36, 0.4) !important;
+  border-color: var(--bd) !important;
 }
 
 body.hh-sora #disWfMailPrompt {
   background: var(--card2) !important;
-  border-color: var(--ac) !important;
+  border-color: var(--bd) !important;
   color: var(--t1) !important;
 }
 
@@ -471,67 +471,21 @@ body.hh-sora .dis-fl-input label {
   color: var(--t2) !important;
 }
 
-/* 繝｢繝ｼ繝繝ｫ蜀・ｼ夂⊃螳ｳ隧ｳ邏ｰ・医う繝ｳ繝ｩ繧､繝ｳ逋ｽ閭梧勹縺ｮ荳頑嶌縺搾ｼ・*/
+/* モーダル・承認画面：白背景はそのまま黒文字・白枠 */
 body.hh-sora .dis-detail-wide #mI [style*="background:#fff"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #fff"] {
-  background: var(--card) !important;
-  color: var(--t1) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #fff"],
+body.hh-sora .dis-detail-wide #mI [style*="background:#f9f9f9"],
+body.hh-sora .dis-detail-wide #mI [style*="background: #f9f9f9"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#e8e8e8"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #e8e8e8"] {
-  background: var(--bg3) !important;
-  color: var(--t1) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #e8e8e8"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#f0f0f0"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #f0f0f0"] {
-  background: var(--bg2) !important;
-  color: var(--t2) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #f0f0f0"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#D0D0D0"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#D9D9D9"],
 body.hh-sora .dis-detail-wide #mI [style*="background: #D0D0D0"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #D9D9D9"] {
-  background: var(--bg3) !important;
-  color: var(--t1) !important;
-}
-
-body.hh-sora .dis-detail-wide #mI [style*="background:#f9f9f9"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #f9f9f9"] {
-  background: var(--input) !important;
-  color: var(--t1) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #D9D9D9"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#FFFDE7"],
-body.hh-sora .dis-detail-wide #mI [style*="background:#FFEBEE"] {
-  background: var(--card2) !important;
-  color: var(--t1) !important;
-}
-
-body.hh-sora .dis-detail-wide #mI [style*="color:#555"],
-body.hh-sora .dis-detail-wide #mI [style*="color:#888"],
-body.hh-sora .dis-detail-wide #mI [style*="color:#333"] {
-  color: var(--t2) !important;
-}
-
-body.hh-sora .dis-detail-wide #mI [style*="color:#1a1a1a"],
-body.hh-sora .dis-detail-wide #mI [style*="color:#E65100"],
-body.hh-sora .dis-detail-wide #mI [style*="color:#C62828"] {
-  color: var(--t1) !important;
-}
-
-body.hh-sora .dis-detail-wide #mI [style*="border:1px solid #333"],
-body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #333"],
-body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #ddd"],
-body.hh-sora .dis-detail-wide #mI [style*="border-top:2px solid #E65100"],
-body.hh-sora .dis-detail-wide #mI [style*="border:1px solid #FFE082"],
-body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #FFCC80"] {
-  border-color: var(--bd) !important;
-}
-
-/* 謇ｿ隱榊・髢狗判髱｢繝ｻ轣ｽ螳ｳ隧ｳ邏ｰ・・root 蜀・う繝ｳ繝ｩ繧､繝ｳ逋ｽ閭梧勹・・*/
+body.hh-sora .dis-detail-wide #mI [style*="background:#FFEBEE"],
 body.hh-sora #root [style*="background:#fff"],
 body.hh-sora #root [style*="background: #fff"],
 body.hh-sora #root [style*="background:#e8e8e8"],
@@ -541,33 +495,56 @@ body.hh-sora #root [style*="background:#D0D0D0"],
 body.hh-sora #root [style*="background:#D9D9D9"],
 body.hh-sora #root [style*="background:#f9f9f9"],
 body.hh-sora #root [style*="background:#FFFDE7"] {
-  background: var(--card) !important;
-  color: var(--t1) !important;
+  color: #000000 !important;
+  border-color: var(--bd) !important;
 }
 
-body.hh-sora #root [style*="background:#e8e8e8"],
-body.hh-sora #root [style*="background:#D0D0D0"],
-body.hh-sora #root [style*="background:#D9D9D9"] {
-  background: var(--bg3) !important;
-}
-
-body.hh-sora #root [style*="background:#f9f9f9"] {
-  background: var(--input) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="color:#555"],
+body.hh-sora .dis-detail-wide #mI [style*="color:#888"],
+body.hh-sora .dis-detail-wide #mI [style*="color:#333"],
+body.hh-sora .dis-detail-wide #mI [style*="color:#1a1a1a"],
+body.hh-sora .dis-detail-wide #mI [style*="color:#E65100"],
+body.hh-sora .dis-detail-wide #mI [style*="color:#C62828"],
 body.hh-sora #root [style*="color:#555"],
 body.hh-sora #root [style*="color:#888"],
 body.hh-sora #root [style*="color:#333"],
 body.hh-sora #root [style*="color:#1a1a1a"] {
-  color: var(--t1) !important;
+  color: #000000 !important;
 }
 
+body.hh-sora .dis-detail-wide #mI [style*="border:1px solid #333"],
+body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #333"],
+body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #ddd"],
+body.hh-sora .dis-detail-wide #mI [style*="border-top:2px solid #E65100"],
+body.hh-sora .dis-detail-wide #mI [style*="border:1px solid #FFE082"],
+body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #FFCC80"],
 body.hh-sora #root [style*="border:1px solid #333"],
 body.hh-sora #root [style*="border-bottom:1px solid #333"],
 body.hh-sora #root [style*="border-bottom:1px solid #ddd"] {
   border-color: var(--bd) !important;
 }
 
+/* 白〜明るい背景の固定UI（背景は変更せず文字のみ黒） */
+body.hh-sora .qr-section,
+body.hh-sora .ocr-cf,
+body.hh-sora .ocr-cf-stat,
+body.hh-sora .ocr-cf-banner,
+body.hh-sora #qrCodeOutput,
+body.hh-sora #qrCodeOutputAdmin,
+body.hh-sora #qrCodeOutputOwner,
+body.hh-sora #firebaseDiagnosticResult {
+  color: #000000 !important;
+  border-color: var(--bd) !important;
+}
+
+body.hh-sora .qr-section .fl,
+body.hh-sora .qr-section label,
+body.hh-sora .qr-section p,
+body.hh-sora .qr-section .cht,
+body.hh-sora .ocr-cf,
+body.hh-sora .ocr-cf * {
+  color: #000000 !important;
+}
 /* 蜊倅ｽ・disaster.html */
 body.hh-sora .login-overlay {
   background: rgba(0, 0, 0, 0.75) !important;
@@ -588,4 +565,5 @@ body.hh-sora .dis-print-area,
 body.hh-sora .dis-detail-print {
   background: #fff !important;
   color: #000 !important;
+  border-color: var(--bd) !important;
 }
