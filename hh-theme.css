@@ -1,27 +1,27 @@
-/* 安全衛生管理 — ダークテーマ（まぶしさを抑え、白文字で読みやすく） */
+/* 安全衛生管理 — ライトテーマ（白背景・黒文字・白枠） */
 :root {
-  --bg: #121820;
-  --bg2: #1a2332;
-  --bg3: #222d3d;
-  --ac: #6eb3ff;
-  --ac2: #8fc4ff;
-  --acg: rgba(110, 179, 255, 0.15);
-  --yl: #fbbf24;
-  --rd: #f87171;
-  --gn: #4ade80;
-  --bl: #38bdf8;
-  --pr: #c4b5fd;
-  --t1: #eef2f7;
-  --t2: #c5d0de;
-  --t3: #8b9cb0;
-  --bd: #3a4a5e;
-  --card: #1e2836;
-  --card2: #252f3f;
-  --input: #2a3545;
+  --bg: #f0f4f8;
+  --bg2: #ffffff;
+  --bg3: #f8fafc;
+  --ac: #2563eb;
+  --ac2: #3b82f6;
+  --acg: rgba(37, 99, 235, 0.08);
+  --yl: #d97706;
+  --rd: #dc2626;
+  --gn: #059669;
+  --bl: #0284c7;
+  --pr: #7c3aed;
+  --t1: #000000;
+  --t2: #333333;
+  --t3: #666666;
+  --bd: #ffffff;
+  --card: #ffffff;
+  --card2: #ffffff;
+  --input: #ffffff;
   --r: 12px;
   --rs: 8px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 body.hh-sora {
@@ -29,7 +29,7 @@ body.hh-sora {
   background: var(--bg) !important;
   color: var(--t1) !important;
   -webkit-font-smoothing: antialiased;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body.hh-sora select,
@@ -43,7 +43,7 @@ body.hh-sora button {
 body.hh-sora .nav {
   background: var(--bg2) !important;
   border-color: var(--bd) !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 body.hh-sora .ni { color: var(--t3) !important; }
@@ -56,11 +56,11 @@ body.hh-sora .hdr {
 }
 
 body.hh-sora .logo {
-  background: linear-gradient(135deg, #3b7dd8, #6eb3ff) !important;
-  box-shadow: 0 2px 10px rgba(110, 179, 255, 0.25) !important;
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.2) !important;
 }
 
-/* ── 文字色（インラインの濃色指定を上書き） ── */
+/* ── 文字色 ── */
 body.hh-sora .hdr-t,
 body.hh-sora .hdr-s,
 body.hh-sora .lt,
@@ -78,9 +78,12 @@ body.hh-sora h2,
 body.hh-sora h3,
 body.hh-sora .login-lbl,
 body.hh-sora .menu-btn-t,
+body.hh-sora .menu-btn-d,
 body.hh-sora .guide-box b,
 body.hh-sora .login-inf b,
-body.hh-sora .ocr-buf-title {
+body.hh-sora .ocr-buf-title,
+body.hh-sora .back,
+body.hh-sora code {
   color: var(--t1) !important;
 }
 
@@ -93,12 +96,11 @@ body.hh-sora .hl,
 body.hh-sora .crl,
 body.hh-sora .tl2,
 body.hh-sora .com-tap,
-body.hh-sora .menu-btn-d {
+body.hh-sora .note {
   color: var(--t2) !important;
 }
 
 body.hh-sora .sd,
-body.hh-sora .guide-box,
 body.hh-sora .user-pill,
 body.hh-sora .top-btn,
 body.hh-sora .period-flt select,
@@ -107,7 +109,11 @@ body.hh-sora .fp {
   color: var(--ac) !important;
 }
 
-/* ── カード・パネル ── */
+body.hh-sora .guide-box {
+  color: var(--t1) !important;
+}
+
+/* ── カード・パネル（白背景・白枠） ── */
 body.hh-sora .cb,
 body.hh-sora .ic,
 body.hh-sora .rc,
@@ -124,22 +130,23 @@ body.hh-sora .drop-zone,
 body.hh-sora .ocr-pick-btn,
 body.hh-sora .ocr-btn-clear,
 body.hh-sora .ocr-buf-thumb,
-body.hh-sora .url-list {
+body.hh-sora .url-list,
+body.hh-sora .qr-section {
   background: var(--card) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
   box-shadow: var(--shadow) !important;
 }
 
-body.hh-sora .rc { border-left-color: var(--ac) !important; }
+body.hh-sora .rc { border-left: 3px solid var(--ac) !important; }
 body.hh-sora .rc:hover {
   background: var(--card2) !important;
   box-shadow: var(--shadow-md) !important;
 }
 
 body.hh-sora .com-detail {
-  background: rgba(110, 179, 255, 0.08) !important;
-  border-left-color: var(--ac) !important;
+  background: var(--card) !important;
+  border-left: 3px solid var(--ac) !important;
   color: var(--t1) !important;
 }
 
@@ -148,8 +155,8 @@ body.hh-sora .com-detail .byexp-item {
 }
 
 body.hh-sora .guide-box {
-  background: rgba(110, 179, 255, 0.1) !important;
-  border-color: var(--bd) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--bd) !important;
 }
 
 /* ── 入力欄 ── */
@@ -160,8 +167,9 @@ body.hh-sora .login-inp,
 body.hh-sora .login-sel,
 body.hh-sora .period-flt select {
   background: var(--input) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 body.hh-sora .fi:focus,
@@ -175,7 +183,7 @@ body.hh-sora .login-sel:focus {
 
 body.hh-sora .fs,
 body.hh-sora .period-flt select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b9cb0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: right 12px center !important;
 }
@@ -183,8 +191,9 @@ body.hh-sora .period-flt select {
 body.hh-sora input[type="date"],
 body.hh-sora input[type="time"],
 body.hh-sora input[type="month"],
-body.hh-sora input[type="number"] {
-  color-scheme: dark;
+body.hh-sora input[type="number"],
+body.hh-sora input[type="datetime-local"] {
+  color-scheme: light;
 }
 
 /* ── チップ・ボタン ── */
@@ -196,8 +205,9 @@ body.hh-sora .user-pill,
 body.hh-sora .top-btn,
 body.hh-sora .dfp {
   background: var(--input) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t2) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 body.hh-sora .ch.on,
@@ -212,21 +222,22 @@ body.hh-sora .tp.on {
 body.hh-sora .lb.on {
   background: var(--ac) !important;
   border-color: var(--ac) !important;
-  color: #0f1419 !important;
+  color: #ffffff !important;
 }
 
 body.hh-sora .sub,
 body.hh-sora .login-btn,
 body.hh-sora .ocr-btn-fill {
-  background: linear-gradient(135deg, #3b7dd8, #6eb3ff) !important;
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
   border: none !important;
-  color: #0f1419 !important;
-  box-shadow: 0 2px 10px rgba(110, 179, 255, 0.25) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.25) !important;
 }
 
 body.hh-sora .fp {
   background: var(--input) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora .fp:hover {
@@ -235,7 +246,7 @@ body.hh-sora .fp:hover {
 }
 
 body.hh-sora .sd { color: var(--ac) !important; }
-body.hh-sora .sd::after { background: linear-gradient(90deg, var(--bd), transparent) !important; }
+body.hh-sora .sd::after { background: linear-gradient(90deg, #e2e8f0, transparent) !important; }
 
 /* ── 統計・グラフ ── */
 body.hh-sora .htk,
@@ -250,18 +261,18 @@ body.hh-sora .sc.cr .sv { color: var(--rd) !important; }
 body.hh-sora .sc.cg2 .sv { color: var(--gn) !important; }
 body.hh-sora .sc.cy .sv { color: var(--yl) !important; }
 
-/* ── バッジ（暗背景でも読めるよう調整） ── */
-body.hh-sora .bf { background: rgba(248, 113, 113, 0.2) !important; color: #fca5a5 !important; }
-body.hh-sora .bt2 { background: rgba(251, 191, 36, 0.2) !important; color: #fcd34d !important; }
-body.hh-sora .bm { background: rgba(196, 181, 253, 0.2) !important; color: #ddd6fe !important; }
-body.hh-sora .bdr { background: rgba(56, 189, 248, 0.2) !important; color: #7dd3fc !important; }
-body.hh-sora .bcl { background: rgba(74, 222, 128, 0.2) !important; color: #86efac !important; }
-body.hh-sora .bo { background: rgba(139, 156, 176, 0.2) !important; color: var(--t2) !important; }
-body.hh-sora .abr { background: rgba(251, 191, 36, 0.15) !important; color: #fcd34d !important; border-color: rgba(251, 191, 36, 0.4) !important; }
-body.hh-sora .abd { background: rgba(74, 222, 128, 0.15) !important; color: #86efac !important; border-color: rgba(74, 222, 128, 0.4) !important; }
+/* ── バッジ ── */
+body.hh-sora .bf { background: #fee2e2 !important; color: #991b1b !important; }
+body.hh-sora .bt2 { background: #fef3c7 !important; color: #92400e !important; }
+body.hh-sora .bm { background: #ede9fe !important; color: #5b21b6 !important; }
+body.hh-sora .bdr { background: #e0f2fe !important; color: #075985 !important; }
+body.hh-sora .bcl { background: #d1fae5 !important; color: #065f46 !important; }
+body.hh-sora .bo { background: #f1f5f9 !important; color: var(--t2) !important; }
+body.hh-sora .abr { background: #fef3c7 !important; color: #92400e !important; border-color: #fde68a !important; }
+body.hh-sora .abd { background: #d1fae5 !important; color: #065f46 !important; border-color: #a7f3d0 !important; }
 
 /* ── モーダル ── */
-body.hh-sora .mbg { background: rgba(0, 0, 0, 0.65) !important; }
+body.hh-sora .mbg { background: rgba(0, 0, 0, 0.4) !important; }
 
 body.hh-sora .mbd {
   background: var(--card2) !important;
@@ -271,33 +282,37 @@ body.hh-sora .mbd {
 }
 
 body.hh-sora .dl { border-bottom-color: var(--bd) !important; }
-body.hh-sora .mp { background: var(--bd) !important; }
-body.hh-sora .tst { background: var(--ac) !important; color: #0f1419 !important; }
+body.hh-sora .mp { background: #e2e8f0 !important; }
+body.hh-sora .tst { background: var(--ac) !important; color: #ffffff !important; }
 
 /* ── ログイン画面 ── */
-body.hh-sora .login-ov {
-  background: rgba(0, 0, 0, 0.75) !important;
+body.hh-sora .login-ov,
+body.hh-sora .login-overlay {
+  background: rgba(255, 255, 255, 0.92) !important;
 }
 
 body.hh-sora .login-card {
   background: var(--card2) !important;
+  border: 1px solid var(--bd) !important;
   box-shadow: var(--shadow-md) !important;
+  color: var(--t1) !important;
 }
 
 /* ── 委員会議事録 ── */
 body.hh-sora .cm-col {
   background: var(--card) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
 }
 
 body.hh-sora .cm-title {
   background: var(--bg3) !important;
   color: var(--t1) !important;
+  border-color: var(--bd) !important;
 }
 
 body.hh-sora .cm-title.cm-confirmed {
-  background: linear-gradient(135deg, #3b7dd8, #6eb3ff) !important;
-  color: #0f1419 !important;
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  color: #ffffff !important;
 }
 
 body.hh-sora .cm-sh { color: var(--ac) !important; }
@@ -306,7 +321,7 @@ body.hh-sora .cm-lbl { color: var(--t2) !important; }
 body.hh-sora .cm-fi,
 body.hh-sora .cm-ta {
   background: var(--input) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
 }
 
@@ -315,11 +330,12 @@ body.hh-sora .cm-section { border-bottom-color: var(--bd) !important; }
 body.hh-sora .cm-fi[style*="background:#f5f5f5"],
 body.hh-sora .cm-ta[style*="background:#f5f5f5"] {
   background: var(--bg3) !important;
+  color: var(--t1) !important;
 }
 
 /* ── 入口 index.html ── */
 body.hh-sora.index-page {
-  background: linear-gradient(160deg, #0f1419 0%, #121820 50%, #1a2332 100%) !important;
+  background: linear-gradient(160deg, #f0f4f8 0%, #ffffff 50%, #f8fafc 100%) !important;
   color: var(--t1) !important;
 }
 
@@ -329,13 +345,14 @@ body.hh-sora.index-page .note { color: var(--t2) !important; }
 
 body.hh-sora.index-page .card {
   background: var(--card) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 body.hh-sora.index-page .card:hover {
-  border-color: var(--ac) !important;
-  box-shadow: 0 8px 24px rgba(110, 179, 255, 0.15) !important;
+  border-color: var(--bd) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
 body.hh-sora.index-page .card .ttl { color: var(--t1) !important; }
@@ -344,15 +361,16 @@ body.hh-sora.index-page .url-item a { color: var(--ac) !important; }
 
 body.hh-sora.index-page .url-item .copy {
   background: var(--input) !important;
-  border-color: var(--bd) !important;
-  color: var(--t2) !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--t1) !important;
 }
 
-/* ── 災害発生報告フォーム（PC様式・使用者画面） ── */
+/* ── 災害発生報告フォーム（白背景・黒文字・白枠） ── */
 body.hh-sora .dis-form-pc {
   background: var(--card) !important;
-  border-color: var(--bd) !important;
+  border: 1px solid var(--bd) !important;
   box-shadow: var(--shadow) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora .dis-pc-left,
@@ -360,6 +378,7 @@ body.hh-sora .dis-pc-center,
 body.hh-sora .dis-pc-right {
   background: var(--card) !important;
   border-color: var(--bd) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora .dis-fl-label,
@@ -370,7 +389,7 @@ body.hh-sora .dis-fl-group-label {
 }
 
 body.hh-sora .dis-fl-sublabel {
-  background: var(--bg2) !important;
+  background: var(--bg3) !important;
   border-color: var(--bd) !important;
   color: var(--t2) !important;
 }
@@ -385,6 +404,7 @@ body.hh-sora .dis-fl-input select,
 body.hh-sora .dis-fl-input textarea {
   background: var(--input) !important;
   color: var(--t1) !important;
+  border: 1px solid var(--bd) !important;
 }
 
 body.hh-sora .dis-fl-row,
@@ -401,8 +421,8 @@ body.hh-sora .dis-sect.dis-title {
 }
 
 body.hh-sora .dis-pc-right .dis-right-sect {
-  background: var(--card2) !important;
-  border-color: var(--bd) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
 }
 
@@ -418,25 +438,27 @@ body.hh-sora .dis-pc-right .dis-rs-title {
 }
 
 body.hh-sora .dis-report-block {
-  background: var(--card2) !important;
-  border-color: var(--bd) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
 }
 
 body.hh-sora #disWfUserWrap {
-  background: rgba(110, 179, 255, 0.08) !important;
-  border-color: var(--bd) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora #disReturnedEditBanner {
-  background: var(--card2) !important;
-  border-color: var(--ac) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
 }
 
 body.hh-sora #disReturnedReturnNoteWrap {
-  background: rgba(248, 113, 113, 0.12) !important;
-  border-color: rgba(248, 113, 113, 0.4) !important;
+  background: #fff5f5 !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora #disReturnedReturnNoteBody,
@@ -445,13 +467,14 @@ body.hh-sora #disReturnedLooseApproverBody {
 }
 
 body.hh-sora #disReturnedLooseApproverWrap {
-  background: rgba(251, 191, 36, 0.12) !important;
-  border-color: rgba(251, 191, 36, 0.4) !important;
+  background: #fffbeb !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora #disWfMailPrompt {
-  background: var(--card2) !important;
-  border-color: var(--ac) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--bd) !important;
   color: var(--t1) !important;
 }
 
@@ -464,61 +487,48 @@ body.hh-sora .dis-fl-input input[style*="background: #e0e0e0"],
 body.hh-sora #f_wf_sender_email[style*="background:#e8e8e8"],
 body.hh-sora #f_wf_sender_email[style*="background: #e8e8e8"] {
   background: var(--bg3) !important;
-  color: var(--t2) !important;
+  color: var(--t1) !important;
 }
 
 body.hh-sora .dis-fl-input label {
-  color: var(--t2) !important;
+  color: var(--t1) !important;
 }
 
-/* モーダル内：災害詳細（インライン白背景の上書き） */
+/* モーダル・承認画面：白背景エリアは黒文字 */
 body.hh-sora .dis-detail-wide #mI [style*="background:#fff"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #fff"] {
-  background: var(--card) !important;
-  color: var(--t1) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #fff"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#e8e8e8"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #e8e8e8"] {
-  background: var(--bg3) !important;
-  color: var(--t1) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #e8e8e8"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#f0f0f0"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #f0f0f0"] {
-  background: var(--bg2) !important;
-  color: var(--t2) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="background: #f0f0f0"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#D0D0D0"],
 body.hh-sora .dis-detail-wide #mI [style*="background:#D9D9D9"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #D0D0D0"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #D9D9D9"] {
-  background: var(--bg3) !important;
-  color: var(--t1) !important;
-}
-
 body.hh-sora .dis-detail-wide #mI [style*="background:#f9f9f9"],
-body.hh-sora .dis-detail-wide #mI [style*="background: #f9f9f9"] {
-  background: var(--input) !important;
-  color: var(--t1) !important;
-}
-
 body.hh-sora .dis-detail-wide #mI [style*="background:#FFFDE7"],
-body.hh-sora .dis-detail-wide #mI [style*="background:#FFEBEE"] {
-  background: var(--card2) !important;
+body.hh-sora .dis-detail-wide #mI [style*="background:#FFEBEE"],
+body.hh-sora #root [style*="background:#fff"],
+body.hh-sora #root [style*="background: #fff"],
+body.hh-sora #root [style*="background:#e8e8e8"],
+body.hh-sora #root [style*="background:#f0f0f0"],
+body.hh-sora #root [style*="background:#D0D0D0"],
+body.hh-sora #root [style*="background:#D9D9D9"],
+body.hh-sora #root [style*="background:#f9f9f9"],
+body.hh-sora #root [style*="background:#FFFDE7"] {
+  background: var(--card) !important;
   color: var(--t1) !important;
+  border-color: var(--bd) !important;
 }
 
 body.hh-sora .dis-detail-wide #mI [style*="color:#555"],
 body.hh-sora .dis-detail-wide #mI [style*="color:#888"],
-body.hh-sora .dis-detail-wide #mI [style*="color:#333"] {
-  color: var(--t2) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="color:#333"],
 body.hh-sora .dis-detail-wide #mI [style*="color:#1a1a1a"],
 body.hh-sora .dis-detail-wide #mI [style*="color:#E65100"],
-body.hh-sora .dis-detail-wide #mI [style*="color:#C62828"] {
+body.hh-sora .dis-detail-wide #mI [style*="color:#C62828"],
+body.hh-sora #root [style*="color:#555"],
+body.hh-sora #root [style*="color:#888"],
+body.hh-sora #root [style*="color:#333"],
+body.hh-sora #root [style*="color:#1a1a1a"] {
   color: var(--t1) !important;
 }
 
@@ -527,65 +537,24 @@ body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #333"],
 body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #ddd"],
 body.hh-sora .dis-detail-wide #mI [style*="border-top:2px solid #E65100"],
 body.hh-sora .dis-detail-wide #mI [style*="border:1px solid #FFE082"],
-body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #FFCC80"] {
-  border-color: var(--bd) !important;
-}
-
-/* 承認公開画面・災害詳細（#root 内インライン白背景） */
-body.hh-sora #root [style*="background:#fff"],
-body.hh-sora #root [style*="background: #fff"],
-body.hh-sora #root [style*="background:#e8e8e8"],
-body.hh-sora #root [style*="background: #e8e8e8"],
-body.hh-sora #root [style*="background:#f0f0f0"],
-body.hh-sora #root [style*="background:#D0D0D0"],
-body.hh-sora #root [style*="background:#D9D9D9"],
-body.hh-sora #root [style*="background:#f9f9f9"],
-body.hh-sora #root [style*="background:#FFFDE7"] {
-  background: var(--card) !important;
-  color: var(--t1) !important;
-}
-
-body.hh-sora #root [style*="background:#e8e8e8"],
-body.hh-sora #root [style*="background:#D0D0D0"],
-body.hh-sora #root [style*="background:#D9D9D9"] {
-  background: var(--bg3) !important;
-}
-
-body.hh-sora #root [style*="background:#f9f9f9"] {
-  background: var(--input) !important;
-}
-
-body.hh-sora #root [style*="color:#555"],
-body.hh-sora #root [style*="color:#888"],
-body.hh-sora #root [style*="color:#333"],
-body.hh-sora #root [style*="color:#1a1a1a"] {
-  color: var(--t1) !important;
-}
-
+body.hh-sora .dis-detail-wide #mI [style*="border-bottom:1px solid #FFCC80"],
 body.hh-sora #root [style*="border:1px solid #333"],
 body.hh-sora #root [style*="border-bottom:1px solid #333"],
 body.hh-sora #root [style*="border-bottom:1px solid #ddd"] {
   border-color: var(--bd) !important;
 }
 
-/* 単体 disaster.html */
-body.hh-sora .login-overlay {
-  background: rgba(0, 0, 0, 0.75) !important;
-}
-
-body.hh-sora .note {
-  color: var(--t2) !important;
-}
-
 body.hh-sora .err {
-  background: rgba(248, 113, 113, 0.15) !important;
-  color: #fca5a5 !important;
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px solid var(--bd) !important;
 }
 
-/* ── 印刷・PDF・エクスポート（白背景維持） ── */
+/* ── 印刷・PDF・エクスポート（白背景・黒文字維持） ── */
 body.hh-sora .report-wrapper,
 body.hh-sora .dis-print-area,
 body.hh-sora .dis-detail-print {
-  background: #fff !important;
-  color: #000 !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
 }
