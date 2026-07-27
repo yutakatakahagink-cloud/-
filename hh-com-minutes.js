@@ -90,7 +90,12 @@
   function uploadBlobToRTDB(ym,file,cb){
     if(!file||!file.name||!attachmentHasLocalData(file)){cb(null,file);return}
     var ref=fbBlobsRef(ym,null);
-    if(!ref){cb(null,file);return}
+    if(!ref){cb(new Error('Firebase未接続'),file);return}
+    var dataLen=(file.url||'').length;
+    if(dataLen>15*1024*1024){
+      cb(new Error('ファイルが大きすぎます（'+Math.round(dataLen/1024/1024)+'MB）。GitHub Pages の owner 画面から再添付してください'),file);
+      return;
+    }
     var fileKey=file.fileKey||('f'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
     fbBlobsRef(ym,fileKey).set({name:file.name,size:file.size||0,data:file.url},function(err){
       if(err){console.warn('[cm] RTDB blob save failed',file.name,err);cb(err,file);return}
@@ -101,7 +106,8 @@
     if(!file||!file.name){cb(null,file);return}
     if(hasShareableAttachment(file)&&!attachmentHasLocalData(file)){cb(null,file);return}
     if(!attachmentHasLocalData(file)){cb(null,file);return}
-    if(canUseStorage()){
+    var useStorage=canUseStorage()&&location.protocol!=='file:';
+    if(useStorage){
       var blob=dataUrlToBlob(file.url);
       if(blob){
         var path=FB_STORAGE_PREFIX+'/'+ym+'/'+Date.now()+'_'+storageSafeName(file.name);
@@ -122,12 +128,16 @@
   }
   function uploadAllAttachments(ym,files,cb){
     var list=(files||[]).slice();
-    var out=[];var i=0;
+    var out=[];var i=0;var errors=[];
     function next(){
-      if(i>=list.length){cb(null,out);return}
+      if(i>=list.length){cb(errors.length?errors[0]:null,out,errors);return}
       var src=list[i++];
       if(hasShareableAttachment(src)&&!attachmentHasLocalData(src)){out.push(src);next();return}
-      uploadOneAttachment(ym,src,function(err,f){out.push(f||src||{});next()});
+      uploadOneAttachment(ym,src,function(err,f){
+        if(err)errors.push({name:src.name,err:err});
+        out.push(f||src||{});
+        next();
+      });
     }
     next();
   }
@@ -153,20 +163,54 @@
   function syncAttachmentsToCloud(ym,minutesData,files,cb){
     cb=cb||function(){};
     if(!needsAttachmentShareSync(minutesData,files)){cb(null,files);return}
-    uploadAllAttachments(ym,files,function(err,uploaded){
+    uploadAllAttachments(ym,files,function(err,uploaded,errors){
       uploaded=mergeAttachmentLists(uploaded,files);
       saveFilesToLocal(ym,uploaded);
       var shareable=uploaded.filter(hasShareableAttachment);
       if(!fbRef(ym)||!shareable.length||!minutesData||!minutesData.yearMonth){
-        cb(err,uploaded);
+        cb(err||((errors&&errors.length)?errors[0].err:null),uploaded,errors);
         return;
       }
       var merged=Object.assign({},minutesData,{
         attachments:shareable.map(toCloudAttachment),
         attachment_names:shareable.map(function(f){return f.name})
       });
-      saveMinutes(ym,merged,function(saveErr){cb(saveErr||err,uploaded)});
+      saveMinutes(ym,merged,function(saveErr){cb(saveErr||err,uploaded,errors)});
     });
+  }
+  function countCloudBlobKeys(ym,cb){
+    whenFirebaseReady(function(){
+      var ref=fbBlobsRef(ym,null);
+      if(!ref){cb(0);return}
+      ref.once('value',function(s){
+        var v=s.val();
+        cb(v&&typeof v==='object'?Object.keys(v).length:0);
+      },function(){cb(0)});
+    });
+  }
+  function verifyCloudBlobCounts(yms,cb){
+    yms=(yms||[]).filter(Boolean);
+    var out={};var i=0;
+    if(!yms.length){cb(out);return}
+    function next(){
+      if(i>=yms.length){cb(out);return}
+      var ym=yms[i++];
+      countCloudBlobKeys(ym,function(n){out[ym]=n;next()});
+    }
+    next();
+  }
+  function formatSyncResultMsg(ok,errors,blobCounts){
+    var names=(errors||[]).map(function(e){return e.name}).filter(Boolean);
+    var blobTotal=Object.values(blobCounts||{}).reduce(function(a,n){return a+(+n||0)},0);
+    if(blobTotal>0){
+      return '✅ 添付をクラウドに同期しました（Firebase本体 '+blobTotal+' 件）。\nGitHub Pages の URL から開き直すと他PC・携帯でもDLできます。';
+    }
+    if(errors&&errors.length){
+      var detail=errors[0].err&&(errors[0].err.message||String(errors[0].err))||'不明';
+      return '❌ 同期失敗: '+errors[0].name+' — '+detail+(names.length>1?' 他'+(names.length-1)+'件も失敗':'')+'\n\n【対処】GitHub Pages の owner 画面（https://yutakatakahagink-cloud.github.io/-/owner.html）から「付随書類」を再選択して保存してください。';
+    }
+    if(ok)return '⚠ 同期処理は完了しましたが Firebase に本体が保存されていません。\nGitHub Pages の owner 画面から再添付してください。';
+    return '同期対象の添付がありません（このブラウザにファイル本体がない可能性）。\n添付したPCのローカルファイル（file://）または GitHub Pages の owner から再添付してください。';
   }
   function collectAttachmentMeta(minutesData){
     var metas=[];
@@ -494,9 +538,11 @@
   function buildActionBar(showSyncBtn,isOwner,opts){
     opts=opts||{};
     var h='';
-    h+='<div class="cm-toolbar" style="position:sticky;top:0;z-index:5;background:var(--bg,#0f1419);padding:8px 0 10px;margin-bottom:10px;border-bottom:1px solid var(--bd)">';
+    if(location.protocol==='file:'){
+      h+='<div style="font-size:10px;color:#1565C0;margin-bottom:8px;text-align:center;line-height:1.5;padding:6px 8px;background:rgba(21,101,192,.1);border-radius:6px">📁 <b>ローカルファイル（file://）</b>から開いています。<br>添付本体はこのブラウザ専用です。下の「☁ 添付をクラウド同期」成功後は <b>GitHub Pages の URL</b> から開いてください。</div>';
+    }
     if(opts.syncMsg){
-      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center;line-height:1.5">'+esc(opts.syncMsg)+'</div>';
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center;line-height:1.5;white-space:pre-wrap">'+esc(opts.syncMsg)+'</div>';
     }else if(opts.pendingCloud){
       h+='<div id="cmSyncStatus" style="font-size:10px;color:#E65100;margin-bottom:8px;text-align:center;line-height:1.5">⚠ 添付ファイル名のみ登録されています（本体はクラウド未同期）。<br>添付したPCで owner または admin を開き「☁ 添付をクラウド同期」を実行してください。'+((isOwner)?' または下の「付随書類」からファイルを再選択して保存してください。':'')+'</div>';
     }else if(showSyncBtn&&!isOwner){
@@ -744,18 +790,20 @@
   function runAttachmentCloudSync(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles,onDone){
     var st=document.getElementById('cmSyncStatus')||document.getElementById('cmStatus');
     if(st)st.textContent='添付をクラウド同期中…（初回は数十秒かかることがあります）';
-    syncAttachmentsToCloud(curYM,curData,curFiles||[],function(err,curSynced){
+    var allErrors=[];
+    syncAttachmentsToCloud(curYM,curData,curFiles||[],function(err,curSynced,curErrs){
+      if(curErrs&&curErrs.length)allErrors=allErrors.concat(curErrs);
       var curFinal=mergeAttachmentLists(curSynced||[],curFiles||[]);
-      syncAttachmentsToCloud(pYM,prvData,prvFiles||[],function(err2,prvSynced){
+      syncAttachmentsToCloud(pYM,prvData,prvFiles||[],function(err2,prvSynced,prvErrs){
+        if(prvErrs&&prvErrs.length)allErrors=allErrors.concat(prvErrs);
         var prvFinal=mergeAttachmentLists(prvSynced||[],prvFiles||[]);
         var all=(curSynced||[]).concat(prvSynced||[]);
         var ok=all.some(hasShareableAttachment);
-        var msg;
-        if(err||err2)msg='同期失敗（ネットワークまたはFirebase権限を確認）';
-        else if(ok)msg='✅ 添付をクラウドに同期しました。他PC・携帯からもDLできます。';
-        else msg='同期対象の添付がありません（このPCにファイル本体がない可能性）';
-        finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFinal,prvFinal,{syncMsg:msg,canSyncAttachments:!ok&&(needsAttachmentShareSync(curData,curFinal)||needsAttachmentShareSync(prvData,prvFinal))});
-        if(typeof onDone==='function')onDone(err||err2,ok);
+        verifyCloudBlobCounts([curYM,pYM],function(blobCounts){
+          var msg=formatSyncResultMsg(ok,allErrors,blobCounts);
+          finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFinal,prvFinal,{syncMsg:msg,canSyncAttachments:!Object.values(blobCounts||{}).reduce(function(a,n){return a+(+n||0)},0)&&(needsAttachmentShareSync(curData,curFinal)||needsAttachmentShareSync(prvData,prvFinal))});
+          if(typeof onDone==='function')onDone(err||err2||allErrors[0],Object.values(blobCounts||{}).reduce(function(a,n){return a+(+n||0)},0)>0);
+        });
       });
     });
   }
