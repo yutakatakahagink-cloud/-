@@ -430,9 +430,9 @@ select,input,textarea,button{color:var(--t1)}
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)">
       <div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:8px">新規管理者を追加</div>
       <input class="fi" type="text" id="newAdmName" placeholder="管理者名" style="margin-bottom:6px">
-      <input class="fi" type="email" id="newAdmEmail" placeholder="承認用メール（ワークフロー照合用）" style="margin-bottom:6px">
       <input class="fi" type="text" id="newAdmId" placeholder="ログインID" style="margin-bottom:6px">
-      <input class="fi" type="text" id="newAdmPass" placeholder="パスワード" style="margin-bottom:8px">
+      <input class="fi" type="text" id="newAdmPass" placeholder="パスワード" style="margin-bottom:6px">
+      <input class="fi" type="email" id="newAdmEmail" placeholder="承認用メール（ワークフロー照合用）" style="margin-bottom:8px">
       <button class="sub" style="margin-top:0;padding:10px;font-size:12px" onclick="addAdmin()">管理者を追加</button>
     </div>
   </div>
@@ -981,7 +981,7 @@ function saveDisasterNotifyFromEmailField(){
 // ===== OWNER: ADMIN MANAGEMENT =====
 function renderAdminList(){
   const el=document.getElementById('adminList');if(!el)return;
-  el.innerHTML=ADMIN_ACCOUNTS.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--t1)">${a.name}</div><div style="font-size:10px;color:var(--t3)">ID: ${a.id}</div><div style="font-size:10px;color:var(--t3)">メール: ${a.email||'（未設定）'}</div><div style="font-size:10px;color:var(--t3)">パスワード: ${a.pass||'—'}</div></div><button style="padding:4px 10px;border-radius:6px;border:1px solid var(--ac);background:var(--acg);color:var(--ac);font-size:10px;font-weight:600;cursor:pointer" onclick="editAdmin(${i})">編集</button><button style="padding:4px 10px;border-radius:6px;border:1px solid var(--rd);background:rgba(229,57,53,.08);color:var(--rd);font-size:10px;font-weight:600;cursor:pointer" onclick="delAdmin(${i})">削除</button></div>`).join('')||'<p style="font-size:11px;color:var(--t3);padding:8px 0">管理者アカウントがありません</p>';
+  el.innerHTML=ADMIN_ACCOUNTS.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--t1)">${a.name}</div><div style="font-size:10px;color:var(--t3)">ID: ${a.id}</div><div style="font-size:10px;color:var(--t3)">パスワード: ${a.pass||'—'}</div><div style="font-size:10px;color:var(--t3)">メール: ${a.email||'（未設定）'}</div></div><button style="padding:4px 10px;border-radius:6px;border:1px solid var(--ac);background:var(--acg);color:var(--ac);font-size:10px;font-weight:600;cursor:pointer" onclick="editAdmin(${i})">編集</button><button style="padding:4px 10px;border-radius:6px;border:1px solid var(--rd);background:rgba(229,57,53,.08);color:var(--rd);font-size:10px;font-weight:600;cursor:pointer" onclick="delAdmin(${i})">削除</button></div>`).join('')||'<p style="font-size:11px;color:var(--t3);padding:8px 0">管理者アカウントがありません</p>';
 }
 function addAdmin(){
   const n=document.getElementById('newAdmName').value.trim();
@@ -1574,7 +1574,7 @@ function rCom(){
   }
   renderComReqPanel();
   if(typeof HHDB!=='undefined'&&HHDB.loadRequests){
-    HHDB.loadRequests(function(arr){REQ_LIST=arr||[];renderComReqPanel()});
+    HHDB.loadRequests(function(arr){REQ_LIST=arr||[];if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);renderComReqPanel()});
   }
 
   function renderComDisPanel(){
