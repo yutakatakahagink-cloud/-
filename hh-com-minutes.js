@@ -491,9 +491,11 @@
     return h;
   }
 
-  function buildFullHtml(curYM,curData,prvYM,prvData,role,curFiles,prvFiles){
+  function buildFullHtml(curYM,curData,prvYM,prvData,role,curFiles,prvFiles,opts){
+    opts=opts||{};
     var isOwner=role==='owner';
     var canEdit=isOwner;
+    var showSyncBtn=isOwner||!!opts.canSyncAttachments;
     window._cmDisplayFiles=[];
     ensureCmDownloadDelegation();
     var h='';
@@ -517,8 +519,15 @@
     h+=buildColumnHtml('cmP',prvYM,prvData,false,false,prvFiles||[]);
     h+=buildColumnHtml('cmC',curYM,curData,canEdit,isOwner,curFiles||[]);
     h+='</div>';
+    if(opts.syncMsg){
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center">'+esc(opts.syncMsg)+'</div>';
+    }else if(showSyncBtn&&!isOwner){
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:#E65100;margin-bottom:8px;text-align:center">⚠ 添付ファイルはこのPCのみに保存されています。他PC・携帯からDLするには「☁ 添付をクラウド同期」を押してください。</div>';
+    }else{
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center;display:none"></div>';
+    }
     h+='<div style="text-align:right;margin-bottom:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">';
-    if(isOwner)h+='<button type="button" class="fp" style="padding:8px 16px" onclick="syncComAttachmentsNow()">☁ 添付をクラウド同期</button>';
+    if(showSyncBtn)h+='<button type="button" class="fp" style="padding:8px 16px" onclick="syncComAttachmentsNow()">☁ 添付をクラウド同期</button>';
     h+='<button type="button" class="fp" style="padding:8px 16px;font-weight:600" onclick="downloadComMinutesExcel()">📥 議事録Excelダウンロード</button></div>';
     return h;
   }
@@ -709,9 +718,36 @@
     });
   }
 
-  function finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles){
+  function finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles,opts){
+    opts=opts||{};
+    var canSync=needsAttachmentShareSync(curData,curFiles)||needsAttachmentShareSync(prvData,prvFiles);
+    if(canSync&&!opts.canSyncAttachments)opts.canSyncAttachments=true;
     window._cmPendingFiles=curFiles||[];
-    wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles);
+    wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles,opts);
+  }
+
+  function runAttachmentCloudSync(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles,onDone){
+    var st=document.getElementById('cmSyncStatus')||document.getElementById('cmStatus');
+    if(st)st.textContent='添付をクラウド同期中…（初回は数十秒かかることがあります）';
+    syncAttachmentsToCloud(curYM,curData,curFiles||[],function(err,curSynced){
+      var curFinal=mergeAttachmentLists(curSynced||[],curFiles||[]);
+      syncAttachmentsToCloud(pYM,prvData,prvFiles||[],function(err2,prvSynced){
+        var prvFinal=mergeAttachmentLists(prvSynced||[],prvFiles||[]);
+        var all=(curSynced||[]).concat(prvSynced||[]);
+        var ok=all.some(hasShareableAttachment);
+        var msg;
+        if(err||err2)msg='同期失敗（ネットワークまたはFirebase権限を確認）';
+        else if(ok)msg='✅ 添付をクラウドに同期しました。他PC・携帯からもDLできます。';
+        else msg='同期対象の添付がありません（このPCにファイル本体がない可能性）';
+        finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFinal,prvFinal,{syncMsg:msg,canSyncAttachments:!ok&&(needsAttachmentShareSync(curData,curFinal)||needsAttachmentShareSync(prvData,prvFinal))});
+        if(typeof onDone==='function')onDone(err||err2,ok);
+      });
+    });
+  }
+
+  function maybeAutoSyncAttachments(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles){
+    if(!needsAttachmentShareSync(curData,curFiles)&&!needsAttachmentShareSync(prvData,prvFiles))return;
+    setTimeout(function(){runAttachmentCloudSync(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles)},300);
   }
 
   function loadAllAndRender(wrap,role){
@@ -724,19 +760,7 @@
           resolveAttachments(curYM,curData||{},function(curFiles){
             resolveAttachments(pYM,prvData||{},function(prvFiles){
               finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
-              if(role==='owner'){
-                setTimeout(function(){
-                  syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(err,curSynced){
-                    var curFinal=mergeAttachmentLists(curSynced||[],curFiles||[]);
-                    syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(err2,prvSynced){
-                      var prvFinal=mergeAttachmentLists(prvSynced||[],prvFiles||[]);
-                      if((curSynced&&curSynced.length)||(prvSynced&&prvSynced.length)){
-                        finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFinal,prvFinal);
-                      }
-                    });
-                  });
-                },0);
-              }
+              maybeAutoSyncAttachments(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
             });
           });
         }catch(e){
@@ -759,22 +783,12 @@
     var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
     var role=typeof ROLE!=='undefined'?ROLE:'user';
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
-    var st=document.getElementById('cmStatus');
-    if(st)st.textContent='添付をクラウド同期中…';
     whenFirebaseReady(function(){
       loadMinutes(curYM,function(curData){
         loadMinutes(pYM,function(prvData){
           resolveAttachments(curYM,curData||{},function(curFiles){
             resolveAttachments(pYM,prvData||{},function(prvFiles){
-              syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(err,curSynced){
-                syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(err2,prvSynced){
-                  finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curSynced||curFiles||[],prvSynced||prvFiles||[]);
-                  if(st){
-                    var ok=(curSynced||[]).concat(prvSynced||[]).some(hasShareableAttachment);
-                    st.textContent=err||err2?'同期失敗':ok?'添付をクラウドに同期しました':'同期対象の添付ファイルがありません（このPCに本体がない可能性）';
-                  }
-                });
-              });
+              runAttachmentCloudSync(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
             });
           });
         });
