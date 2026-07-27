@@ -566,7 +566,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260525-photos2"></script>
 <script src="hh-report-detail.js?v=20260525-cause-photos"></script>
-<script src="hh-req-detail.js?v=20260727-popup"></script>
+<script src="hh-req-detail.js?v=20260727-popup2"></script>
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
@@ -778,7 +778,7 @@ function doDataInit(){
     HHDB.onReportsChange(function(arr){syncReportsFromCloud(arr||[])});
     if(HHDB.useFirebase()&&HHDB.onPhotosChange)HHDB.onPhotosChange(function(){reloadPhotosFromCloud()});
     HHDB.onAdminsChange(function(admins){if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins));renderAdminList&&renderAdminList()}catch(e){}}});
-    HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(document.querySelector('#pReq.pg.on'))rReqList()});
+    HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);if(document.querySelector('#pReq.pg.on'))rReqList()});
     HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
     if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()});
     if(typeof HHDB.useFirebase==='function'&&HHDB.useFirebase()&&HHDB.onDisasterWorkflowChange)HHDB.onDisasterWorkflowChange(function(){if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()})});
@@ -810,7 +810,9 @@ function refreshCurrentPage(){window._comMinutesInited=false;const pg=document.q
 
 // ===== 要望・災害 =====
 function rReqList(){
+  if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
   loadReqDis(function(){
+  if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
   var fs=document.getElementById('reqStatusF');var fv=fs?fs.value:'all';
   var list=fv==='all'?REQ_LIST:REQ_LIST.filter(r=>r.status===fv);
   var SL={pending:'未対応',in_progress:'取り掛かり中',resolved:'解決済み'};
@@ -820,7 +822,7 @@ function rReqList(){
     var idEsc=String(r.id||'').replace(/'/g,"\\'");
     var resHtml=(r.status==='resolved'&&r.resolution)?'<div style="margin-top:6px;font-size:11px;color:var(--gn);line-height:1.5">対策：'+(r.resolution||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>':'';
     var clickAttr=typeof reqListCardClickAttr==='function'?reqListCardClickAttr(r.id):' class="rc" style="margin-bottom:8px"';
-    return'<div'+clickAttr+' style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center" onclick="event.stopPropagation()">'+
+    return'<div'+clickAttr+' style="margin-bottom:8px"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
       ['pending','in_progress','resolved'].map(s=>'<button class="fp" onclick="event.stopPropagation();setReqStatus(\''+r.id+'\',\''+s+'\')" style="padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #E2E8F0;background:#fff;cursor:pointer'+(r.status===s?';border-color:var(--ac);color:var(--ac)':'')+'">'+SL[s]+'</button>').join('')+
       '<button type="button" class="fp" onclick="event.stopPropagation();ownerDeleteRequest(\''+idEsc+'\')" style="margin-left:auto;padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:600;cursor:pointer">🗑 削除</button>'+
     '</div></div>';

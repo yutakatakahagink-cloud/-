@@ -1150,7 +1150,7 @@ input[type="file"].photo-input{display:none}
 <script src="hh-data.js?v=20260525-heic"></script>
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="hh-report-detail.js?v=20260525-cause-photos"></script>
-<script src="hh-req-detail.js?v=20260727-popup"></script>
+<script src="hh-req-detail.js?v=20260727-popup2"></script>
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
@@ -1480,7 +1480,7 @@ function doDataInit(){
   HHDB.loadReports([],function(arr){syncReportsFromCloud(arr||[])});
   if(HHDB.useFirebase()&&HHDB.onReportsChange)HHDB.onReportsChange(function(arr){syncReportsFromCloud(arr||[])});
   if(HHDB.useFirebase()&&HHDB.onPhotosChange)HHDB.onPhotosChange(function(){reloadPhotosFromCloud()});
-  HHDB.loadRequests(function(arr){REQ_LIST=arr||[];renderReqList()});
+  HHDB.loadRequests(function(arr){REQ_LIST=arr||[];if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);renderReqList()});
   if(HHDB.useFirebase()&&HHDB.onRequestsChange)HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderReqList()});
   if(HHDB.loadDisasterReports)HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[];});
   if(HHDB.useFirebase()&&HHDB.onDisasterChange)HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
@@ -1503,12 +1503,13 @@ function loadReqDis(cb){
 function loadRequests(){
   if(typeof HHDB!=='undefined'){
     HHDB.init(function(){
-      HHDB.loadRequests(function(arr){REQ_LIST=arr||[];renderReqList()});
+      HHDB.loadRequests(function(arr){REQ_LIST=arr||[];if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);renderReqList()});
       if(HHDB.useFirebase()&&HHDB.onRequestsChange)HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderReqList()});
     });
   }else{REQ_LIST=[];renderReqList()}
 }
 function renderReqList(){
+  if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
   var el=document.getElementById('reqL');if(!el)return;
   var list=ROLE==='user'&&CUR?REQ_LIST.filter(r=>r.name===CUR.name):REQ_LIST;
   var stMap={pending:'未対応',in_progress:'取り掛かり中',resolved:'解決済み'};
@@ -1520,7 +1521,9 @@ function renderReqList(){
   }).join('')||'<p style="color:var(--t3);font-size:12px;padding:20px">送信した要望はありません</p>';
 }
 function rReqList(){
+  if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
   loadReqDis(function(){
+    if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
     var fs=document.getElementById('reqStatusF');var fv=fs?fs.value:'all';
     var list=fv==='all'?REQ_LIST:REQ_LIST.filter(r=>r.status===fv);
     var SL={pending:'未対応',in_progress:'取り掛かり中',resolved:'解決済み'};
@@ -1529,8 +1532,7 @@ function rReqList(){
       var st=SL[r.status]||'未対応';var sc='bd2 '+(r.status||'pending');
       var resHtml=(r.status==='resolved'&&r.resolution)?'<div style="margin-top:6px;font-size:11px;color:var(--gn);line-height:1.5">対策：'+(r.resolution||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>':'';
       var clickAttr=typeof reqListCardClickAttr==='function'?reqListCardClickAttr(r.id):' class="rc" style="margin-bottom:8px"';
-      var stop=typeof reqListStopClick==='function'?reqListStopClick():' onclick="event.stopPropagation()"';
-      return'<div'+clickAttr+' style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"'+stop+'>'+
+      return'<div'+clickAttr+' style="margin-bottom:8px"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
         ['pending','in_progress','resolved'].map(s=>'<button class="fp" onclick="event.stopPropagation();setReqStatus(\''+r.id+'\',\''+s+'\')" style="padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #E2E8F0;background:#fff;cursor:pointer'+(r.status===s?';border-color:var(--ac);color:var(--ac)':'')+'">'+SL[s]+'</button>').join('')+
       '</div></div>';
     }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';

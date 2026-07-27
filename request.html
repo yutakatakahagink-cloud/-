@@ -35,6 +35,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);
 .bd2.resolved{background:rgba(45,198,166,.12);color:#00897B}
 .back{display:inline-block;margin-bottom:16px;color:var(--ac);font-size:12px;text-decoration:none}
 .back:hover{text-decoration:underline}
+.mbg{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.mbg.show{display:flex}
+.mbd{background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.mh{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--t1)}
+.req-clickable{cursor:pointer;transition:background .15s}
+.req-clickable:hover{background:rgba(46,125,50,.06)}
 </style>
 </head>
 <body>
@@ -64,10 +70,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--t1);
   <div id="rL"></div>
 </div>
 
+<div class="mbg" id="modal"><div class="mbd"><div class="mh" id="mT"></div><div id="mI"></div></div></div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js"></script>
+<script src="hh-req-detail.js?v=20260727-popup2"></script>
 <script>
 var EMP=typeof window.EMP!=='undefined'?window.EMP:[];
 if(!EMP.length){EMP=[{name:'川名哲也',honbu:'総務部',bu:'',ka:'',dept:'総務部'},{name:'髙萩泰',honbu:'総務部',bu:'安全管理',ka:'',dept:'総務部/安全管理'},{name:'志田和弘',honbu:'土木本部',bu:'土木部',ka:'',dept:'土木本部/土木部'},{name:'町田建也',honbu:'建材本部',bu:'',ka:'',dept:'建材本部'}];}
@@ -100,20 +109,24 @@ function loadRequests(){
     HHDB.init(function(){
       HHDB.loadRequests(function(arr){
         REQ_LIST=arr||[];
+        if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
         renderMyList();
       });
-      if(HHDB.useFirebase())HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];renderMyList()});
+      if(HHDB.useFirebase())HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);renderMyList()});
     });
   }else{REQ_LIST=[];renderMyList()}
 }
 
 function renderMyList(){
+  if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);
   const mine=CUR?REQ_LIST.filter(r=>r.name===CUR.name):[];
   const el=document.getElementById('rL');
   const stMap={pending:'未対応',in_progress:'取り掛かり中',resolved:'解決済み'};
   el.innerHTML=mine.map(r=>{
     const st=r.status||'pending';
-    return'<div class="rc"><span class="bd2 '+st+'">'+stMap[st]+'</span><div class="rde">'+(r.content||'').substring(0,100)+(r.content&&r.content.length>100?'…':'')+'</div><div class="rm">'+r.date+' '+r.name+'</div></div>';
+    const resHtml=(st==='resolved'&&r.resolution)?'<div class="rde" style="margin-top:4px;font-size:11px;color:#00897B">対策：'+(r.resolution||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>':'';
+    const clickAttr=typeof reqListCardClickAttr==='function'?reqListCardClickAttr(r.id):' class="rc"';
+    return'<div'+clickAttr+'><span class="bd2 '+st+'">'+stMap[st]+'</span><div class="rde">'+(r.content||'').substring(0,100)+(r.content&&r.content.length>100?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.date+' '+r.name+'</div></div>';
   }).join('')||'<p style="color:var(--t3);font-size:12px;padding:20px">送信した要望はありません</p>';
 }
 
