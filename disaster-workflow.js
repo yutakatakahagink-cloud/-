@@ -685,21 +685,22 @@
       .map(function (h) {
         var typeJa = HISTORY_TYPE_JA[h.type] || h.type || '';
         return (
-          '<div style="font-size:11px;border-bottom:1px solid #eee;padding:6px 0">' +
-          '<span style="color:var(--t3)">' +
+          '<div style="font-size:11px;border-bottom:1px solid #eee;padding:6px 0;color:#000">' +
+          '<span style="color:#555">' +
           esc(formatAtJst(h.at)) +
           '</span> ' +
-          '<strong>' +
+          '<strong style="color:#000">' +
           esc(typeJa) +
           '</strong> ' +
+          '<span style="color:#000">' +
           esc(h.by || '') +
           (h.note ? ' — ' + esc(h.note) : '') +
-          '</div>'
+          '</span></div>'
         );
       })
       .join('');
     return (
-      '<div style="margin-top:12px;padding:10px;background:#fafafa;border-radius:8px;border:1px solid #ddd"><div style="font-weight:700;font-size:12px;margin-bottom:6px">履歴</div>' +
+      '<div style="margin-top:12px;padding:10px;background:#fafafa;border-radius:8px;border:1px solid #ddd;color:#000"><div style="font-weight:700;font-size:12px;margin-bottom:6px;color:#000">履歴</div>' +
       rows +
       '</div>'
     );
