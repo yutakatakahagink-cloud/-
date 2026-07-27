@@ -32,6 +32,92 @@
     if(typeof HHDB==='undefined'||!HHDB.useFirebase||!HHDB.useFirebase())return null;
     try{return firebase.app().database().ref(FB_PATH+'/'+ym)}catch(e){return null}
   }
+  var FB_STORAGE_PREFIX='hh_data/committee_minutes_files';
+  function canUseStorage(){
+    try{return typeof firebase!=='undefined'&&firebase.storage&&firebase.apps&&firebase.apps.length>0}catch(e){return false}
+  }
+  function storageSafeName(name){
+    return String(name||'file').replace(/[/\\?#%]/g,'_').substring(0,180);
+  }
+  function isHttpUrl(url){return!!(url&&/^https?:\/\//i.test(String(url)))}
+  function dataUrlToBlob(dataUrl){
+    var m=String(dataUrl).match(/^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.*)$/s);
+    if(!m)return null;
+    var b64=m[2].replace(/\s/g,'');
+    var slice=0x8000;var parts=[];
+    for(var i=0;i<b64.length;i+=slice){parts.push(atob(b64.substring(i,i+slice)))}
+    var bin=parts.join('');
+    var arr=new Uint8Array(bin.length);
+    for(var j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);
+    return new Blob([arr],{type:m[1]||'application/octet-stream'});
+  }
+  function toCloudAttachment(f){
+    return{name:f.name||'',url:isHttpUrl(f.url)?f.url:'',size:f.size||0,storagePath:f.storagePath||''};
+  }
+  function attachmentsNeedCloudUpload(files){
+    return (files||[]).some(function(f){return f&&f.name&&(!isHttpUrl(f.url))});
+  }
+  function uploadOneAttachment(ym,file,cb){
+    if(!file||!file.name){cb(null,file);return}
+    if(isHttpUrl(file.url)&&file.storagePath){cb(null,file);return}
+    if(!canUseStorage()){cb(null,file);return}
+    var blob=null;
+    if(file.url&&String(file.url).indexOf('data:')===0)blob=dataUrlToBlob(file.url);
+    if(!blob){cb(null,file);return}
+    var path=FB_STORAGE_PREFIX+'/'+ym+'/'+Date.now()+'_'+storageSafeName(file.name);
+    try{
+      firebase.storage().ref(path).put(blob).then(function(snap){
+        return snap.ref.getDownloadURL();
+      }).then(function(url){
+        cb(null,{name:file.name,url:url,size:file.size||0,storagePath:path});
+      }).catch(function(err){
+        console.warn('[cm] storage upload failed',file.name,err);
+        cb(err,file);
+      });
+    }catch(e){
+      console.warn('[cm] storage upload error',e);
+      cb(e,file);
+    }
+  }
+  function uploadAllAttachments(ym,files,cb){
+    var list=(files||[]).slice();
+    var out=[];var i=0;
+    function next(){
+      if(i>=list.length){cb(null,out);return}
+      uploadOneAttachment(ym,list[i++],function(err,f){out.push(f||{});next()});
+    }
+    next();
+  }
+  function mergeAttachmentLists(primary,fallback){
+    var map={};
+    (fallback||[]).forEach(function(f,i){
+      if(!f||!f.name)return;
+      map[f.name+'\0'+(f.storagePath||i)]=f;
+    });
+    (primary||[]).forEach(function(f,i){
+      if(!f||!f.name)return;
+      var key=f.name+'\0'+(f.storagePath||i);
+      var prev=map[key];
+      if(!prev||(!isHttpUrl(prev.url)&&isHttpUrl(f.url)))map[key]=f;
+      else if(isHttpUrl(prev.url))map[key]=prev;
+    });
+    return Object.keys(map).map(function(k){return map[k]});
+  }
+  function syncAttachmentsToCloud(ym,minutesData,files,cb){
+    if(!attachmentsNeedCloudUpload(files)){cb(null,files);return}
+    uploadAllAttachments(ym,files,function(err,uploaded){
+      uploaded=mergeAttachmentLists(uploaded,files);
+      saveFilesToLocal(ym,uploaded);
+      if(!canUseStorage()||!fbRef(ym)){cb(err,uploaded);return}
+      var cloud=uploaded.filter(function(f){return f&&f.name&&isHttpUrl(f.url)});
+      if(!cloud.length){cb(err,uploaded);return}
+      var merged=Object.assign({},minutesData||{},{
+        attachments:cloud.map(toCloudAttachment),
+        attachment_names:cloud.map(function(f){return f.name})
+      });
+      saveMinutes(ym,merged,function(saveErr){cb(saveErr||err,uploaded)});
+    });
+  }
   function loadMinutes(ym,cb){
     var ref=fbRef(ym);
     if(ref){ref.once('value',function(s){var v=s.val();if(v){try{var ls=JSON.parse(localStorage.getItem(LS_KEY)||'{}');ls[ym]=v;localStorage.setItem(LS_KEY,JSON.stringify(ls))}catch(e){}}cb(v||null)},function(){cb(loadLocal(ym))});return}
@@ -40,15 +126,19 @@
   function loadLocal(ym){try{return(JSON.parse(localStorage.getItem(LS_KEY)||'{}'))[ym]||null}catch(e){return null}}
   function saveMinutes(ym,data,cb){
     data.yearMonth=ym;
+    var cloudData=Object.assign({},data);
+    if(cloudData.attachments){
+      cloudData.attachments=cloudData.attachments.map(toCloudAttachment);
+    }
     try{
       var a=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
-      var lsCopy=Object.assign({},data);
+      var lsCopy=Object.assign({},cloudData);
       delete lsCopy.attachments;
       a[ym]=lsCopy;
       localStorage.setItem(LS_KEY,JSON.stringify(a));
     }catch(e){}
     var ref=fbRef(ym);
-    if(ref){ref.set(data,function(err){if(typeof cb==='function')cb(err)});return}
+    if(ref){ref.set(cloudData,function(err){if(typeof cb==='function')cb(err)});return}
     if(typeof cb==='function')cb(null);
   }
 
@@ -398,6 +488,18 @@
     };
   }
 
+  function persistComMinutes(ym,data,cb){
+    var files=window._cmPendingFiles||[];
+    saveFilesToLocal(ym,files);
+    syncAttachmentsToCloud(ym,data,files,function(err,uploaded){
+      uploaded=uploaded||files;
+      window._cmPendingFiles=uploaded;
+      data.attachments=uploaded.map(toCloudAttachment);
+      data.attachment_names=uploaded.map(function(f){return f.name});
+      saveMinutes(ym,data,cb);
+    });
+  }
+
   global.saveComMinutes=function(){
     var ym=getSelectedComYM();
     var data=collectCurrentFormData();
@@ -405,10 +507,9 @@
     data.confirmed=!!existing.confirmed;
     data.confirmed_at=existing.confirmed_at||null;
     data.confirmed_by=existing.confirmed_by||null;
-    saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
-    saveMinutes(ym,data,function(err){
+    persistComMinutes(ym,data,function(err){
       if(st)st.textContent=err?'保存失敗: '+err:'保存しました（'+ymLabel(ym)+'）';
       window._comMinutesData=data;
       var tt=document.getElementById('cmCTitle');
@@ -430,9 +531,8 @@
       data.confirmed_at=new Date().toISOString();
       data.confirmed_by=(typeof CUR!=='undefined'&&CUR)?CUR.name:'所有者';
     }
-    saveFilesToLocal(ym,window._cmPendingFiles||[]);
     var st=document.getElementById('cmStatus');if(st)st.textContent='保存中…';
-    saveMinutes(ym,data,function(err){
+    persistComMinutes(ym,data,function(err){
       if(st)st.textContent=err?'保存失敗':data.confirmed?'議事録を確定しました':'確定を取り消しました';
       window._comMinutesData=data;
       var tt=document.getElementById('cmCTitle');
@@ -455,13 +555,35 @@
   };
 
   function resolveAttachments(ym,minutesData,cb){
-    var fromCloud=minutesData&&minutesData.attachments&&minutesData.attachments.length?minutesData.attachments:null;
-    if(fromCloud){
-      saveFilesToLocal(ym,fromCloud);
-      cb(fromCloud);
-      return;
-    }
-    loadFilesFromLocal(ym,cb);
+    var cloud=minutesData&&minutesData.attachments;
+    var cloudHttp=(cloud||[]).filter(function(f){return f&&f.name&&isHttpUrl(f.url)});
+    loadFilesFromLocal(ym,function(local){
+      var localUsable=(local||[]).filter(function(f){return f&&f.name&&f.url});
+      if(cloudHttp.length){
+        var merged=mergeAttachmentLists(cloudHttp,localUsable);
+        saveFilesToLocal(ym,merged);
+        cb(merged);
+        return;
+      }
+      if(localUsable.length){
+        cb(localUsable);
+        return;
+      }
+      if(cloud&&cloud.length){
+        cb(cloud.filter(function(f){return f&&f.name}));
+        return;
+      }
+      if(minutesData&&minutesData.attachment_names&&minutesData.attachment_names.length){
+        cb(minutesData.attachment_names.map(function(name){return{name:name,url:''}}));
+        return;
+      }
+      cb([]);
+    });
+  }
+
+  function finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles){
+    window._cmPendingFiles=curFiles||[];
+    wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles);
   }
 
   function loadAllAndRender(wrap,role){
@@ -471,16 +593,13 @@
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
         resolveAttachments(curYM,curData,function(curFiles){
-          window._cmPendingFiles=curFiles||[];
-          if(curData&&curFiles&&curFiles.length&&!(curData.attachments&&curData.attachments.length)){
-            var migrated=Object.assign({},curData,{
-              attachments:curFiles.map(function(f){return{name:f.name,url:f.url,size:f.size||0}}),
-              attachment_names:curFiles.map(function(f){return f.name})
-            });
-            saveMinutes(curYM,migrated,function(){});
-          }
           resolveAttachments(pYM,prvData,function(prvFiles){
-            wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles);
+            syncAttachmentsToCloud(curYM,curData,curFiles,function(err,curSynced){
+              var curFinal=curSynced||curFiles;
+              syncAttachmentsToCloud(pYM,prvData,prvFiles,function(err2,prvSynced){
+                finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFinal,prvSynced||prvFiles);
+              });
+            });
           });
         });
       });
