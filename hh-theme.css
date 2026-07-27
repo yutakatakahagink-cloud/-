@@ -425,6 +425,8 @@ body.hh-sora .dis-report-block {
 
 .req-clickable{cursor:pointer;transition:background .15s}
 .req-clickable:hover{background:rgba(59,125,216,.06)}
+
+body.hh-sora #disWfUserWrap {
   background: rgba(110, 179, 255, 0.08) !important;
   border-color: var(--bd) !important;
 }
