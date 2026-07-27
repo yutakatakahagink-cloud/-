@@ -33,6 +33,14 @@
     try{return firebase.app().database().ref(FB_PATH+'/'+ym)}catch(e){return null}
   }
   var FB_STORAGE_PREFIX='hh_data/committee_minutes_files';
+  var FB_BLOBS_PATH='hh_data/committee_minutes_blobs';
+  function canUseFirebase(){
+    try{return typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length>0}catch(e){return false}
+  }
+  function fbBlobsRef(ym,key){
+    if(!canUseFirebase())return null;
+    try{return firebase.app().database().ref(FB_BLOBS_PATH+'/'+ym+(key!=null?'/'+key:''))}catch(e){return null}
+  }
   function canUseStorage(){
     try{return typeof firebase!=='undefined'&&firebase.storage&&firebase.apps&&firebase.apps.length>0}catch(e){return false}
   }
@@ -40,6 +48,9 @@
     return String(name||'file').replace(/[/\\?#%]/g,'_').substring(0,180);
   }
   function isHttpUrl(url){return!!(url&&/^https?:\/\//i.test(String(url)))}
+  function hasShareableAttachment(f){
+    return !!(f&&f.name&&(isHttpUrl(f.url)||f.fileKey));
+  }
   function dataUrlToBlob(dataUrl){
     var m=String(dataUrl).match(/^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.*)$/s);
     if(!m)return null;
@@ -52,39 +63,63 @@
     return new Blob([arr],{type:m[1]||'application/octet-stream'});
   }
   function toCloudAttachment(f){
-    return{name:f.name||'',url:isHttpUrl(f.url)?f.url:'',size:f.size||0,storagePath:f.storagePath||''};
+    return{name:f.name||'',url:isHttpUrl(f.url)?f.url:'',size:f.size||0,storagePath:f.storagePath||'',fileKey:f.fileKey||''};
+  }
+  function attachmentHasLocalData(f){
+    return !!(f&&f.url&&String(f.url).indexOf('data:')===0);
   }
   function attachmentsNeedCloudUpload(files){
-    return (files||[]).some(function(f){return f&&f.name&&(!isHttpUrl(f.url))});
+    return (files||[]).some(function(f){return f&&f.name&&!hasShareableAttachment(f)&&attachmentHasLocalData(f)});
+  }
+  function needsAttachmentShareSync(minutesData,files){
+    if(attachmentsNeedCloudUpload(files))return true;
+    var att=minutesData&&minutesData.attachments;
+    if((att||[]).some(hasShareableAttachment))return false;
+    var names=minutesData&&minutesData.attachment_names;
+    if(!names||!names.length)return false;
+    return (files||[]).some(function(f){return f&&f.name&&names.indexOf(f.name)>=0&&attachmentHasLocalData(f)});
+  }
+  function uploadBlobToRTDB(ym,file,cb){
+    if(!file||!file.name||!attachmentHasLocalData(file)){cb(null,file);return}
+    var ref=fbBlobsRef(ym,null);
+    if(!ref){cb(null,file);return}
+    var fileKey=file.fileKey||('f'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
+    fbBlobsRef(ym,fileKey).set({name:file.name,size:file.size||0,data:file.url},function(err){
+      if(err){console.warn('[cm] RTDB blob save failed',file.name,err);cb(err,file);return}
+      cb(null,{name:file.name,size:file.size||0,fileKey:fileKey,url:''});
+    });
   }
   function uploadOneAttachment(ym,file,cb){
     if(!file||!file.name){cb(null,file);return}
-    if(isHttpUrl(file.url)&&file.storagePath){cb(null,file);return}
-    if(!canUseStorage()){cb(null,file);return}
-    var blob=null;
-    if(file.url&&String(file.url).indexOf('data:')===0)blob=dataUrlToBlob(file.url);
-    if(!blob){cb(null,file);return}
-    var path=FB_STORAGE_PREFIX+'/'+ym+'/'+Date.now()+'_'+storageSafeName(file.name);
-    try{
-      firebase.storage().ref(path).put(blob).then(function(snap){
-        return snap.ref.getDownloadURL();
-      }).then(function(url){
-        cb(null,{name:file.name,url:url,size:file.size||0,storagePath:path});
-      }).catch(function(err){
-        console.warn('[cm] storage upload failed',file.name,err);
-        cb(err,file);
-      });
-    }catch(e){
-      console.warn('[cm] storage upload error',e);
-      cb(e,file);
+    if(hasShareableAttachment(file)&&!attachmentHasLocalData(file)){cb(null,file);return}
+    if(!attachmentHasLocalData(file)){cb(null,file);return}
+    if(canUseStorage()){
+      var blob=dataUrlToBlob(file.url);
+      if(blob){
+        var path=FB_STORAGE_PREFIX+'/'+ym+'/'+Date.now()+'_'+storageSafeName(file.name);
+        try{
+          firebase.storage().ref(path).put(blob).then(function(snap){return snap.ref.getDownloadURL()}).then(function(url){
+            cb(null,{name:file.name,url:url,size:file.size||0,storagePath:path,fileKey:file.fileKey||''});
+          }).catch(function(err){
+            console.warn('[cm] storage upload failed, fallback RTDB',file.name,err);
+            uploadBlobToRTDB(ym,file,cb);
+          });
+          return;
+        }catch(e){
+          console.warn('[cm] storage upload error, fallback RTDB',e);
+        }
+      }
     }
+    uploadBlobToRTDB(ym,file,cb);
   }
   function uploadAllAttachments(ym,files,cb){
     var list=(files||[]).slice();
     var out=[];var i=0;
     function next(){
       if(i>=list.length){cb(null,out);return}
-      uploadOneAttachment(ym,list[i++],function(err,f){out.push(f||{});next()});
+      var src=list[i++];
+      if(hasShareableAttachment(src)&&!attachmentHasLocalData(src)){out.push(src);next();return}
+      uploadOneAttachment(ym,src,function(err,f){out.push(f||src||{});next()});
     }
     next();
   }
@@ -92,34 +127,68 @@
     var map={};
     (fallback||[]).forEach(function(f,i){
       if(!f||!f.name)return;
-      map[f.name+'\0'+(f.storagePath||i)]=f;
+      map[f.name]=f;
     });
-    (primary||[]).forEach(function(f,i){
+    (primary||[]).forEach(function(f){
       if(!f||!f.name)return;
-      var key=f.name+'\0'+(f.storagePath||i);
-      var prev=map[key];
-      if(!prev||(!isHttpUrl(prev.url)&&isHttpUrl(f.url)))map[key]=f;
-      else if(isHttpUrl(prev.url))map[key]=prev;
+      var prev=map[f.name];
+      if(!prev||(!hasShareableAttachment(prev)&&hasShareableAttachment(f)))map[f.name]=f;
+      else if(hasShareableAttachment(prev))map[f.name]=prev;
     });
     return Object.keys(map).map(function(k){return map[k]});
   }
   function syncAttachmentsToCloud(ym,minutesData,files,cb){
     cb=cb||function(){};
-    if(!attachmentsNeedCloudUpload(files)){cb(null,files);return}
+    if(!needsAttachmentShareSync(minutesData,files)){cb(null,files);return}
     uploadAllAttachments(ym,files,function(err,uploaded){
       uploaded=mergeAttachmentLists(uploaded,files);
       saveFilesToLocal(ym,uploaded);
-      var cloud=uploaded.filter(function(f){return f&&f.name&&isHttpUrl(f.url)});
-      if(!canUseStorage()||!fbRef(ym)||!cloud.length||!minutesData||!minutesData.yearMonth){
+      var shareable=uploaded.filter(hasShareableAttachment);
+      if(!fbRef(ym)||!shareable.length||!minutesData||!minutesData.yearMonth){
         cb(err,uploaded);
         return;
       }
       var merged=Object.assign({},minutesData,{
-        attachments:cloud.map(toCloudAttachment),
-        attachment_names:cloud.map(function(f){return f.name})
+        attachments:shareable.map(toCloudAttachment),
+        attachment_names:shareable.map(function(f){return f.name})
       });
       saveMinutes(ym,merged,function(saveErr){cb(saveErr||err,uploaded)});
     });
+  }
+  function collectAttachmentMeta(minutesData){
+    var metas=[];
+    var att=minutesData&&minutesData.attachments;
+    if(att&&att.length){
+      att.forEach(function(f){if(f&&f.name)metas.push({name:f.name,url:f.url||'',size:f.size||0,storagePath:f.storagePath||'',fileKey:f.fileKey||''})});
+    }else if(minutesData&&minutesData.attachment_names&&minutesData.attachment_names.length){
+      minutesData.attachment_names.forEach(function(name){metas.push({name:name,url:'',size:0,fileKey:''})});
+    }
+    return metas;
+  }
+  function hydrateAttachmentsFromCloud(ym,metas,cb){
+    var list=(metas||[]).slice();
+    if(!list.length){cb([]);return}
+    var out=[];var i=0;
+    function next(){
+      if(i>=list.length){cb(out);return}
+      var meta=list[i++];
+      if(!meta||!meta.name){next();return}
+      if(isHttpUrl(meta.url)){out.push({name:meta.name,url:meta.url,size:meta.size||0,fileKey:meta.fileKey||'',storagePath:meta.storagePath||''});next();return}
+      if(meta.fileKey){
+        var blobRef=fbBlobsRef(ym,meta.fileKey);
+        if(!blobRef){out.push(meta);next();return}
+        blobRef.once('value',function(s){
+          var v=s.val();
+          if(v&&v.data)out.push({name:meta.name||v.name,url:v.data,size:meta.size||v.size||0,fileKey:meta.fileKey});
+          else out.push(meta);
+          next();
+        },function(){out.push(meta);next()});
+        return;
+      }
+      out.push(meta);
+      next();
+    }
+    next();
   }
   function loadMinutes(ym,cb){
     var ref=fbRef(ym);
@@ -496,9 +565,10 @@
     saveFilesToLocal(ym,files);
     syncAttachmentsToCloud(ym,data,files,function(err,uploaded){
       uploaded=uploaded||files;
-      window._cmPendingFiles=uploaded;
-      data.attachments=uploaded.map(toCloudAttachment);
-      data.attachment_names=uploaded.map(function(f){return f.name});
+      var shareable=(uploaded||[]).filter(hasShareableAttachment);
+      window._cmPendingFiles=shareable.length?shareable:uploaded;
+      data.attachments=window._cmPendingFiles.map(toCloudAttachment);
+      data.attachment_names=window._cmPendingFiles.map(function(f){return f.name});
       saveMinutes(ym,data,cb);
     });
   }
@@ -558,29 +628,24 @@
   };
 
   function resolveAttachments(ym,minutesData,cb){
-    var cloud=minutesData&&minutesData.attachments;
-    var cloudHttp=(cloud||[]).filter(function(f){return f&&f.name&&isHttpUrl(f.url)});
     loadFilesFromLocal(ym,function(local){
       var localUsable=(local||[]).filter(function(f){return f&&f.name&&f.url});
-      if(cloudHttp.length){
-        var merged=mergeAttachmentLists(cloudHttp,localUsable);
-        saveFilesToLocal(ym,merged);
-        cb(merged);
-        return;
-      }
-      if(localUsable.length){
+      var metas=collectAttachmentMeta(minutesData||{});
+      if(!metas.length){
         cb(localUsable);
         return;
       }
-      if(cloud&&cloud.length){
-        cb(cloud.filter(function(f){return f&&f.name}));
-        return;
-      }
-      if(minutesData&&minutesData.attachment_names&&minutesData.attachment_names.length){
-        cb(minutesData.attachment_names.map(function(name){return{name:name,url:''}}));
-        return;
-      }
-      cb([]);
+      hydrateAttachmentsFromCloud(ym,metas,function(cloudFiles){
+        var cloudUsable=(cloudFiles||[]).filter(function(f){return f&&f.name&&f.url});
+        var merged=mergeAttachmentLists(cloudUsable,localUsable);
+        if(merged.length){
+          saveFilesToLocal(ym,merged);
+          cb(merged);
+          return;
+        }
+        if(localUsable.length){cb(localUsable);return}
+        cb(metas.filter(function(f){return f&&f.name}));
+      });
     });
   }
 
@@ -601,8 +666,12 @@
               finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
               if(role==='owner'){
                 setTimeout(function(){
-                  syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(){});
-                  syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(){});
+                  syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(err,uploaded){
+                    if(uploaded&&uploaded.length)finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},uploaded,prvFiles||[]);
+                  });
+                  syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(err,uploaded){
+                    if(uploaded&&uploaded.length)finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],uploaded);
+                  });
                 },0);
               }
             });
