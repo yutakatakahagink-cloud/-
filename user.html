@@ -1150,6 +1150,7 @@ input[type="file"].photo-input{display:none}
 <script src="hh-data.js?v=20260525-heic"></script>
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="hh-report-detail.js?v=20260525-cause-photos"></script>
+<script src="hh-req-detail.js?v=20260727-popup"></script>
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
@@ -1514,7 +1515,8 @@ function renderReqList(){
   el.innerHTML=list.map(r=>{
     var st=r.status||'pending';
     var resHtml=(st==='resolved'&&r.resolution)?'<div class="rde" style="margin-top:4px;font-size:11px;color:var(--gn)">対策：'+(r.resolution||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>':'';
-    return'<div class="rc"><span class="bd2 '+st+'">'+stMap[st]+'</span><div class="rde">'+(r.content||'').substring(0,100)+(r.content&&r.content.length>100?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.date+' '+r.name+'</div></div>';
+    var clickAttr=typeof reqListCardClickAttr==='function'?reqListCardClickAttr(r.id):' class="rc"';
+    return'<div'+clickAttr+'><span class="bd2 '+st+'">'+stMap[st]+'</span><div class="rde">'+(r.content||'').substring(0,100)+(r.content&&r.content.length>100?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.date+' '+r.name+'</div></div>';
   }).join('')||'<p style="color:var(--t3);font-size:12px;padding:20px">送信した要望はありません</p>';
 }
 function rReqList(){
@@ -1526,8 +1528,10 @@ function rReqList(){
     el.innerHTML=list.length?list.map(function(r){
       var st=SL[r.status]||'未対応';var sc='bd2 '+(r.status||'pending');
       var resHtml=(r.status==='resolved'&&r.resolution)?'<div style="margin-top:6px;font-size:11px;color:var(--gn);line-height:1.5">対策：'+(r.resolution||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>':'';
-      return'<div class="rc" style="margin-bottom:8px"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
-        ['pending','in_progress','resolved'].map(s=>'<button class="fp" onclick="setReqStatus(\''+r.id+'\',\''+s+'\')" style="padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #E2E8F0;background:#fff;cursor:pointer'+(r.status===s?';border-color:var(--ac);color:var(--ac)':'')+'">'+SL[s]+'</button>').join('')+
+      var clickAttr=typeof reqListCardClickAttr==='function'?reqListCardClickAttr(r.id):' class="rc" style="margin-bottom:8px"';
+      var stop=typeof reqListStopClick==='function'?reqListStopClick():' onclick="event.stopPropagation()"';
+      return'<div'+clickAttr+' style="margin-bottom:8px;cursor:pointer"><div class="rt"><span class="bd2 '+sc+'">'+st+'</span></div><div class="rde">'+(r.content||'').substring(0,120)+(r.content&&r.content.length>120?'…':'')+'</div>'+resHtml+'<div class="rm">'+r.name+' '+r.dept+' '+r.date+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"'+stop+'>'+
+        ['pending','in_progress','resolved'].map(s=>'<button class="fp" onclick="event.stopPropagation();setReqStatus(\''+r.id+'\',\''+s+'\')" style="padding:4px 10px;font-size:10px;border-radius:8px;border:1px solid #E2E8F0;background:#fff;cursor:pointer'+(r.status===s?';border-color:var(--ac);color:var(--ac)':'')+'">'+SL[s]+'</button>').join('')+
       '</div></div>';
     }).join(''):'<p style="text-align:center;color:var(--t3);padding:20px;font-size:12px">該当なし</p>';
   });
@@ -1546,6 +1550,8 @@ function setReqStatus(id,s){
   else try{localStorage.setItem('hh_requests',JSON.stringify(REQ_LIST))}catch(e){}
   rReqList();
   if(document.querySelector('#pC.pg.on')&&typeof rCom==='function')rCom();
+  var modal=document.getElementById('modal');
+  if(modal&&modal.classList.contains('show')&&typeof openReqDetail==='function')openReqDetail(id);
 }
 function doReqSubmit(){
   var content=(document.getElementById('f_req_content')||document.getElementById('f_content')).value.trim();
