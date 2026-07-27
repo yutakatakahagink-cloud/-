@@ -360,7 +360,7 @@
       cellWithApprovals('taisaku', r.taisaku || '') +
       '</div></div>';
     h += '</div></div>';
-    if (r.wf && Array.isArray(r.wf.report_addenda) && r.wf.report_addenda.length) {
+    if (!hideAddenda && r.wf && Array.isArray(r.wf.report_addenda) && r.wf.report_addenda.length) {
       var looseRaw = r.wf.report_addenda.filter(function (e) {
         return e && !e.field;
       });
