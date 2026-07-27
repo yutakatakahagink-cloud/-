@@ -330,16 +330,22 @@
 
   global.disasterExportOpenPrintPdf = function (r) {
     if (!r) return;
+    var lite = !!global.HH_DIS_VIEWER_LITE;
     var h =
       typeof global.disasterBuildDetailHtml === 'function'
-        ? global.disasterBuildDetailHtml(r, { exportMode: true })
+        ? global.disasterBuildDetailHtml(r, {
+            exportMode: true,
+            hideAddenda: lite,
+            hideReporter: lite,
+            hideVictim: lite,
+          })
         : '<p>詳細を生成できませんでした。</p>';
     if (typeof global.disasterWrapDetailWithStamps === 'function') {
       h = global.disasterWrapDetailWithStamps(h, r);
     }
     var ex = '';
     if (typeof global.disasterWfStatusBanner === 'function') ex += global.disasterWfStatusBanner(r);
-    if (typeof global.disasterWfHistoryHtml === 'function') ex += global.disasterWfHistoryHtml(r);
+    if (!lite && typeof global.disasterWfHistoryHtml === 'function') ex += global.disasterWfHistoryHtml(r);
     var title = '災害事故発生報告_' + (r.id != null ? r.id : '');
     var pdfCss =
       'html,body{margin:0;padding:0;color:#111;font-family:Meiryo,MS PGothic,sans-serif}' +

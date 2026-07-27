@@ -678,7 +678,12 @@
     approver_note: '承認者の追記・訂正',
   };
 
+  function isLiteDisViewer() {
+    return !!global.HH_DIS_VIEWER_LITE;
+  }
+
   global.disasterWfHistoryHtml = function (r) {
+    if (isLiteDisViewer()) return '';
     if (!r || !r.wf || !r.wf.history || !r.wf.history.length) return '';
     var rows = r.wf.history
       .map(function (h) {
@@ -732,17 +737,20 @@
       );
     }
     var idStr = String(id).replace(/'/g, "\\'");
+    var addendumBlock = isLiteDisViewer()
+      ? ''
+      : '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
+        '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">承認者による追記・訂正</div>' +
+        '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと<b>報告書の該当箇所</b>に追記として表示されます（承認者名は小さく赤色）。一覧のみにしたい場合は先頭を選んでください。</p>' +
+        (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
+        '<textarea id="disApproverNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px" placeholder="指摘・補足・訂正文など"></textarea>' +
+        '<button type="button" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="disasterDoApproverNote(\'' +
+        idStr +
+        "')\">追記・訂正を保存</button></div>";
     return (
       '<div style="margin-top:12px;padding:12px;background:linear-gradient(135deg,rgba(46,125,50,.08),rgba(129,199,132,.12));border:1px solid #81C784;border-radius:8px">' +
       hint +
-      '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
-      '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">承認者による追記・訂正</div>' +
-      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと<b>報告書の該当箇所</b>に追記として表示されます（承認者名は小さく赤色）。一覧のみにしたい場合は先頭を選んでください。</p>' +
-      (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
-      '<textarea id="disApproverNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px" placeholder="指摘・補足・訂正文など"></textarea>' +
-      '<button type="button" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="disasterDoApproverNote(\'' +
-      idStr +
-      "')\">追記・訂正を保存</button></div>" +
+      addendumBlock +
       '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
       '<button type="button" class="sub" style="margin:0;padding:10px 16px;font-size:13px;background:#2E7D32" onclick="disasterDoApprove(\'' +
       idStr +
@@ -823,15 +831,20 @@
       '<div style="margin-top:12px;padding:12px;background:#E8F5E9;border:1px solid #66BB6A;border-radius:8px">' +
       retBox +
       '<div style="font-weight:700;font-size:12px;margin-bottom:6px">差戻しへの対応</div>' +
-      '<p style="font-size:11px;color:var(--t3);margin:0 0 10px;line-height:1.55"><strong>報告書フォームで修正する</strong>と、差戻し前の<strong>承認者追記</strong>も各欄にあわせて表示されます（欄未指定の追記はフォーム上部の参考欄に出ます）。</p>' +
+      (isLiteDisViewer()
+        ? ''
+        : '<p style="font-size:11px;color:var(--t3);margin:0 0 10px;line-height:1.55"><strong>報告書フォームで修正する</strong>と、差戻し前の<strong>承認者追記</strong>も各欄にあわせて表示されます（欄未指定の追記はフォーム上部の参考欄に出ます）。</p>') +
       '<button type="button" class="sub" style="margin:0 0 10px;padding:10px 16px;font-size:13px;display:block;width:100%;box-sizing:border-box" onclick="if(typeof disasterOpenReturnedFormEdit===\'function\')disasterOpenReturnedFormEdit(\'' +
       idStr +
       "')\">報告書フォームで修正する</button>" +
-      '<div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--t2)">追記のみで再提出する場合（任意）</div>' +
-      '<textarea id="disWfUserNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px" placeholder="テキストだけ追記して再提出する場合に入力"></textarea>' +
-      '<button type="button" class="fp" style="margin:0;padding:10px 16px;font-size:12px;border-radius:8px" onclick="disasterDoUserResubmit(\'' +
-      idStr +
-      "')\">追記のみ再提出</button></div>"
+      (isLiteDisViewer()
+        ? ''
+        : '<div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--t2)">追記のみで再提出する場合（任意）</div>' +
+          '<textarea id="disWfUserNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px" placeholder="テキストだけ追記して再提出する場合に入力"></textarea>' +
+          '<button type="button" class="fp" style="margin:0;padding:10px 16px;font-size:12px;border-radius:8px" onclick="disasterDoUserResubmit(\'' +
+          idStr +
+          "')\">追記のみ再提出</button>") +
+      '</div>'
     );
   };
 })(window);

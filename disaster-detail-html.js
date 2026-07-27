@@ -14,7 +14,7 @@
     var formFormat = !!opts.formFormat;
     var hideVictim = !!opts.hideVictim;
     var hideReporter = !!opts.hideReporter;
-    var hideAddenda = !!opts.hideAddenda;
+    var hideAddenda = !!opts.hideAddenda || !!global.HH_DIS_VIEWER_LITE;
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

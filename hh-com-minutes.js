@@ -67,46 +67,63 @@
 
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
   function hrefAttr(s){return String(s||'').replace(/"/g,'&quot;')}
-  window._cmDlFiles=window._cmDlFiles||{};
-  var _cmDlSeq=0;
-  function registerCmFile(f){
-    var id='cmf'+(++_cmDlSeq);
-    window._cmDlFiles[id]={url:f.url,name:f.name||'download'};
-    return id;
+  window._cmDisplayFiles=window._cmDisplayFiles||[];
+  function triggerBlobDownload(blob,filename){
+    var objUrl=URL.createObjectURL(blob);
+    var link=document.createElement('a');
+    link.href=objUrl;link.download=filename||'download';
+    link.style.display='none';
+    document.body.appendChild(link);link.click();
+    setTimeout(function(){URL.revokeObjectURL(objUrl);link.remove()},500);
   }
   function downloadDataUrlFile(dataUrl,filename){
+    filename=filename||'download';
     try{
-      var m=String(dataUrl).match(/^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.+)$/s);
+      if(/^https?:\/\//i.test(dataUrl)){
+        fetch(dataUrl).then(function(r){return r.blob()}).then(function(blob){triggerBlobDownload(blob,filename)})
+          .catch(function(){window.open(dataUrl,'_blank')});
+        return;
+      }
+      var m=String(dataUrl).match(/^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.*)$/s);
       if(!m){
         var a=document.createElement('a');
-        a.href=dataUrl;a.download=filename||'download';a.target='_blank';
+        a.href=dataUrl;a.download=filename;a.target='_blank';
         document.body.appendChild(a);a.click();a.remove();return;
       }
       var mime=m[1]||'application/octet-stream';
-      var bin=atob(m[2].replace(/\s/g,''));
+      var b64=m[2].replace(/\s/g,'');
+      var slice=0x8000;var parts=[];
+      for(var i=0;i<b64.length;i+=slice){parts.push(atob(b64.substring(i,i+slice)))}
+      var bin=parts.join('');
       var arr=new Uint8Array(bin.length);
-      for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
-      var blob=new Blob([arr],{type:mime});
-      var objUrl=URL.createObjectURL(blob);
-      var link=document.createElement('a');
-      link.href=objUrl;link.download=filename||'download';
-      document.body.appendChild(link);link.click();
-      setTimeout(function(){URL.revokeObjectURL(objUrl);link.remove()},200);
+      for(var j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);
+      triggerBlobDownload(new Blob([arr],{type:mime}),filename);
     }catch(e){
       console.warn('download failed',e);
       window.open(dataUrl,'_blank');
     }
   }
-  global.downloadCmAttachment=function(id){
-    var f=window._cmDlFiles[id];
+  global.downloadCmAttachment=function(idx){
+    var f=window._cmDisplayFiles[+idx];
     if(f&&f.url)downloadDataUrlFile(f.url,f.name);
   };
+  function ensureCmDownloadDelegation(){
+    if(window._cmDlDelegated)return;
+    window._cmDlDelegated=true;
+    document.addEventListener('click',function(ev){
+      var btn=ev.target.closest('[data-cm-dl-idx]');
+      if(!btn)return;
+      ev.preventDefault();ev.stopPropagation();
+      global.downloadCmAttachment(btn.getAttribute('data-cm-dl-idx'));
+    },true);
+  }
   function fileActionLinks(f){
     if(!f||!f.url)return '';
-    var u=hrefAttr(f.url);var n=esc(f.name);
-    var fid=registerCmFile(f);
+    var idx=window._cmDisplayFiles.length;
+    window._cmDisplayFiles.push({url:f.url,name:f.name||'download'});
+    var u=hrefAttr(f.url);
     return '<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--ac);font-size:10px;white-space:nowrap">表示</a> '
-      +'<a href="#" onclick="downloadCmAttachment(\''+fid+'\');return false" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
+      +'<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">DL</button>';
   }
 
   function defaultAttendeesText(){
@@ -230,6 +247,7 @@
       h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"></div>';
     }
     var fileList=files||[];
+    if(!fileList.length&&data&&data.attachments&&data.attachments.length)fileList=data.attachments;
     h+='<div id="'+prefix+'FileList">';
     if(fileList.length){
       fileList.forEach(function(f,i){
@@ -261,6 +279,8 @@
 
   function buildFullHtml(curYM,curData,prvYM,prvData,role,curFiles,prvFiles){
     var isOwner=role==='owner';
+    window._cmDisplayFiles=[];
+    ensureCmDownloadDelegation();
     var h='';
     h+='<style>';
     h+='.cm-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}';
