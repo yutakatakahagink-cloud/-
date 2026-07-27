@@ -67,11 +67,46 @@
 
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
   function hrefAttr(s){return String(s||'').replace(/"/g,'&quot;')}
+  window._cmDlFiles=window._cmDlFiles||{};
+  var _cmDlSeq=0;
+  function registerCmFile(f){
+    var id='cmf'+(++_cmDlSeq);
+    window._cmDlFiles[id]={url:f.url,name:f.name||'download'};
+    return id;
+  }
+  function downloadDataUrlFile(dataUrl,filename){
+    try{
+      var m=String(dataUrl).match(/^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.+)$/s);
+      if(!m){
+        var a=document.createElement('a');
+        a.href=dataUrl;a.download=filename||'download';a.target='_blank';
+        document.body.appendChild(a);a.click();a.remove();return;
+      }
+      var mime=m[1]||'application/octet-stream';
+      var bin=atob(m[2].replace(/\s/g,''));
+      var arr=new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+      var blob=new Blob([arr],{type:mime});
+      var objUrl=URL.createObjectURL(blob);
+      var link=document.createElement('a');
+      link.href=objUrl;link.download=filename||'download';
+      document.body.appendChild(link);link.click();
+      setTimeout(function(){URL.revokeObjectURL(objUrl);link.remove()},200);
+    }catch(e){
+      console.warn('download failed',e);
+      window.open(dataUrl,'_blank');
+    }
+  }
+  global.downloadCmAttachment=function(id){
+    var f=window._cmDlFiles[id];
+    if(f&&f.url)downloadDataUrlFile(f.url,f.name);
+  };
   function fileActionLinks(f){
     if(!f||!f.url)return '';
     var u=hrefAttr(f.url);var n=esc(f.name);
+    var fid=registerCmFile(f);
     return '<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--ac);font-size:10px;white-space:nowrap">表示</a> '
-      +'<a href="'+u+'" download="'+n+'" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
+      +'<a href="#" onclick="downloadCmAttachment(\''+fid+'\');return false" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
   }
 
   function defaultAttendeesText(){

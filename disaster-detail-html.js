@@ -13,6 +13,7 @@
     /** 所有者・承認画面：入力様式どおりの災害事故発生報告書フォーマット */
     var formFormat = !!opts.formFormat;
     var hideVictim = !!opts.hideVictim;
+    var hideReporter = !!opts.hideReporter;
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -428,9 +429,7 @@
     h +=
       '<div style="margin-top:12px;padding:12px;background:#f8f8f8;border:1px solid #333;border-radius:6px;font-size:11pt"><div style="margin-bottom:8px">上記のとおり相違なく報告いたします。</div><div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap">' +
       V(r.report_date || '') +
-      '　記入者：' +
-      V(r.sekininsha || '') +
-      (formFormat && r.reporter ? '　報告者：' + V(r.reporter) : '') +
+      (!hideReporter && formFormat && r.reporter ? '　報告者：' + V(r.reporter) : '') +
       '</div></div>';
     h += '</div>';
     return h;
@@ -538,7 +537,7 @@
       '</tr>' +
       '<tr><td colspan="3" style="border:1px solid #333;padding:10px 12px;background:#F8F8F8;font-size:11pt">' +
       '上記のとおり相違なく報告いたします。&nbsp;&nbsp;' +
-      V(r.report_date || '') + '&nbsp;&nbsp;記入者：' + V(r.sekininsha || '') + '&nbsp;&nbsp;報告者：' + V(r.reporter || '') +
+      V(r.report_date || '') + (r.reporter ? '&nbsp;&nbsp;報告者：' + V(r.reporter) : '') +
       '</td></tr>' +
       '</table>';
 

@@ -517,7 +517,6 @@
     'jiko',
     'kanri',
     'report_date',
-    'sekininsha',
     'wf_sender_email',
   ];
 

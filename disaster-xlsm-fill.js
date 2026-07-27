@@ -199,7 +199,7 @@
     if (rep.y) setNum(ref, 'BN61', rep.y);
     if (rep.m) setNum(ref, 'BS61', rep.m);
     if (rep.d) setNum(ref, 'BV61', rep.d);
-    setStr(ref, 'BR63', r.sekininsha || r.reporter);
+    setStr(ref, 'BR63', r.reporter);
 
     return ref.s;
   };
@@ -293,7 +293,7 @@
     if (rep.y) setNumCompat('BN61', rep.y);
     if (rep.m) setNumCompat('BS61', rep.m);
     if (rep.d) setNumCompat('BV61', rep.d);
-    setCell('BR63', r.sekininsha || r.reporter);
+    setCell('BR63', r.reporter);
     return true;
   };
 
