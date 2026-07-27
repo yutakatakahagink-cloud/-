@@ -14,6 +14,7 @@
     var formFormat = !!opts.formFormat;
     var hideVictim = !!opts.hideVictim;
     var hideReporter = !!opts.hideReporter;
+    var hideAddenda = !!opts.hideAddenda;
     var V = function (v) {
       var s = v != null ? String(v) : '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -198,6 +199,7 @@
     }
 
     function addendaForFieldUnified(fieldKey) {
+      if (hideAddenda) return '';
       if (!r.wf || !Array.isArray(r.wf.report_addenda)) return '';
       var seen = Object.create(null);
       var out = [];
