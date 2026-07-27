@@ -40,7 +40,13 @@
   function loadLocal(ym){try{return(JSON.parse(localStorage.getItem(LS_KEY)||'{}'))[ym]||null}catch(e){return null}}
   function saveMinutes(ym,data,cb){
     data.yearMonth=ym;
-    try{var a=JSON.parse(localStorage.getItem(LS_KEY)||'{}');a[ym]=data;localStorage.setItem(LS_KEY,JSON.stringify(a))}catch(e){}
+    try{
+      var a=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+      var lsCopy=Object.assign({},data);
+      delete lsCopy.attachments;
+      a[ym]=lsCopy;
+      localStorage.setItem(LS_KEY,JSON.stringify(a));
+    }catch(e){}
     var ref=fbRef(ym);
     if(ref){ref.set(data,function(err){if(typeof cb==='function')cb(err)});return}
     if(typeof cb==='function')cb(null);
@@ -60,6 +66,13 @@
   }
 
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function hrefAttr(s){return String(s||'').replace(/"/g,'&quot;')}
+  function fileActionLinks(f){
+    if(!f||!f.url)return '';
+    var u=hrefAttr(f.url);var n=esc(f.name);
+    return '<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--ac);font-size:10px;white-space:nowrap">表示</a> '
+      +'<a href="'+u+'" download="'+n+'" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
+  }
 
   function defaultAttendeesText(){
     return DEFAULT_MEMBERS.map(function(m){return(m.role?m.role+'：':'')+m.name}).join('、');
@@ -137,7 +150,7 @@
 
   function todayStr(){return new Date().toISOString().slice(0,10)}
 
-  function buildColumnHtml(prefix,ym,data,isEditable,isOwner){
+  function buildColumnHtml(prefix,ym,data,isEditable,isOwner,files){
     var d=data||{};var lbl=ymLabel(ym);
     var titleText=d.confirmed?lbl+' 安全衛生委員会 議事録':lbl+' 安全衛生委員会 報告事項';
     var ro=isEditable?'':'readonly';
@@ -181,15 +194,19 @@
     if(isEditable){
       h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"></div>';
     }
-    var files=isEditable?(window._cmPendingFiles||[]):(window['_cmFiles_'+ym]||[]);
+    var fileList=files||[];
     h+='<div id="'+prefix+'FileList">';
-    if(files.length){
-      files.forEach(function(f,i){
+    if(fileList.length){
+      fileList.forEach(function(f,i){
         h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
         h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+'</span>';
-        if(f.url)h+='<a href="'+esc(f.url)+'" download="'+esc(f.name)+'" style="color:var(--ac);font-size:10px;white-space:nowrap">ダウンロード</a>';
+        h+=fileActionLinks(f);
         if(isEditable)h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
         h+='</div>';
+      });
+    }else if((data&&data.attachment_names&&data.attachment_names.length)||(data&&data.attachments&&data.attachments.length)){
+      (data.attachment_names||[]).forEach(function(name){
+        h+='<div style="font-size:10px;color:var(--t3);padding:4px 0">📎 '+esc(name)+' <span style="font-size:9px">（ファイル本体未取得）</span></div>';
       });
     }else{
       h+='<div style="font-size:10px;color:var(--t3);padding:4px 0">（なし）</div>';
@@ -207,7 +224,7 @@
     return h;
   }
 
-  function buildFullHtml(curYM,curData,prvYM,prvData,role){
+  function buildFullHtml(curYM,curData,prvYM,prvData,role,curFiles,prvFiles){
     var isOwner=role==='owner';
     var h='';
     h+='<style>';
@@ -227,8 +244,8 @@
     h+='</style>';
     h+='<script>setTimeout(function(){document.querySelectorAll(".cm-auto").forEach(function(ta){function grow(){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"}ta.addEventListener("input",grow);grow()})},50)<\/script>';
     h+='<div class="cm-wrap">';
-    h+=buildColumnHtml('cmP',prvYM,prvData,false,false);
-    h+=buildColumnHtml('cmC',curYM,curData,true,isOwner);
+    h+=buildColumnHtml('cmP',prvYM,prvData,false,false,prvFiles||[]);
+    h+=buildColumnHtml('cmC',curYM,curData,true,isOwner,curFiles||[]);
     h+='</div>';
     h+='<div style="text-align:right;margin-bottom:8px"><button type="button" class="fp" style="padding:8px 16px;font-weight:600" onclick="downloadComMinutesExcel()">📥 議事録Excelダウンロード</button></div>';
     return h;
@@ -305,7 +322,7 @@
     files.forEach(function(f,i){
       h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
       h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+' <span style="color:var(--t3);font-size:9px">('+formatSize(f.size||0)+')</span></span>';
-      if(f.url)h+='<a href="'+esc(f.url)+'" download="'+esc(f.name)+'" style="color:var(--ac);font-size:10px;white-space:nowrap">DL</a>';
+      h+=fileActionLinks(f);
       h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
       h+='</div>';
     });
@@ -321,7 +338,8 @@
       participants:el('cmCParts'),
       agenda_text:el('cmCAgenda'),
       other_reports:el('cmCOther'),discussions:el('cmCDisc'),
-      attachment_names:(window._cmPendingFiles||[]).map(function(f){return f.name})
+      attachment_names:(window._cmPendingFiles||[]).map(function(f){return f.name}),
+      attachments:(window._cmPendingFiles||[]).map(function(f){return{name:f.name,url:f.url,size:f.size||0}})
     };
   }
 
@@ -381,17 +399,33 @@
     });
   };
 
+  function resolveAttachments(ym,minutesData,cb){
+    var fromCloud=minutesData&&minutesData.attachments&&minutesData.attachments.length?minutesData.attachments:null;
+    if(fromCloud){
+      saveFilesToLocal(ym,fromCloud);
+      cb(fromCloud);
+      return;
+    }
+    loadFilesFromLocal(ym,cb);
+  }
+
   function loadAllAndRender(wrap,role){
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
     wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">読み込み中…</div>';
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
         window._comMinutesData=curData||{};
-        loadFilesFromLocal(curYM,function(curFiles){
+        resolveAttachments(curYM,curData,function(curFiles){
           window._cmPendingFiles=curFiles||[];
-          loadFilesFromLocal(pYM,function(prvFiles){
-            window['_cmFiles_'+pYM]=prvFiles||[];
-            wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role);
+          if(curData&&curFiles&&curFiles.length&&!(curData.attachments&&curData.attachments.length)){
+            var migrated=Object.assign({},curData,{
+              attachments:curFiles.map(function(f){return{name:f.name,url:f.url,size:f.size||0}}),
+              attachment_names:curFiles.map(function(f){return f.name})
+            });
+            saveMinutes(curYM,migrated,function(){});
+          }
+          resolveAttachments(pYM,prvData,function(prvFiles){
+            wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles);
           });
         });
       });
