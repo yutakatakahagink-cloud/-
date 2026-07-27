@@ -326,7 +326,7 @@
     if(!f||!f.name)return '';
     ym=ym||'';
     if(!f.url&&!f.fileKey){
-      return '<span style="font-size:9px;color:var(--t3);white-space:nowrap">（同期待ち）</span>';
+      return '<span style="font-size:9px;color:var(--t3);white-space:nowrap" title="Firebaseにファイル本体が未登録です">（クラウド未同期）</span>';
     }
     var idx=window._cmDisplayFiles.length;
     window._cmDisplayFiles.push({url:f.url||'',name:f.name||'download',fileKey:f.fileKey||'',ym:ym});
@@ -491,11 +491,34 @@
     return h;
   }
 
+  function buildActionBar(showSyncBtn,isOwner,opts){
+    opts=opts||{};
+    var h='';
+    h+='<div class="cm-toolbar" style="position:sticky;top:0;z-index:5;background:var(--bg,#0f1419);padding:8px 0 10px;margin-bottom:10px;border-bottom:1px solid var(--bd)">';
+    if(opts.syncMsg){
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center;line-height:1.5">'+esc(opts.syncMsg)+'</div>';
+    }else if(opts.pendingCloud){
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:#E65100;margin-bottom:8px;text-align:center;line-height:1.5">⚠ 添付ファイル名のみ登録されています（本体はクラウド未同期）。<br>添付したPCで owner または admin を開き「☁ 添付をクラウド同期」を実行してください。'+((isOwner)?' または下の「付随書類」からファイルを再選択して保存してください。':'')+'</div>';
+    }else if(showSyncBtn&&!isOwner){
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:#E65100;margin-bottom:8px;text-align:center;line-height:1.5">⚠ 添付ファイルはこのPCのみに保存されています。他PC・携帯からDLするには「☁ 添付をクラウド同期」を押してください。</div>';
+    }else{
+      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center;display:none"></div>';
+    }
+    h+='<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center">';
+    if(showSyncBtn)h+='<button type="button" class="fp" style="padding:8px 16px" onclick="syncComAttachmentsNow()">☁ 添付をクラウド同期</button>';
+    h+='<button type="button" class="fp" style="padding:8px 16px;font-weight:600" onclick="downloadComMinutesExcel()">📥 議事録Excelダウンロード</button>';
+    h+='</div></div>';
+    return h;
+  }
+  function hasPendingCloudFiles(curFiles,prvFiles){
+    return (curFiles||[]).concat(prvFiles||[]).some(function(f){return f&&f.name&&!f.url&&!f.fileKey});
+  }
   function buildFullHtml(curYM,curData,prvYM,prvData,role,curFiles,prvFiles,opts){
     opts=opts||{};
+    if(opts.pendingCloud==null)opts.pendingCloud=hasPendingCloudFiles(curFiles,prvFiles);
     var isOwner=role==='owner';
     var canEdit=isOwner;
-    var showSyncBtn=isOwner||!!opts.canSyncAttachments;
+    var showSyncBtn=isOwner||!!opts.canSyncAttachments||!!opts.pendingCloud;
     window._cmDisplayFiles=[];
     ensureCmDownloadDelegation();
     var h='';
@@ -514,21 +537,12 @@
     h+='.cm-ta{font-size:11px!important;padding:6px 8px!important;line-height:1.5}';
     h+='.cm-auto{overflow-y:auto;resize:vertical}';
     h+='</style>';
+    h+=buildActionBar(showSyncBtn,isOwner,opts);
     h+='<script>setTimeout(function(){document.querySelectorAll(".cm-auto").forEach(function(ta){function grow(){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"}ta.addEventListener("input",grow);grow()})},50)<\/script>';
     h+='<div class="cm-wrap">';
     h+=buildColumnHtml('cmP',prvYM,prvData,false,false,prvFiles||[]);
     h+=buildColumnHtml('cmC',curYM,curData,canEdit,isOwner,curFiles||[]);
     h+='</div>';
-    if(opts.syncMsg){
-      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center">'+esc(opts.syncMsg)+'</div>';
-    }else if(showSyncBtn&&!isOwner){
-      h+='<div id="cmSyncStatus" style="font-size:10px;color:#E65100;margin-bottom:8px;text-align:center">⚠ 添付ファイルはこのPCのみに保存されています。他PC・携帯からDLするには「☁ 添付をクラウド同期」を押してください。</div>';
-    }else{
-      h+='<div id="cmSyncStatus" style="font-size:10px;color:var(--t3);margin-bottom:8px;text-align:center;display:none"></div>';
-    }
-    h+='<div style="text-align:right;margin-bottom:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">';
-    if(showSyncBtn)h+='<button type="button" class="fp" style="padding:8px 16px" onclick="syncComAttachmentsNow()">☁ 添付をクラウド同期</button>';
-    h+='<button type="button" class="fp" style="padding:8px 16px;font-weight:600" onclick="downloadComMinutesExcel()">📥 議事録Excelダウンロード</button></div>';
     return h;
   }
 
@@ -722,6 +736,7 @@
     opts=opts||{};
     var canSync=needsAttachmentShareSync(curData,curFiles)||needsAttachmentShareSync(prvData,prvFiles);
     if(canSync&&!opts.canSyncAttachments)opts.canSyncAttachments=true;
+    if(opts.pendingCloud==null)opts.pendingCloud=hasPendingCloudFiles(curFiles,prvFiles);
     window._cmPendingFiles=curFiles||[];
     wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles,opts);
   }
