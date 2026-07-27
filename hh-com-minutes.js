@@ -289,10 +289,28 @@
       window.open(dataUrl,'_blank');
     }
   }
+  function fetchAttachmentBlob(ym,fileKey,cb){
+    whenFirebaseReady(function(){
+      var ref=fbBlobsRef(ym,fileKey);
+      if(!ref){cb(null);return}
+      ref.once('value',function(s){
+        var v=s.val();
+        cb(v&&v.data?v.data:null);
+      },function(){cb(null)});
+    });
+  }
   global.downloadCmAttachment=function(idx){
     var f=window._cmDisplayFiles[+idx];
-    if(!f||!f.url){alert('ファイル本体がクラウドに未同期です。所有者画面で「保存」または委員会タブを開いて同期してください。');return}
-    downloadDataUrlFile(f.url,f.name);
+    if(!f||!f.name)return;
+    if(f.url){downloadDataUrlFile(f.url,f.name);return}
+    if(f.fileKey&&f.ym){
+      fetchAttachmentBlob(f.ym,f.fileKey,function(dataUrl){
+        if(dataUrl)downloadDataUrlFile(dataUrl,f.name);
+        else alert('ファイル本体がクラウドに未同期です。\n\n所有者画面（GitHub Pages URL）で委員会タブを開き、「☁ 添付をクラウド同期」を実行してください。');
+      });
+      return;
+    }
+    alert('ファイル本体がクラウドに未同期です。\n\n所有者画面で「☁ 添付をクラウド同期」を実行してください。');
   };
   function ensureCmDownloadDelegation(){
     if(window._cmDlDelegated)return;
@@ -304,13 +322,22 @@
       global.downloadCmAttachment(btn.getAttribute('data-cm-dl-idx'));
     },true);
   }
-  function fileActionLinks(f){
-    if(!f||!f.url)return '';
+  function fileActionLinks(f,ym){
+    if(!f||!f.name)return '';
+    ym=ym||'';
+    if(!f.url&&!f.fileKey){
+      return '<span style="font-size:9px;color:var(--t3);white-space:nowrap">（同期待ち）</span>';
+    }
     var idx=window._cmDisplayFiles.length;
-    window._cmDisplayFiles.push({url:f.url,name:f.name||'download'});
-    var u=hrefAttr(f.url);
-    return '<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--ac);font-size:10px;white-space:nowrap">表示</a> '
-      +'<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">DL</button>';
+    window._cmDisplayFiles.push({url:f.url||'',name:f.name||'download',fileKey:f.fileKey||'',ym:ym});
+    var h='';
+    if(f.url){
+      h+='<a href="'+hrefAttr(f.url)+'" target="_blank" rel="noopener" style="color:var(--ac);font-size:10px;white-space:nowrap">表示</a> ';
+    }else{
+      h+='<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">表示</button> ';
+    }
+    h+='<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">DL</button>';
+    return h;
   }
 
   function defaultAttendeesText(){
@@ -440,7 +467,7 @@
       fileList.forEach(function(f,i){
         h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
         h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+'</span>';
-        h+=fileActionLinks(f);
+        h+=fileActionLinks(f,ym);
         if(isEditable)h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
         h+='</div>';
       });
@@ -567,7 +594,7 @@
     files.forEach(function(f,i){
       h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
       h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+' <span style="color:var(--t3);font-size:9px">('+formatSize(f.size||0)+')</span></span>';
-      h+=fileActionLinks(f);
+      h+=fileActionLinks(f,getSelectedComYM());
       h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
       h+='</div>';
     });
