@@ -1301,25 +1301,36 @@ function ownerSaveEditedDisasterReport(id){
 // ===== QR CODE GENERATION =====
 let qrInstances={};
 var QR_URL_KEYS={user:'hh_qr_url_user',admin:'hh_qr_url_admin',owner:'hh_qr_url_owner'};
+var HH_PAGE_URL_V='20260727';
 function getBaseUrl(){
   if(typeof window.HH_BASE_URL==='string'&&window.HH_BASE_URL){return window.HH_BASE_URL.replace(/\/?$/,'/')}
   var href=window.location.href;
   var lastSep=Math.max(href.lastIndexOf('/'),href.lastIndexOf('\\'));
   return href.substring(0,lastSep+1);
 }
-function getUserPageUrl(){return getBaseUrl()+'user.html'}
-function getAdminPageUrl(){return getBaseUrl()+'admin.html'}
-function getOwnerPageUrl(){return getBaseUrl()+'owner.html'}
+function pageUrlWithVersion(page){return getBaseUrl()+page+'?v='+HH_PAGE_URL_V}
+function getUserPageUrl(){return pageUrlWithVersion('user.html')}
+function getAdminPageUrl(){return pageUrlWithVersion('admin.html')}
+function getOwnerPageUrl(){return pageUrlWithVersion('owner.html')}
 function getPageUrl(type){
   if(type==='user')return getUserPageUrl();
   if(type==='admin')return getAdminPageUrl();
   if(type==='owner')return getOwnerPageUrl();
   return getUserPageUrl();
 }
+function normalizeQRPageUrl(url,type){
+  var canonical=getPageUrl(type);
+  if(!url||/kensaibou_hiyarihatto|file:\/\//i.test(url))return canonical;
+  var page=type==='user'?'user.html':type==='admin'?'admin.html':'owner.html';
+  if(url.indexOf(page)<0)return canonical;
+  if(url.indexOf('?v='+HH_PAGE_URL_V)>=0)return url;
+  return canonical;
+}
 function getSavedQRUrl(type){try{var s=localStorage.getItem(QR_URL_KEYS[type]);return s||''}catch(e){return ''}}
 function saveQRUrl(type,url){try{if(url)localStorage.setItem(QR_URL_KEYS[type],url);else localStorage.removeItem(QR_URL_KEYS[type])}catch(e){}}
 function resetQRUrl(type){
   type=type||'user';
+  saveQRUrl(type,'');
   var inp=document.getElementById(type==='user'?'qrUrlInput':type==='admin'?'qrAdminUrlInput':'qrOwnerUrlInput');
   if(inp){inp.value=getPageUrl(type);saveQRUrl(type,inp.value);generateQR(type)}
 }
@@ -1329,13 +1340,11 @@ function generateQR(type){
   var containerId=type==='user'?'qrCodeOutput':type==='admin'?'qrCodeOutputAdmin':'qrCodeOutputOwner';
   var urlDispId=type==='user'?'qrCurrentUrl':type==='admin'?'qrCurrentUrlAdmin':'qrCurrentUrlOwner';
   var inp=document.getElementById(inpId);
-  var url=inp?inp.value.trim():'';
+  var raw=inp?inp.value.trim():'';
   var savedUrl=getSavedQRUrl(type);
   var defaultUrl=getPageUrl(type);
-  if(!url||url===type+'.html'||url===type){
-    url=savedUrl||defaultUrl;
-    if(inp)inp.value=url;
-  }
+  var url=normalizeQRPageUrl(raw||savedUrl||defaultUrl,type);
+  if(inp)inp.value=url;
   saveQRUrl(type,url);
   var container=document.getElementById(containerId);
   var urlDisp=document.getElementById(urlDispId);
@@ -1355,7 +1364,7 @@ function generateQR(type){
 function generateAllQR(){
   ['user','admin','owner'].forEach(function(t){
     var inp=document.getElementById(t==='user'?'qrUrlInput':t==='admin'?'qrAdminUrlInput':'qrOwnerUrlInput');
-    if(inp&&!inp.value.trim())inp.value=getSavedQRUrl(t)||getPageUrl(t);
+    if(inp)inp.value=normalizeQRPageUrl(inp.value.trim()||getSavedQRUrl(t)||'',t);
     generateQR(t);
   });
 }
