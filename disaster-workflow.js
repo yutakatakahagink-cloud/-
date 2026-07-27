@@ -18,6 +18,85 @@
 
   global.disasterNormEmail = normEmail;
 
+  /** 災害WF固定承認者（末尾3段：部署→本部→最終） */
+  var DIS_WF_FIXED = {
+    final: { name: '吉川真人', email: 'makoto_yoshikawa@nissinkohgyo.co.jp', label: '最終承認' },
+    penultimate: { name: '日高義幸', email: 'yoshiyuki_hidaka@nissinkohgyo.co.jp', label: '本部承認' },
+    dept: [
+      { key: 'kenzai', name: '木田寛士', email: 'hiroshi_kida@nissinkohgyo.co.jp', label: '建材承認', re: /建材/ },
+      { key: 'doboku', name: '成岡浩二', email: 'koji_narioka@nissinkohgyo.co.jp', label: '土木承認', re: /土木/ },
+      { key: 'somu', name: '川名哲也', email: 'tetsuya_kawana@nissinkohgyo.co.jp', label: '総務承認', re: /総務/ },
+    ],
+  };
+
+  global.disasterWfDeptGroup = function (deptStr) {
+    var d = String(deptStr || '');
+    for (var i = 0; i < DIS_WF_FIXED.dept.length; i++) {
+      if (DIS_WF_FIXED.dept[i].re.test(d)) return DIS_WF_FIXED.dept[i].key;
+    }
+    return '';
+  };
+
+  global.disasterWfFixedTailSteps = function (deptStr) {
+    var out = [];
+    var d = String(deptStr || '');
+    for (var i = 0; i < DIS_WF_FIXED.dept.length; i++) {
+      var cfg = DIS_WF_FIXED.dept[i];
+      if (cfg.re.test(d)) {
+        out.push({ label: cfg.label, email: normEmail(cfg.email), name: cfg.name, fixed: true });
+        break;
+      }
+    }
+    out.push({
+      label: DIS_WF_FIXED.penultimate.label,
+      email: normEmail(DIS_WF_FIXED.penultimate.email),
+      name: DIS_WF_FIXED.penultimate.name,
+      fixed: true,
+    });
+    out.push({
+      label: DIS_WF_FIXED.final.label,
+      email: normEmail(DIS_WF_FIXED.final.email),
+      name: DIS_WF_FIXED.final.name,
+      fixed: true,
+    });
+    return out;
+  };
+
+  global.disasterWfAllFixedEmails = function () {
+    var set = {};
+    set[normEmail(DIS_WF_FIXED.final.email)] = 1;
+    set[normEmail(DIS_WF_FIXED.penultimate.email)] = 1;
+    DIS_WF_FIXED.dept.forEach(function (c) {
+      set[normEmail(c.email)] = 1;
+    });
+    return set;
+  };
+
+  global.disasterWfSplitOptionalSteps = function (allSteps) {
+    var fixed = global.disasterWfAllFixedEmails();
+    var out = [];
+    (allSteps || []).forEach(function (s) {
+      var em = normEmail(s && s.email);
+      if (em && !fixed[em]) out.push(s);
+    });
+    return out;
+  };
+
+  global.disasterWfMergeSubmitSteps = function (optionalSteps, deptStr) {
+    var out = [];
+    var n = 0;
+    (optionalSteps || []).forEach(function (s) {
+      var em = normEmail(s && s.email);
+      if (!em) return;
+      n++;
+      out.push({ label: String((s && s.label) || '').trim() || '追加承認' + n, email: em });
+    });
+    global.disasterWfFixedTailSteps(deptStr).forEach(function (s) {
+      out.push({ label: s.label, email: s.email });
+    });
+    return out;
+  };
+
   function formatAtJst(iso) {
     if (iso == null || iso === '') return '';
     var d = new Date(iso);

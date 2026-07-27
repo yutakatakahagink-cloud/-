@@ -639,9 +639,13 @@ input[type="file"].photo-input{display:none}
   <div id="disFormArea">
   <div id="disWfUserWrap" class="dis-wf-user-block" style="margin:0 0 16px;padding:12px;background:rgba(106,27,154,.06);border:1px solid rgba(106,27,154,.28);border-radius:8px">
     <div class="sd" style="margin-top:0">承認ワークフロー</div>
-    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">承認者を選択してください。名前を選ぶとメールアドレスが自動で設定されます。</p>
+    <p style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px">必要に応じて<b>追加承認者</b>を選んでください。その後に部署承認・本部承認・最終承認が自動で付きます（名前を選ぶとメールアドレスが自動設定されます）。</p>
     <div id="disWfUserSteps"></div>
-    <button type="button" class="fp" style="margin-top:6px;font-size:11px;padding:8px 12px;border-radius:8px" onclick="disWfUserAddApproverRow()">＋ 承認段階を追加</button>
+    <button type="button" class="fp" style="margin-top:6px;font-size:11px;padding:8px 12px;border-radius:8px" onclick="disWfUserAddApproverRow()">＋ 追加承認者を選択</button>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed rgba(106,27,154,.35)">
+      <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">固定承認者（自動・変更不可）</div>
+      <div id="disWfFixedSteps"></div>
+    </div>
     <div class="fg" style="margin-top:12px;margin-bottom:0"><label class="fl">送信者メール</label><input class="fi" type="email" id="f_wf_sender_email" placeholder="ログイン氏名から自動設定" readonly style="background:#e8e8e8"></div>
   </div>
   <div class="dis-form-mobile">
@@ -1720,8 +1724,8 @@ function disWfUserAddApproverRow(){
   div.style.cssText='display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px';
   var labEl=document.createElement('input');
   labEl.className='fi dis-wf-u-lab';
-  labEl.type='text';labEl.readOnly=true;labEl.value='第'+n+'承認';
-  labEl.style.cssText='flex:0 0 70px;min-width:70px;margin:0;background:#e8e8e8;font-weight:600;text-align:center';
+  labEl.type='text';labEl.readOnly=true;labEl.value='追加承認'+n;
+  labEl.style.cssText='flex:0 0 80px;min-width:80px;margin:0;background:#e8e8e8;font-weight:600;text-align:center;font-size:11px';
   var sel=document.createElement('select');
   sel.className='fi dis-wf-u-sel';
   sel.style.cssText='flex:1;min-width:120px;margin:0;padding:8px 6px;font-size:12px';
@@ -1750,11 +1754,39 @@ function collectDisUserApproverSteps(){
   });
   return out;
 }
-/** 提出時: フォームに承認者メールがあればそれを使う。空なら所有者画面で保存した既定承認者（DISASTER_WF_STEPS）を使う */
+function disWfCurrentDeptStr(){
+  if(typeof CUR!=='undefined'&&CUR)return String(CUR.dept||CUR.honbu||'').trim();
+  var vd=document.getElementById('f_victim_dept');if(vd&&vd.value)return String(vd.value).trim();
+  var vdp=document.getElementById('f_victim_dept_pc');if(vdp&&vdp.value)return String(vdp.value).trim();
+  return '';
+}
+function disWfRenderFixedSteps(){
+  var box=document.getElementById('disWfFixedSteps');if(!box)return;
+  var dept=disWfCurrentDeptStr();
+  var steps=typeof disasterWfFixedTailSteps==='function'?disasterWfFixedTailSteps(dept):[];
+  var grp=typeof disasterWfDeptGroup==='function'?disasterWfDeptGroup(dept):'';
+  var h='';
+  if(dept&&!grp){
+    h+='<p style="font-size:10px;color:#E65100;margin:0 0 6px;line-height:1.45">所属「'+String(dept).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'」は建材・土木・総務以外のため、部署承認者は省略されます。</p>';
+  }
+  steps.forEach(function(s){
+    h+='<div class="dis-wf-fixed-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:12px">';
+    h+='<span style="flex:0 0 72px;font-weight:600;color:var(--t2);text-align:center">'+String(s.label||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
+    h+='<span style="flex:1;min-width:80px">'+String(s.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
+    h+='<span style="flex:2;min-width:140px;color:var(--t3);font-size:11px;word-break:break-all">'+String(s.email||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
+    h+='</div>';
+  });
+  box.innerHTML=h;
+}
+/** 提出時: 追加承認者 + 固定承認者（部署→本部→最終） */
 function effectiveDisApproverStepsForSubmit(){
-  var raw=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  var optional=typeof collectDisUserApproverSteps==='function'?collectDisUserApproverSteps():[];
+  if(typeof disasterWfMergeSubmitSteps==='function'){
+    var merged=disasterWfMergeSubmitSteps(optional,disWfCurrentDeptStr());
+    if(merged.length)return merged;
+  }
   var cleaned=[];
-  raw.forEach(function(s){
+  optional.forEach(function(s){
     var em=String(s&&s.email||'').trim();
     if(!em)return;
     cleaned.push({label:String(s&&s.label||'').trim()||'承認',email:em});
@@ -1770,8 +1802,7 @@ function effectiveDisApproverStepsForSubmit(){
   return out;
 }
 function ensureDisWfUserRows(){
-  var box=document.getElementById('disWfUserSteps');if(!box||box.querySelector('.dis-wf-u-row'))return;
-  disWfUserAddApproverRow();
+  disWfRenderFixedSteps();
 }
 function disasterPendingMailOpen(){
   var r=window._disPendingMailRec;if(!r||!r.wf)return;
@@ -1787,6 +1818,7 @@ function resetDisasterFormPC(){
   if(window._disPhotosPC){window._disPhotosPC.length=0;if(window._disPhotosPC_names)window._disPhotosPC_names.length=0}
   if(window._disPhotosPC_render)window._disPhotosPC_render();
   var box=document.getElementById('disWfUserSteps');if(box)box.innerHTML='';
+  disWfRenderFixedSteps();
   var wse=document.getElementById('f_wf_sender_email');if(wse)wse.value='';
   fillDisFormDefaults();
   updateDisDtWeek();updateDisAge();updateDisExp();
@@ -1797,6 +1829,7 @@ function resetDisasterFormMobile(){
   if(window._disPhotos){window._disPhotos.length=0;if(window._disPhotos_names)window._disPhotos_names.length=0}
   if(window._disPhotos_render)window._disPhotos_render();
   var box=document.getElementById('disWfUserSteps');if(box)box.innerHTML='';
+  disWfRenderFixedSteps();
   var wse=document.getElementById('f_wf_sender_email');if(wse)wse.value='';
   fillDisFormDefaults();
 }
@@ -1994,7 +2027,8 @@ function fillDisFormFromReturnedEdit(){
     if(wse)wse.value=(r.wf_sender_email!=null?String(r.wf_sender_email):'');
     if(r.wf&&Array.isArray(r.wf.steps)&&r.wf.steps.length){
       var wBox=document.getElementById('disWfUserSteps');if(wBox)wBox.innerHTML='';
-      r.wf.steps.forEach(function(st){
+      var optSteps=typeof disasterWfSplitOptionalSteps==='function'?disasterWfSplitOptionalSteps(r.wf.steps):r.wf.steps;
+      optSteps.forEach(function(st){
         disWfUserAddApproverRow();
         var rows=document.querySelectorAll('#disWfUserSteps .dis-wf-u-row');
         var lastRow=rows[rows.length-1];if(!lastRow)return;
@@ -2006,6 +2040,7 @@ function fillDisFormFromReturnedEdit(){
         }
         if(emEl)emEl.value=String(st.email||'');
       });
+      disWfRenderFixedSteps();
     }
     window._disPhotosPC=(r.situation_imgs&&r.situation_imgs.length?r.situation_imgs.slice():(r.situation_img?[r.situation_img]:[]));
     window._disPhotosPC_names=window._disPhotosPC.map(function(_,i){return'画像'+(i+1)});
