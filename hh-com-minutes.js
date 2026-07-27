@@ -33,13 +33,21 @@
     try{return firebase.app().database().ref(FB_PATH+'/'+ym)}catch(e){return null}
   }
   var FB_STORAGE_PREFIX='hh_data/committee_minutes_files';
-  var FB_BLOBS_PATH='hh_data/committee_minutes_blobs';
   function canUseFirebase(){
     try{return typeof HHDB!=='undefined'&&HHDB.useFirebase&&HHDB.useFirebase()&&typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length>0}catch(e){return false}
   }
+  function whenFirebaseReady(cb){
+    if(typeof HHDB!=='undefined'&&HHDB.init){
+      return HHDB.init(function(){cb()});
+    }
+    cb();
+  }
   function fbBlobsRef(ym,key){
     if(!canUseFirebase())return null;
-    try{return firebase.app().database().ref(FB_BLOBS_PATH+'/'+ym+(key!=null?'/'+key:''))}catch(e){return null}
+    try{
+      var base=firebase.app().database().ref(FB_PATH+'/'+ym+'/_blobs');
+      return key!=null?base.child(key):base;
+    }catch(e){return null}
   }
   function canUseStorage(){
     try{return typeof firebase!=='undefined'&&firebase.storage&&firebase.apps&&firebase.apps.length>0}catch(e){return false}
@@ -125,17 +133,22 @@
   }
   function mergeAttachmentLists(primary,fallback){
     var map={};
-    (fallback||[]).forEach(function(f,i){
-      if(!f||!f.name)return;
-      map[f.name]=f;
-    });
-    (primary||[]).forEach(function(f){
-      if(!f||!f.name)return;
-      var prev=map[f.name];
-      if(!prev||(!hasShareableAttachment(prev)&&hasShareableAttachment(f)))map[f.name]=f;
-      else if(hasShareableAttachment(prev))map[f.name]=prev;
-    });
-    return Object.keys(map).map(function(k){return map[k]});
+    function pick(name){
+      var pri=(primary||[]).find(function(f){return f&&f.name===name});
+      var fb=(fallback||[]).find(function(f){return f&&f.name===name});
+      if(pri&&fb){
+        if((pri.fileKey||isHttpUrl(pri.url))&&attachmentHasLocalData(fb)){
+          return{name:name,url:fb.url,size:fb.size||pri.size||0,fileKey:pri.fileKey||'',storagePath:pri.storagePath||''};
+        }
+        if(isHttpUrl(pri.url))return pri;
+        if(attachmentHasLocalData(fb))return fb;
+        if(pri.fileKey)return pri;
+        return fb;
+      }
+      return pri||fb||null;
+    }
+    (fallback||[]).concat(primary||[]).forEach(function(f){if(f&&f.name)map[f.name]=1});
+    return Object.keys(map).map(pick).filter(Boolean);
   }
   function syncAttachmentsToCloud(ym,minutesData,files,cb){
     cb=cb||function(){};
@@ -190,15 +203,24 @@
     }
     next();
   }
+  function stripMinutesVal(v){
+    if(!v||typeof v!=='object')return v;
+    var d=Object.assign({},v);
+    delete d._blobs;
+    return d;
+  }
   function loadMinutes(ym,cb){
-    var ref=fbRef(ym);
-    if(ref){ref.once('value',function(s){var v=s.val();if(v){try{var ls=JSON.parse(localStorage.getItem(LS_KEY)||'{}');ls[ym]=v;localStorage.setItem(LS_KEY,JSON.stringify(ls))}catch(e){}}cb(v||null)},function(){cb(loadLocal(ym))});return}
-    cb(loadLocal(ym));
+    whenFirebaseReady(function(){
+      var ref=fbRef(ym);
+      if(ref){ref.once('value',function(s){var v=stripMinutesVal(s.val());if(v){try{var ls=JSON.parse(localStorage.getItem(LS_KEY)||'{}');ls[ym]=v;localStorage.setItem(LS_KEY,JSON.stringify(ls))}catch(e){}}cb(v||null)},function(){cb(loadLocal(ym))});return}
+      cb(loadLocal(ym));
+    });
   }
   function loadLocal(ym){try{return(JSON.parse(localStorage.getItem(LS_KEY)||'{}'))[ym]||null}catch(e){return null}}
   function saveMinutes(ym,data,cb){
     data.yearMonth=ym;
     var cloudData=Object.assign({},data);
+    delete cloudData._blobs;
     if(cloudData.attachments){
       cloudData.attachments=cloudData.attachments.map(toCloudAttachment);
     }
@@ -209,9 +231,11 @@
       a[ym]=lsCopy;
       localStorage.setItem(LS_KEY,JSON.stringify(a));
     }catch(e){}
-    var ref=fbRef(ym);
-    if(ref){ref.set(cloudData,function(err){if(typeof cb==='function')cb(err)});return}
-    if(typeof cb==='function')cb(null);
+    whenFirebaseReady(function(){
+      var ref=fbRef(ym);
+      if(ref){ref.update(cloudData,function(err){if(typeof cb==='function')cb(err)});return}
+      if(typeof cb==='function')cb(null);
+    });
   }
 
   function currentYM(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
@@ -267,7 +291,8 @@
   }
   global.downloadCmAttachment=function(idx){
     var f=window._cmDisplayFiles[+idx];
-    if(f&&f.url)downloadDataUrlFile(f.url,f.name);
+    if(!f||!f.url){alert('ファイル本体がクラウドに未同期です。所有者画面で「保存」または委員会タブを開いて同期してください。');return}
+    downloadDataUrlFile(f.url,f.name);
   };
   function ensureCmDownloadDelegation(){
     if(window._cmDlDelegated)return;
@@ -441,6 +466,7 @@
 
   function buildFullHtml(curYM,curData,prvYM,prvData,role,curFiles,prvFiles){
     var isOwner=role==='owner';
+    var canEdit=isOwner;
     window._cmDisplayFiles=[];
     ensureCmDownloadDelegation();
     var h='';
@@ -462,9 +488,11 @@
     h+='<script>setTimeout(function(){document.querySelectorAll(".cm-auto").forEach(function(ta){function grow(){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"}ta.addEventListener("input",grow);grow()})},50)<\/script>';
     h+='<div class="cm-wrap">';
     h+=buildColumnHtml('cmP',prvYM,prvData,false,false,prvFiles||[]);
-    h+=buildColumnHtml('cmC',curYM,curData,true,isOwner,curFiles||[]);
+    h+=buildColumnHtml('cmC',curYM,curData,canEdit,isOwner,curFiles||[]);
     h+='</div>';
-    h+='<div style="text-align:right;margin-bottom:8px"><button type="button" class="fp" style="padding:8px 16px;font-weight:600" onclick="downloadComMinutesExcel()">📥 議事録Excelダウンロード</button></div>';
+    h+='<div style="text-align:right;margin-bottom:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">';
+    if(isOwner)h+='<button type="button" class="fp" style="padding:8px 16px" onclick="syncComAttachmentsNow()">☁ 添付をクラウド同期</button>';
+    h+='<button type="button" class="fp" style="padding:8px 16px;font-weight:600" onclick="downloadComMinutesExcel()">📥 議事録Excelダウンロード</button></div>';
     return h;
   }
 
@@ -583,7 +611,12 @@
     var st=document.getElementById('cmStatus');
     if(st)st.textContent='保存中…';
     persistComMinutes(ym,data,function(err){
-      if(st)st.textContent=err?'保存失敗: '+err:'保存しました（'+ymLabel(ym)+'）';
+      if(st){
+        if(err)st.textContent='保存失敗: '+err;
+        else if(!(data.attachments||[]).some(hasShareableAttachment)&& (window._cmPendingFiles||[]).some(attachmentHasLocalData)){
+          st.textContent='保存しましたが添付のクラウド同期に失敗した可能性があります（'+ymLabel(ym)+'）';
+        }else st.textContent='保存しました（'+ymLabel(ym)+'）';
+      }
       window._comMinutesData=data;
       var tt=document.getElementById('cmCTitle');
       if(tt)tt.textContent=ymLabel(ym)+(data.confirmed?' 安全衛生委員会 議事録':' 安全衛生委員会 報告事項');
@@ -666,11 +699,14 @@
               finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
               if(role==='owner'){
                 setTimeout(function(){
-                  syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(err,uploaded){
-                    if(uploaded&&uploaded.length)finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},uploaded,prvFiles||[]);
-                  });
-                  syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(err,uploaded){
-                    if(uploaded&&uploaded.length)finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],uploaded);
+                  syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(err,curSynced){
+                    var curFinal=mergeAttachmentLists(curSynced||[],curFiles||[]);
+                    syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(err2,prvSynced){
+                      var prvFinal=mergeAttachmentLists(prvSynced||[],prvFiles||[]);
+                      if((curSynced&&curSynced.length)||(prvSynced&&prvSynced.length)){
+                        finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFinal,prvFinal);
+                      }
+                    });
                   });
                 },0);
               }
@@ -685,11 +721,37 @@
   }
   global.comMinutesInit=function(role){
     var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
-    loadAllAndRender(wrap,role);
+    whenFirebaseReady(function(){loadAllAndRender(wrap,role)});
   };
   global.comMinutesReload=function(){
     var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
     var role=typeof ROLE!=='undefined'?ROLE:'user';
-    loadAllAndRender(wrap,role);
+    whenFirebaseReady(function(){loadAllAndRender(wrap,role)});
+  };
+  global.syncComAttachmentsNow=function(){
+    var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
+    var role=typeof ROLE!=='undefined'?ROLE:'user';
+    var curYM=getSelectedComYM();var pYM=prevYM(curYM);
+    var st=document.getElementById('cmStatus');
+    if(st)st.textContent='添付をクラウド同期中…';
+    whenFirebaseReady(function(){
+      loadMinutes(curYM,function(curData){
+        loadMinutes(pYM,function(prvData){
+          resolveAttachments(curYM,curData||{},function(curFiles){
+            resolveAttachments(pYM,prvData||{},function(prvFiles){
+              syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(err,curSynced){
+                syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(err2,prvSynced){
+                  finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curSynced||curFiles||[],prvSynced||prvFiles||[]);
+                  if(st){
+                    var ok=(curSynced||[]).concat(prvSynced||[]).some(hasShareableAttachment);
+                    st.textContent=err||err2?'同期失敗':ok?'添付をクラウドに同期しました':'同期対象の添付ファイルがありません（このPCに本体がない可能性）';
+                  }
+                });
+              });
+            });
+          });
+        });
+      });
+    });
   };
 })(typeof window!=='undefined'?window:this);

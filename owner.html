@@ -577,7 +577,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="hh-com-xlsx-fill.js?v=20260707c"></script>
-<script src="hh-com-minutes.js?v=20260727-rtdb-blob"></script>
+<script src="hh-com-minutes.js?v=20260727-blobfix"></script>
 <script src="disaster-xlsm-fill.js?v=20260727-reporter"></script>
 <script src="disaster-export.js?v=20260727-lite"></script>
 <script src="laws_refresh.js"></script>
@@ -1533,10 +1533,8 @@ function anlActs(){
 function rCom(){
   buildPeriodFilter('pfCom');
   buildDeptFilter('dfCom');
-  if(!window._comMinutesInited){
-    if(typeof comMinutesInit==='function')comMinutesInit('owner');
-    window._comMinutesInited=true;
-  }
+  if(typeof comMinutesReload==='function')comMinutesReload();
+  else if(typeof comMinutesInit==='function')comMinutesInit('owner');
   const fd=getF();
   const hi=fd.filter(r=>r.l>=7);
   let sm=`<div class="com-section"><strong>報告状況</strong><p>報告総数 ${fd.length}件、高レベル(Lv.7+) <span style="color:var(--rd);font-weight:700">${hi.length}件</span></p></div>`;
