@@ -136,11 +136,17 @@
     modal.classList.add('show');
   };
 
-  global.reqListCardClickAttr = function (id) {
+  global.reqListCardClickAttr = function (id, extraStyle) {
+    var style = 'cursor:pointer';
+    if (extraStyle) style += ';' + extraStyle;
     return (
       ' class="rc req-clickable" data-req-id="' +
       esc(id) +
-      '" role="button" tabindex="0" style="cursor:pointer"'
+      '" role="button" tabindex="0" style="' +
+      style +
+      '" onclick="openReqDetail(\'' +
+      idEsc(id) +
+      '\')"'
     );
   };
 
