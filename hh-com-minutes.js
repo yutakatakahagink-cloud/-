@@ -538,6 +538,7 @@
   function buildActionBar(showSyncBtn,isOwner,opts){
     opts=opts||{};
     var h='';
+    h+='<div class="cm-toolbar" style="position:sticky;top:0;z-index:5;background:var(--bg,#0f1419);padding:8px 0 10px;margin-bottom:10px;border-bottom:1px solid var(--bd)">';
     if(location.protocol==='file:'){
       h+='<div style="font-size:10px;color:#1565C0;margin-bottom:8px;text-align:center;line-height:1.5;padding:6px 8px;background:rgba(21,101,192,.1);border-radius:6px">📁 <b>ローカルファイル（file://）</b>から開いています。<br>添付本体はこのブラウザ専用です。下の「☁ 添付をクラウド同期」成功後は <b>GitHub Pages の URL</b> から開いてください。</div>';
     }
