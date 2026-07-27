@@ -104,14 +104,17 @@
     return Object.keys(map).map(function(k){return map[k]});
   }
   function syncAttachmentsToCloud(ym,minutesData,files,cb){
+    cb=cb||function(){};
     if(!attachmentsNeedCloudUpload(files)){cb(null,files);return}
     uploadAllAttachments(ym,files,function(err,uploaded){
       uploaded=mergeAttachmentLists(uploaded,files);
       saveFilesToLocal(ym,uploaded);
-      if(!canUseStorage()||!fbRef(ym)){cb(err,uploaded);return}
       var cloud=uploaded.filter(function(f){return f&&f.name&&isHttpUrl(f.url)});
-      if(!cloud.length){cb(err,uploaded);return}
-      var merged=Object.assign({},minutesData||{},{
+      if(!canUseStorage()||!fbRef(ym)||!cloud.length||!minutesData||!minutesData.yearMonth){
+        cb(err,uploaded);
+        return;
+      }
+      var merged=Object.assign({},minutesData,{
         attachments:cloud.map(toCloudAttachment),
         attachment_names:cloud.map(function(f){return f.name})
       });
@@ -591,17 +594,23 @@
     wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">読み込み中…</div>';
     loadMinutes(pYM,function(prvData){
       loadMinutes(curYM,function(curData){
-        window._comMinutesData=curData||{};
-        resolveAttachments(curYM,curData,function(curFiles){
-          resolveAttachments(pYM,prvData,function(prvFiles){
-            syncAttachmentsToCloud(curYM,curData,curFiles,function(err,curSynced){
-              var curFinal=curSynced||curFiles;
-              syncAttachmentsToCloud(pYM,prvData,prvFiles,function(err2,prvSynced){
-                finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFinal,prvSynced||prvFiles);
-              });
+        try{
+          window._comMinutesData=curData||{};
+          resolveAttachments(curYM,curData||{},function(curFiles){
+            resolveAttachments(pYM,prvData||{},function(prvFiles){
+              finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
+              if(role==='owner'){
+                setTimeout(function(){
+                  syncAttachmentsToCloud(curYM,curData||{},curFiles||[],function(){});
+                  syncAttachmentsToCloud(pYM,prvData||{},prvFiles||[],function(){});
+                },0);
+              }
             });
           });
-        });
+        }catch(e){
+          console.error('[cm] load failed',e);
+          wrap.innerHTML='<div style="padding:20px;color:var(--rd);font-size:12px">議事録の表示に失敗しました。</div>';
+        }
       });
     });
   }
