@@ -374,14 +374,7 @@
     }
     var idx=window._cmDisplayFiles.length;
     window._cmDisplayFiles.push({url:f.url||'',name:f.name||'download',fileKey:f.fileKey||'',ym:ym});
-    var h='';
-    if(f.url){
-      h+='<a href="'+hrefAttr(f.url)+'" target="_blank" rel="noopener" style="color:var(--ac);font-size:10px;white-space:nowrap">表示</a> ';
-    }else{
-      h+='<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">表示</button> ';
-    }
-    h+='<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">DL</button>';
-    return h;
+    return '<button type="button" data-cm-dl-idx="'+idx+'" style="border:none;background:none;color:var(--ac);font-size:10px;white-space:nowrap;cursor:pointer;padding:0;text-decoration:underline">DL</button>';
   }
 
   function defaultAttendeesText(){
