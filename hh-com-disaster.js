@@ -70,9 +70,10 @@
     return !!(r.victim||r.reporter||r.situation||r.basho_detail||r.keigen||r.basho||r.place);
   }
   function deptMatch(r,deptFilt){
-    var fields=[r.victim_dept,r.keigen,r.basho,r.place,r.jigyosho,r.reporter].map(function(x){return String(x||'')});
+    var f=String(deptFilt||'').replace(/福岡営業所/g,'福岡支店');
+    var fields=[r.victim_dept,r.keigen,r.basho,r.place,r.jigyosho,r.reporter].map(function(x){return String(x||'').replace(/福岡営業所/g,'福岡支店')});
     return fields.some(function(d){
-      return d===deptFilt||d.startsWith(deptFilt+'/')||deptFilt.startsWith(d)||d.indexOf(deptFilt)>=0;
+      return d===f||d.startsWith(f+'/')||f.startsWith(d)||d.indexOf(f)>=0;
     });
   }
   function filterComDisasters(list,deptFilt,periodYear,periodMonth){

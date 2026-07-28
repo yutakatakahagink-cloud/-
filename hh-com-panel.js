@@ -237,8 +237,9 @@
     var list=(requests||[]).slice();
     if(deptFilt&&deptFilt!=='all'){
       list=list.filter(function(r){
-        var d=String(r.dept||'');
-        return d===deptFilt||d.startsWith(deptFilt+'/')||deptFilt.startsWith(d);
+        var d=String(r.dept||'').replace(/福岡営業所/g,'福岡支店');
+        var f=String(deptFilt).replace(/福岡営業所/g,'福岡支店');
+        return d===f||d.startsWith(f+'/')||f.startsWith(d);
       });
     }
     if(periodYear&&periodYear!=='all'){
