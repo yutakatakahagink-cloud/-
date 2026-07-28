@@ -566,8 +566,8 @@ select,input,textarea,button{color:var(--t1)}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260525-photos2"></script>
-<script src="hh-report-detail.js?v=20260525-cause-photos"></script>
-<script src="hh-req-detail.js?v=20260727-popup3"></script>
+<script src="hh-report-detail.js?v=20260728-owner-edit"></script>
+<script src="hh-req-detail.js?v=20260728-owner-edit"></script>
 <script src="hh-com-dept-analysis.js?v=20260525-dept-an"></script>
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260526-byexp-photos"></script>
@@ -593,6 +593,7 @@ function saveAdminAccounts(){if(typeof HHDB!=='undefined'&&HHDB.useFirebase()){H
 
 // Owner is always 'owner' role
 let CUR=null,ROLE='owner';
+window.CUR=CUR;window.ROLE=ROLE;
 
 // IS_ADMIN always true for owner
 Object.defineProperty(window,'IS_ADMIN',{get:()=>true});
@@ -608,7 +609,7 @@ function doOwnerLogin(){
   const pw=document.getElementById('ownerPass').value;
   if(pw!==OWNER_PASS){document.getElementById('ownerErr').style.display='block';return}
   if(document.getElementById('ownerRemember').checked){localStorage.setItem('hh_owner_login',pw)}else{localStorage.removeItem('hh_owner_login')}
-  CUR={name:'所有者',dept:'全社',kubun:'所有者',ageRange:'—',honbu:'',email:''};ROLE='owner';
+  CUR={name:'所有者',dept:'全社',kubun:'所有者',ageRange:'—',honbu:'',email:''};ROLE='owner';window.CUR=CUR;window.ROLE=ROLE;
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('userPill').textContent='ログイン画面へ';
   rDash();
@@ -701,7 +702,7 @@ function openHhReportDetail(id){
   function renderDetail(rep){
     var e0=(typeof hhReportDetail!=='undefined'?hhReportDetail.arrJoin(rep.e):((rep.e||[]).join('、')||'')).split('、')[0]||'報告';
     document.getElementById('mT').textContent=e0+' — 詳細';
-    document.getElementById('mI').innerHTML=(typeof hhReportDetail!=='undefined'&&hhReportDetail.buildDetailHtml)?hhReportDetail.buildDetailHtml(rep,{showAdminActions:true,showStress:true,showOwnerDelete:true}):'';
+    document.getElementById('mI').innerHTML=(typeof hhReportDetail!=='undefined'&&hhReportDetail.buildDetailHtml)?hhReportDetail.buildDetailHtml(rep,{showAdminActions:true,showStress:true,showOwnerDelete:true,showOwnerEdit:true}):'';
     document.getElementById('modal').classList.add('show');
   }
   if(typeof hhReportDetail!=='undefined'&&hhReportDetail.ensurePhotos){hhReportDetail.ensurePhotos(r,renderDetail)}
