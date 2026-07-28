@@ -182,10 +182,16 @@
     whenFirebaseReady(function(){
       var ref=fbBlobsRef(ym,null);
       if(!ref){cb(0);return}
-      ref.once('value',function(s){
-        var v=s.val();
-        cb(v&&typeof v==='object'?Object.keys(v).length:0);
-      },function(){cb(0)});
+      // shallow で件数だけ取得（本体dataのダウンロードを避ける）
+      var url=ref.toString()+'.json?shallow=true';
+      fetch(url).then(function(r){return r.ok?r.json():null}).then(function(keys){
+        cb(keys&&typeof keys==='object'?Object.keys(keys).length:0);
+      }).catch(function(){
+        ref.once('value',function(s){
+          var v=s.val();
+          cb(v&&typeof v==='object'?Object.keys(v).length:0);
+        },function(){cb(0)});
+      });
     });
   }
   function verifyCloudBlobCounts(yms,cb){
@@ -253,10 +259,73 @@
     delete d._blobs;
     return d;
   }
+  /** 議事録フィールド（_blobs を除外して読むための既知キー） */
+  var MINUTES_FIELD_KEYS=[
+    'yearMonth','date','place','time_from','time_to','attendees','absentees',
+    'participants','agenda_text','other_reports','discussions','attachment_names',
+    'attachments','confirmed','confirmed_at','confirmed_by','members'
+  ];
+  function cacheMinutesLocal(ym,v){
+    if(!v)return;
+    try{
+      var ls=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+      ls[ym]=v;
+      localStorage.setItem(LS_KEY,JSON.stringify(ls));
+    }catch(e){}
+  }
+  function loadMinutesByKnownFields(ref,cb){
+    var pending=MINUTES_FIELD_KEYS.length;
+    var result={};
+    var any=false;
+    MINUTES_FIELD_KEYS.forEach(function(key){
+      ref.child(key).once('value',function(s){
+        var v=s.val();
+        if(v!==null&&v!==undefined){result[key]=v;any=true}
+        if(--pending===0)cb(any?result:null);
+      },function(){
+        if(--pending===0)cb(any?result:null);
+      });
+    });
+  }
+  /**
+   * 議事録本体のみ取得（_blobs＝添付バイナリを同時DLしない）
+   * 従来の ref.once('value') は _blobs ごと落とすため十数秒かかっていた
+   */
+  function loadMinutesFromFirebase(ym,ref,cb){
+    var url=ref.toString()+'.json?shallow=true';
+    fetch(url).then(function(r){
+      if(!r.ok)throw new Error('shallow '+r.status);
+      return r.json();
+    }).then(function(keys){
+      if(!keys||typeof keys!=='object'){cb(null);return}
+      var names=Object.keys(keys).filter(function(k){return k!=='_blobs'});
+      if(!names.length){cb(null);return}
+      var pending=names.length;
+      var result={};
+      var any=false;
+      names.forEach(function(name){
+        ref.child(name).once('value',function(s){
+          var v=s.val();
+          if(v!==null&&v!==undefined){result[name]=v;any=true}
+          if(--pending===0)cb(any?stripMinutesVal(result):null);
+        },function(){
+          if(--pending===0)cb(any?stripMinutesVal(result):null);
+        });
+      });
+    }).catch(function(){
+      loadMinutesByKnownFields(ref,function(v){cb(v?stripMinutesVal(v):null)});
+    });
+  }
   function loadMinutes(ym,cb){
     whenFirebaseReady(function(){
       var ref=fbRef(ym);
-      if(ref){ref.once('value',function(s){var v=stripMinutesVal(s.val());if(v){try{var ls=JSON.parse(localStorage.getItem(LS_KEY)||'{}');ls[ym]=v;localStorage.setItem(LS_KEY,JSON.stringify(ls))}catch(e){}}cb(v||null)},function(){cb(loadLocal(ym))});return}
+      if(ref){
+        loadMinutesFromFirebase(ym,ref,function(v){
+          if(v)cacheMinutesLocal(ym,v);
+          cb(v||loadLocal(ym));
+        });
+        return;
+      }
       cb(loadLocal(ym));
     });
   }
@@ -750,25 +819,40 @@
     });
   };
 
+  function metasWithYm(metas,ym){
+    return(metas||[]).map(function(m){
+      return{name:m.name,url:isHttpUrl(m.url)?m.url:'',size:m.size||0,storagePath:m.storagePath||'',fileKey:m.fileKey||'',ym:ym};
+    });
+  }
+  /**
+   * 表示用添付の解決（高速版）
+   * — クラウドの巨大base64を先読みしない（DL時に fileKey で取得）
+   * — IndexedDB は短時間だけ待ち、遅ければメタデータだけで描画
+   */
   function resolveAttachments(ym,minutesData,cb){
+    var metas=metasWithYm(collectAttachmentMeta(minutesData||{}),ym);
+    var settled=false;
+    function finish(list){
+      if(settled)return;
+      settled=true;
+      cb(list||[]);
+    }
+    var timer=setTimeout(function(){finish(metas.slice())},60);
     loadFilesFromLocal(ym,function(local){
+      clearTimeout(timer);
+      if(settled)return;
       var localUsable=(local||[]).filter(function(f){return f&&f.name&&f.url});
-      var metas=collectAttachmentMeta(minutesData||{});
-      if(!metas.length){
-        cb(localUsable);
-        return;
-      }
-      hydrateAttachmentsFromCloud(ym,metas,function(cloudFiles){
-        var cloudUsable=(cloudFiles||[]).filter(function(f){return f&&f.name&&f.url});
-        var merged=mergeAttachmentLists(cloudUsable,localUsable);
-        if(merged.length){
-          saveFilesToLocal(ym,merged);
-          cb(merged);
-          return;
-        }
-        if(localUsable.length){cb(localUsable);return}
-        cb(metas.filter(function(f){return f&&f.name}));
+      if(!metas.length){finish(localUsable);return}
+      var merged=metas.map(function(m){
+        if(m.url)return m;
+        var loc=localUsable.find(function(f){return f.name===m.name});
+        if(loc)return{name:m.name,url:loc.url,size:loc.size||m.size||0,fileKey:m.fileKey||'',storagePath:m.storagePath||'',ym:ym};
+        return m;
       });
+      localUsable.forEach(function(f){
+        if(!merged.some(function(m){return m.name===f.name}))merged.push(Object.assign({ym:ym},f));
+      });
+      finish(merged);
     });
   }
 
@@ -809,23 +893,48 @@
 
   function loadAllAndRender(wrap,role){
     var curYM=getSelectedComYM();var pYM=prevYM(curYM);
-    wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">読み込み中…</div>';
-    loadMinutes(pYM,function(prvData){
-      loadMinutes(curYM,function(curData){
-        try{
-          window._comMinutesData=curData||{};
-          resolveAttachments(curYM,curData||{},function(curFiles){
-            resolveAttachments(pYM,prvData||{},function(prvFiles){
-              finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
-              maybeAutoSyncAttachments(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
-            });
-          });
-        }catch(e){
-          console.error('[cm] load failed',e);
-          wrap.innerHTML='<div style="padding:20px;color:var(--rd);font-size:12px">議事録の表示に失敗しました。</div>';
+    var gen=(window._cmLoadGen=(window._cmLoadGen||0)+1);
+    try{
+      // 1) localStorage キャッシュで即描画（委員会タブを開いた瞬間に表示）
+      var localCur=loadLocal(curYM)||{};
+      var localPrv=loadLocal(pYM)||{};
+      if(Object.keys(localCur).length||Object.keys(localPrv).length){
+        window._comMinutesData=localCur;
+        finishLoadAndRender(
+          wrap,role,curYM,localCur,pYM,localPrv,
+          metasWithYm(collectAttachmentMeta(localCur),curYM),
+          metasWithYm(collectAttachmentMeta(localPrv),pYM)
+        );
+      }else{
+        wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">読み込み中…</div>';
+      }
+
+      // 2) Firebase から当月・前月を並列取得（_blobs 除外）して差し替え
+      var left=2;
+      var curData=null;
+      var prvData=null;
+      function onMinutesPair(){
+        if(--left>0)return;
+        if(gen!==window._cmLoadGen)return;
+        window._comMinutesData=curData||{};
+        var aLeft=2;
+        var curFiles=[];
+        var prvFiles=[];
+        function onFilesPair(){
+          if(--aLeft>0)return;
+          if(gen!==window._cmLoadGen)return;
+          finishLoadAndRender(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
+          maybeAutoSyncAttachments(wrap,role,curYM,curData||{},pYM,prvData||{},curFiles||[],prvFiles||[]);
         }
-      });
-    });
+        resolveAttachments(curYM,curData||{},function(f){curFiles=f||[];onFilesPair()});
+        resolveAttachments(pYM,prvData||{},function(f){prvFiles=f||[];onFilesPair()});
+      }
+      loadMinutes(pYM,function(d){prvData=d||{};onMinutesPair()});
+      loadMinutes(curYM,function(d){curData=d||{};onMinutesPair()});
+    }catch(e){
+      console.error('[cm] load failed',e);
+      wrap.innerHTML='<div style="padding:20px;color:var(--rd);font-size:12px">議事録の表示に失敗しました。</div>';
+    }
   }
   global.comMinutesInit=function(role){
     var wrap=document.getElementById('comMinutesWrap');if(!wrap)return;
