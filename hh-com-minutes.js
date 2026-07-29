@@ -564,7 +564,8 @@
 
     h+='<div class="cm-section"><div class="cm-sh">付随書類</div>';
     if(isEditable){
-      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv" style="font-size:11px" onchange="comMinutesAddFiles(this)"></div>';
+      h+='<div style="margin-bottom:6px"><input type="file" id="'+prefix+'FileInput" multiple accept="*/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.csv,.heic,.heif" style="font-size:11px"></div>';
+      h+='<div id="'+prefix+'FileStatus" style="font-size:10px;color:var(--t3);margin-bottom:4px"></div>';
     }
     var fileList=files||[];
     if(!fileList.length&&data&&data.attachments&&data.attachments.length)fileList=data.attachments;
@@ -626,8 +627,9 @@
     opts=opts||{};
     if(opts.pendingCloud==null)opts.pendingCloud=hasPendingCloudFiles(curFiles,prvFiles);
     var isOwner=role==='owner';
-    var canEdit=isOwner;
-    var showSyncBtn=isOwner||!!opts.canSyncAttachments||!!opts.pendingCloud;
+    // 議事録本文・添付は全ロールで編集可（確定ボタンのみ所有者）
+    var canEdit=true;
+    var showSyncBtn=isOwner||role==='admin'||!!opts.canSyncAttachments||!!opts.pendingCloud;
     window._cmDisplayFiles=[];
     ensureCmDownloadDelegation();
     var h='';
@@ -691,24 +693,76 @@
     return Math.round(bytes/1024)+'KB';
   }
 
+  function mergePendingLocalFiles(cloudFiles){
+    var pending=(window._cmPendingFiles||[]).filter(function(f){
+      return f&&f.name&&attachmentHasLocalData(f);
+    });
+    if(!pending.length)return cloudFiles||[];
+    return mergeAttachmentLists(pending,cloudFiles||[]);
+  }
+
+  function bindCmFileInput(){
+    var input=document.getElementById('cmCFileInput');
+    if(!input||input._cmBound)return;
+    input._cmBound=true;
+    input.addEventListener('change',function(){
+      global.comMinutesAddFiles(input);
+    });
+  }
+
   global.comMinutesAddFiles=function(input){
-    if(!input||!input.files)return;
-    var existing=window._cmPendingFiles||[];
-    var remaining=Array.from(input.files);
+    if(!input||!input.files||!input.files.length)return;
+    window._cmAddingFiles=true;
+    var remaining=[];
+    for(var i=0;i<input.files.length;i++)remaining.push(input.files[i]);
+    input.value='';
+    if(!Array.isArray(window._cmPendingFiles))window._cmPendingFiles=[];
+    var st=document.getElementById('cmCFileStatus');
     var idx=0;
+    function setStatus(msg){if(st)st.textContent=msg||''}
+    function finishAdd(){
+      window._cmAddingFiles=false;
+      setStatus(remaining.length?'✓ '+remaining.length+'件を添付しました（保存ボタンで確定）':'');
+      try{saveFilesToLocal(getSelectedComYM(),window._cmPendingFiles||[])}catch(e){}
+      if(window._cmDeferredRenderArgs){
+        var a=window._cmDeferredRenderArgs;window._cmDeferredRenderArgs=null;
+        a[6]=mergePendingLocalFiles(a[6]);
+        finishLoadAndRender.apply(null,a);
+        setStatus(remaining.length?'✓ '+remaining.length+'件を添付しました（保存ボタンで確定）':'');
+      }else{
+        refreshFileList();
+      }
+    }
     function next(){
-      if(idx>=remaining.length){window._cmPendingFiles=existing;refreshFileList();return}
+      if(idx>=remaining.length){finishAdd();return}
       var file=remaining[idx++];
+      setStatus('読み込み中… ('+idx+'/'+remaining.length+') '+file.name);
+      if(file.size>20*1024*1024){
+        alert(file.name+' は大きすぎます（20MB以下にしてください）');
+        next();
+        return;
+      }
       var reader=new FileReader();
       reader.onload=function(){
-        existing.push({name:file.name,url:reader.result,size:file.size});
+        var list=window._cmPendingFiles||(window._cmPendingFiles=[]);
+        var ix=-1;
+        for(var j=0;j<list.length;j++){if(list[j]&&list[j].name===file.name){ix=j;break}}
+        var item={name:file.name,url:reader.result,size:file.size||0};
+        if(ix>=0)list[ix]=item;else list.push(item);
+        window._cmPendingFiles=list;
+        refreshFileList();
         next();
       };
-      reader.onerror=function(){alert(file.name+' の読み込みに失敗しました');next()};
-      reader.readAsDataURL(file);
+      reader.onerror=function(){
+        alert(file.name+' の読み込みに失敗しました');
+        next();
+      };
+      try{reader.readAsDataURL(file)}catch(e){
+        alert(file.name+' の読み込みに失敗しました: '+(e&&e.message?e.message:e));
+        next();
+      }
     }
     next();
-    input.value='';
   };
 
   global.comMinutesRemoveFile=function(idx){
@@ -716,17 +770,19 @@
     files.splice(idx,1);
     window._cmPendingFiles=files;
     refreshFileList();
+    try{saveFilesToLocal(getSelectedComYM(),files)}catch(e){}
   };
 
   function refreshFileList(){
     var list=document.getElementById('cmCFileList');if(!list)return;
     var files=window._cmPendingFiles||[];
+    var ym=getSelectedComYM();
     if(!files.length){list.innerHTML='<div style="font-size:10px;color:var(--t3);padding:4px 0">（なし）</div>';return}
     var h='';
     files.forEach(function(f,i){
       h+='<div class="cm-file-item" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px">';
       h+='<span style="flex:1;word-break:break-all">📎 '+esc(f.name)+' <span style="color:var(--t3);font-size:9px">('+formatSize(f.size||0)+')</span></span>';
-      h+=fileActionLinks(f,getSelectedComYM());
+      h+=fileActionLinks(f,ym);
       h+='<button type="button" style="border:none;background:none;color:var(--rd);cursor:pointer;font-size:12px;padding:2px 4px" onclick="comMinutesRemoveFile('+i+')">✕</button>';
       h+='</div>';
     });
@@ -858,37 +914,29 @@
 
   function finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles,opts){
     opts=opts||{};
+    // ファイル選択中の再描画は後回し（選択結果が消えるのを防ぐ）
+    curFiles=mergePendingLocalFiles(curFiles);
+    if(window._cmAddingFiles){
+      window._cmPendingFiles=curFiles||[];
+      window._cmDeferredRenderArgs=[wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles,opts];
+      return;
+    }
+    window._cmDeferredRenderArgs=null;
     var canSync=needsAttachmentShareSync(curData,curFiles)||needsAttachmentShareSync(prvData,prvFiles);
     if(canSync&&!opts.canSyncAttachments)opts.canSyncAttachments=true;
     if(opts.pendingCloud==null)opts.pendingCloud=hasPendingCloudFiles(curFiles,prvFiles);
     window._cmPendingFiles=curFiles||[];
     wrap.innerHTML=buildFullHtml(curYM,curData,pYM,prvData,role,curFiles,prvFiles,opts);
-  }
-
-  function runAttachmentCloudSync(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles,onDone){
-    var st=document.getElementById('cmSyncStatus')||document.getElementById('cmStatus');
-    if(st)st.textContent='添付をクラウド同期中…（初回は数十秒かかることがあります）';
-    var allErrors=[];
-    syncAttachmentsToCloud(curYM,curData,curFiles||[],function(err,curSynced,curErrs){
-      if(curErrs&&curErrs.length)allErrors=allErrors.concat(curErrs);
-      var curFinal=mergeAttachmentLists(curSynced||[],curFiles||[]);
-      syncAttachmentsToCloud(pYM,prvData,prvFiles||[],function(err2,prvSynced,prvErrs){
-        if(prvErrs&&prvErrs.length)allErrors=allErrors.concat(prvErrs);
-        var prvFinal=mergeAttachmentLists(prvSynced||[],prvFiles||[]);
-        var all=(curSynced||[]).concat(prvSynced||[]);
-        var ok=all.some(hasShareableAttachment);
-        verifyCloudBlobCounts([curYM,pYM],function(blobCounts){
-          var msg=formatSyncResultMsg(ok,allErrors,blobCounts);
-          finishLoadAndRender(wrap,role,curYM,curData,pYM,prvData,curFinal,prvFinal,{syncMsg:msg,canSyncAttachments:!Object.values(blobCounts||{}).reduce(function(a,n){return a+(+n||0)},0)&&(needsAttachmentShareSync(curData,curFinal)||needsAttachmentShareSync(prvData,prvFinal))});
-          if(typeof onDone==='function')onDone(err||err2||allErrors[0],Object.values(blobCounts||{}).reduce(function(a,n){return a+(+n||0)},0)>0);
-        });
-      });
-    });
+    bindCmFileInput();
   }
 
   function maybeAutoSyncAttachments(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles){
+    if(window._cmAddingFiles)return;
     if(!needsAttachmentShareSync(curData,curFiles)&&!needsAttachmentShareSync(prvData,prvFiles))return;
-    setTimeout(function(){runAttachmentCloudSync(wrap,role,curYM,curData,pYM,prvData,curFiles,prvFiles)},300);
+    setTimeout(function(){
+      if(window._cmAddingFiles)return;
+      runAttachmentCloudSync(wrap,role,curYM,curData,pYM,prvData,mergePendingLocalFiles(curFiles),prvFiles);
+    },300);
   }
 
   function loadAllAndRender(wrap,role){
