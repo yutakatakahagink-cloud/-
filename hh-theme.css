@@ -570,3 +570,52 @@ body.hh-sora .dis-detail-print {
   color: #000 !important;
   border-color: var(--bd) !important;
 }
+
+/* 規定関連：白背景のカードとポップアップは黒文字を維持 */
+body.hh-sora .reg-card {
+  background: #fff !important;
+  border-color: var(--bd) !important;
+}
+body.hh-sora .reg-title { color: #111827 !important; }
+body.hh-sora .reg-desc { color: #475569 !important; }
+body.hh-sora .reg-dl { color: #1D4ED8 !important; }
+body.hh-sora .reg-ico {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1D4ED8 !important;
+}
+
+body.hh-sora #kiteiModal .kt-panel { background: #fff !important; }
+body.hh-sora #kiteiModal .kt-head {
+  background: #F8FAFC !important;
+  border-bottom-color: #E2E8F0 !important;
+}
+body.hh-sora #kiteiModal .kt-close {
+  background: #F1F5F9 !important;
+  color: #334155 !important;
+}
+body.hh-sora #kiteiModal .kt-title,
+body.hh-sora #kiteiModal .kt-body,
+body.hh-sora #kiteiModal .kt-body h1,
+body.hh-sora #kiteiModal .kt-body h2,
+body.hh-sora #kiteiModal .kt-body p,
+body.hh-sora #kiteiModal .kt-body li,
+body.hh-sora #kiteiModal .kt-body b,
+body.hh-sora #kiteiModal .kt-body td,
+body.hh-sora #kiteiModal .kt-body th,
+body.hh-sora #kiteiModal .kt-foot,
+body.hh-sora #kiteiModal .kt-qa b {
+  color: #111827 !important;
+}
+body.hh-sora #kiteiModal .kt-body h2 { border-bottom-color: #E2E8F0 !important; }
+body.hh-sora #kiteiModal .kt-body h3 { color: #1D4ED8 !important; }
+body.hh-sora #kiteiModal .kt-note { color: #64748B !important; }
+body.hh-sora #kiteiModal .kt-sub { color: #334155 !important; }
+body.hh-sora #kiteiModal .kt-qa {
+  background: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+body.hh-sora #kiteiModal .kt-qa p { color: #334155 !important; }
+body.hh-sora #kiteiModal .kt-foot { background: rgba(37, 99, 235, 0.06) !important; }
+body.hh-sora #kiteiModal .kt-table th { background: #F1F5F9 !important; }
+body.hh-sora #kiteiModal .kt-table th,
+body.hh-sora #kiteiModal .kt-table td { border-color: #E2E8F0 !important; }
