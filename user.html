@@ -1269,7 +1269,7 @@ function onNameSel(){
   if(!name){info.style.display='none';btn.disabled=true;return}
   if(name==='__other__'){var dept=(dSel||document.getElementById('loginDept')).value;info.style.display='block';info.innerHTML='<b>その他</b>（'+dept+'）／ログイン後に氏名を入力してください';btn.disabled=false;return}
   const e=EMP.find(x=>x.name===name);
-  if(e){info.style.display='block';info.innerHTML=`<b>${e.name}</b>（${e.kubun}）/ ${e.age}歳（${e.ageRange}）/ ${e.dept}`;btn.disabled=false}
+  if(e){info.style.display='block';info.innerHTML=`<b>${e.name}</b>（${e.kubun}）/ ${e.dept}`;btn.disabled=false}
 }
 function doLogin(){
   const name=document.getElementById('loginName').value;
