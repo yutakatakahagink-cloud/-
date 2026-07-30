@@ -824,9 +824,8 @@
       return '';
     }
     var idStr = String(id).replace(/'/g, "\\'");
-    var addendumBlock = isLiteDisViewer()
-      ? ''
-      : '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
+    var addendumBlock =
+        '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
         '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">承認者による追記・訂正</div>' +
         '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと<b>報告書の該当箇所</b>に追記として表示されます（承認者名は小さく赤色）。一覧のみにしたい場合は先頭を選んでください。</p>' +
         (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
