@@ -6,12 +6,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-build" content="20260731-login-fix">
+<meta name="app-build" content="20260731-draft-save">
 <title>安全衛生管理（使用者）</title>
 <script>
 /* 古いHTMLキャッシュを破棄して最新版を強制読込 */
 (function(){
-  var BUILD='20260731-login-fix';
+  var BUILD='20260731-draft-save';
   try{
     var prev=localStorage.getItem('hh_app_build');
     if(prev!==BUILD){
@@ -708,7 +708,10 @@ input[type="file"].photo-input{display:none}
   <div class="fg"><label class="fl">発生原因</label><textarea class="ft" id="f_cause" placeholder="事故の原因を記入"></textarea></div>
   <div class="fg"><label class="fl">再発防止措置</label><textarea class="ft" id="f_measure" placeholder="再発防止のための対策"></textarea></div>
   <div class="fg"><label class="fl">報告書作成者</label><input class="fi" id="f_reporter" readonly></div>
-  <button class="sub" onclick="doDisSubmit()">報告書を送信する</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+    <button class="sub" onclick="doDisSubmit()" style="flex:1;min-width:140px;margin:0">報告書を送信する</button>
+    <button type="button" class="fp" onclick="saveDisasterDraft()" style="padding:12px 16px;font-size:13px;border-radius:var(--rs);border:1px solid #6A1B9A;background:rgba(106,27,154,.08);color:#6A1B9A;font-weight:600;cursor:pointer">💾 仮保存</button>
+  </div>
   </div>
   <div class="dis-form-pc">
   <div id="disReturnedEditBanner" style="display:none;margin:0 0 12px;padding:12px;background:#F0F4F8;border:1px solid #3B82F6;border-radius:8px;font-size:12px;line-height:1.5">
@@ -782,7 +785,18 @@ input[type="file"].photo-input{display:none}
   </div>
   <div class="dis-report-block"><div class="dis-report-msg">上記のとおり相違なく報告いたします。</div><div class="dis-report-date" style="justify-content:flex-end"><input class="fi" type="date" id="f_report_date_pc" style="width:140px"></div></div>
   <div id="disReturnedOptionalNoteWrap" style="display:none;margin-top:14px"><div class="fg"><label class="fl">差戻しへの補足（任意）</label><textarea class="ft" id="disWfReturnedOptionalNote" placeholder="フォーム修正に加えて追記するコメント" style="min-height:56px"></textarea></div></div>
-  <button class="sub" id="btnDisSubmitPC" onclick="doDisSubmitPC()" style="margin-top:16px">報告書を提出する</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+    <button class="sub" id="btnDisSubmitPC" onclick="doDisSubmitPC()" style="flex:1;min-width:160px;margin:0">報告書を提出する</button>
+    <button type="button" class="fp" onclick="saveDisasterDraftPC()" style="padding:12px 20px;font-size:13px;border-radius:var(--rs);border:1px solid #6A1B9A;background:rgba(106,27,154,.08);color:#6A1B9A;font-weight:600;cursor:pointer">💾 仮保存</button>
+  </div>
+  <div id="disDraftBanner" style="display:none;margin-top:12px;padding:10px 12px;background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;font-size:12px">
+    <strong style="color:#E65100">📋 仮保存データがあります</strong>
+    <span id="disDraftDate" style="font-size:11px;color:var(--t3);margin-left:8px"></span>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="fp" onclick="loadDisasterDraft()" style="padding:6px 12px;font-size:11px;border-radius:6px;border:1px solid #E65100;background:#fff;color:#E65100;font-weight:600;cursor:pointer">読み込む</button>
+      <button type="button" class="fp" onclick="clearDisasterDraft()" style="padding:6px 12px;font-size:11px;border-radius:6px;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:600;cursor:pointer">削除</button>
+    </div>
+  </div>
   </div>
   <div id="disWfMailPrompt" style="display:none;margin-top:14px;padding:14px;background:#F0F4F8;border:1px solid #3B82F6;border-radius:var(--rs);font-size:12px;line-height:1.55;color:var(--t1)">
     <strong style="color:#2563EB">承認依頼メール（再送）</strong>
@@ -1341,6 +1355,7 @@ function goTo(pgId,opts){
       if(dfa)dfa.style.display='block';if(dla)dla.style.display='none';
       if(!window._disEditReturnedId){fillDisFormDefaults()}
       updateDisReturnedEditUi();
+      if(typeof checkDisDraftBanner==='function')checkDisDraftBanner();
     }
   }
   if(pgId==='pD')rDash();
@@ -2345,6 +2360,9 @@ function doDisSubmitPC(){
     window._disPendingMailRec=rec.wf?rec:null;
     var bp=document.getElementById('disWfMailPrompt');if(bp)bp.style.display=rec.wf&&typeof disasterNeedPrepareMailtoOnSubmit==='function'&&disasterNeedPrepareMailtoOnSubmit()?'block':'none';
     resetDisasterFormPC();
+    var draftKey=typeof getDisDraftKey==='function'?getDisDraftKey():null;
+    if(draftKey)try{localStorage.removeItem(draftKey)}catch(e){}
+    var dbanner=document.getElementById('disDraftBanner');if(dbanner)dbanner.style.display='none';
     if(rec.wf&&bp&&bp.style.display==='block'){try{bp.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){bp.scrollIntoView()}}
     if(rec.wf){
       var t=document.getElementById('toastDis');if(t){
@@ -2358,6 +2376,189 @@ function doDisSubmitPC(){
   disSubmitRunAfterListReady(savePc);
   }catch(err){alert('送信エラー: '+err.message);console.error('doDisSubmitPC error',err)}
 }
+
+// ===== 災害報告書 仮保存機能 =====
+function getDisDraftKey(){
+  if(!CUR||!CUR.name)return null;
+  return 'hh_disaster_draft_'+CUR.name;
+}
+function collectDisPcDraftData(){
+  var d={};
+  d.savedAt=new Date().toISOString();
+  d.keigen=document.getElementById('f_keigen_pc')?.value||'';
+  d.dt_y=document.getElementById('f_dt_y_pc')?.value||'';
+  d.dt_m=document.getElementById('f_dt_m_pc')?.value||'';
+  d.dt_d=document.getElementById('f_dt_d_pc')?.value||'';
+  d.dt_h=document.getElementById('f_dt_h_pc')?.value||'';
+  d.dt_min=document.getElementById('f_dt_min_pc')?.value||'';
+  d.basho=document.getElementById('f_basho_pc')?.value||'';
+  d.basho_jusho=document.getElementById('f_basho_jusho_pc')?.value||'';
+  d.jusho=document.getElementById('f_jusho_pc')?.value||'';
+  d.victim=document.getElementById('f_victim_pc')?.value||'';
+  d.birth_y=document.getElementById('f_birth_y_pc')?.value||'';
+  d.birth_m=document.getElementById('f_birth_m_pc')?.value||'';
+  d.birth_d=document.getElementById('f_birth_d_pc')?.value||'';
+  d.victim_dept=document.getElementById('f_victim_dept_pc')?.value||'';
+  d.hire_y=document.getElementById('f_hire_y_pc')?.value||'';
+  d.hire_m=document.getElementById('f_hire_m_pc')?.value||'';
+  d.shobyomei=document.getElementById('f_shobyomei_pc')?.value||'';
+  d.byoin=document.getElementById('f_byoin_pc')?.value||'';
+  d.koui=document.querySelector('input[name="koui_pc"]:checked')?.value||'';
+  d.kyugyo_type=document.querySelector('input[name="kyugyo_type_pc"]:checked')?.value||'';
+  d.kyugyo_days=document.getElementById('f_kyugyo_days_pc')?.value||'';
+  d.kyugyo_yen=document.getElementById('f_kyugyo_yen_pc')?.value||'';
+  d.gennin_aru=document.querySelector('input[name="gennin_aru_pc"]:checked')?.value||'';
+  d.shokumei=document.getElementById('f_shokumei_pc')?.value||'';
+  d.gennin=document.getElementById('f_gennin_pc')?.value||'';
+  d.kyukun_person=document.getElementById('f_kyukun_person_pc')?.value||'';
+  d.kyukun_equip=document.getElementById('f_kyukun_equip_pc')?.value||'';
+  d.kyukun_mgmt=document.getElementById('f_kyukun_mgmt_pc')?.value||'';
+  d.kiinbutsu=document.getElementById('f_kiinbutsu_pc')?.value||'';
+  d.fuanzen=document.getElementById('f_fuanzen_pc')?.value||'';
+  d.fuanzen_kodo=document.getElementById('f_fuanzen_kodo_pc')?.value||'';
+  d.jiko=document.getElementById('f_jiko_pc')?.value||'';
+  d.kanri=document.getElementById('f_kanri_pc')?.value||'';
+  d.basho_detail=document.getElementById('f_basho_detail_pc')?.value||'';
+  d.sagyo=document.getElementById('f_sagyo_pc')?.value||'';
+  d.genin_busshi=document.getElementById('f_genin_busshi_pc')?.value||'';
+  d.genin_jin=document.getElementById('f_genin_jin_pc')?.value||'';
+  d.kekka=document.getElementById('f_kekka_pc')?.value||'';
+  d.kaizen_honin=document.getElementById('f_kaizen_honin_pc')?.value||'';
+  d.kaizen_kantoku=document.getElementById('f_kaizen_kantoku_pc')?.value||'';
+  d.taisaku=document.getElementById('f_taisaku_pc')?.value||'';
+  d.report_date=document.getElementById('f_report_date_pc')?.value||'';
+  d.photos=(window._disPhotosPC||[]).slice(0,5);
+  d.photoNames=(window._disPhotosPC_names||[]).slice(0,5);
+  return d;
+}
+function saveDisasterDraftPC(){
+  if(!CUR){alert('ログインしてください');return}
+  var key=getDisDraftKey();if(!key)return;
+  var d=collectDisPcDraftData();
+  try{
+    localStorage.setItem(key,JSON.stringify(d));
+    var t=document.getElementById('toastDis');
+    if(t){t.textContent='💾 仮保存しました';t.style.background='#6A1B9A';t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.style.background='#E65100';t.textContent='送信しました'},2500)}
+    else alert('仮保存しました');
+    checkDisDraftBanner();
+  }catch(e){alert('仮保存に失敗しました: '+e.message)}
+}
+function saveDisasterDraft(){
+  if(!CUR){alert('ログインしてください');return}
+  var key=getDisDraftKey();if(!key)return;
+  var d={};
+  d.savedAt=new Date().toISOString();
+  d.form='mobile';
+  d.datetime=document.getElementById('f_datetime')?.value||'';
+  d.place=document.getElementById('f_place')?.value||'';
+  d.machine=document.getElementById('f_machine')?.value||'';
+  d.type=document.getElementById('f_type')?.value||'';
+  d.victim=document.getElementById('f_victim')?.value||'';
+  d.victim_dept=document.getElementById('f_victim_dept')?.value||'';
+  d.human_damage=document.getElementById('f_human_damage')?.value||'';
+  d.material_damage=document.getElementById('f_material_damage')?.value||'';
+  d.situation=document.getElementById('f_situation')?.value||'';
+  d.cause=document.getElementById('f_cause')?.value||'';
+  d.measure=document.getElementById('f_measure')?.value||'';
+  d.photos=(window._disPhotos||[]).slice(0,5);
+  d.photoNames=(window._disPhotos_names||[]).slice(0,5);
+  try{
+    localStorage.setItem(key,JSON.stringify(d));
+    var t=document.getElementById('toastDis');
+    if(t){t.textContent='💾 仮保存しました';t.style.background='#6A1B9A';t.classList.add('show');setTimeout(function(){t.classList.remove('show');t.style.background='#E65100';t.textContent='送信しました'},2500)}
+    else alert('仮保存しました');
+    checkDisDraftBanner();
+  }catch(e){alert('仮保存に失敗しました: '+e.message)}
+}
+function loadDisasterDraft(){
+  var key=getDisDraftKey();if(!key)return;
+  var raw;try{raw=localStorage.getItem(key)}catch(e){return}
+  if(!raw)return;
+  var d;try{d=JSON.parse(raw)}catch(e){return}
+  if(d.form==='mobile'){
+    if(d.datetime)document.getElementById('f_datetime').value=d.datetime;
+    if(d.place)document.getElementById('f_place').value=d.place;
+    if(d.machine)document.getElementById('f_machine').value=d.machine;
+    if(d.type)document.getElementById('f_type').value=d.type;
+    if(d.victim)document.getElementById('f_victim').value=d.victim;
+    if(d.victim_dept)document.getElementById('f_victim_dept').value=d.victim_dept;
+    if(d.human_damage)document.getElementById('f_human_damage').value=d.human_damage;
+    if(d.material_damage)document.getElementById('f_material_damage').value=d.material_damage;
+    if(d.situation)document.getElementById('f_situation').value=d.situation;
+    if(d.cause)document.getElementById('f_cause').value=d.cause;
+    if(d.measure)document.getElementById('f_measure').value=d.measure;
+    if(d.photos&&d.photos.length){window._disPhotos=d.photos.slice();window._disPhotos_names=d.photoNames||[];if(window._disPhotos_render)window._disPhotos_render()}
+    alert('仮保存データを読み込みました（モバイル版）');
+  }else{
+    if(d.keigen)document.getElementById('f_keigen_pc').value=d.keigen;
+    if(d.dt_y)document.getElementById('f_dt_y_pc').value=d.dt_y;
+    if(d.dt_m)document.getElementById('f_dt_m_pc').value=d.dt_m;
+    if(d.dt_d)document.getElementById('f_dt_d_pc').value=d.dt_d;
+    if(d.dt_h)document.getElementById('f_dt_h_pc').value=d.dt_h;
+    if(d.dt_min)document.getElementById('f_dt_min_pc').value=d.dt_min;
+    if(d.basho)document.getElementById('f_basho_pc').value=d.basho;
+    if(d.basho_jusho)document.getElementById('f_basho_jusho_pc').value=d.basho_jusho;
+    if(d.jusho)document.getElementById('f_jusho_pc').value=d.jusho;
+    if(d.victim)document.getElementById('f_victim_pc').value=d.victim;
+    if(d.birth_y)document.getElementById('f_birth_y_pc').value=d.birth_y;
+    if(d.birth_m)document.getElementById('f_birth_m_pc').value=d.birth_m;
+    if(d.birth_d)document.getElementById('f_birth_d_pc').value=d.birth_d;
+    if(d.victim_dept)document.getElementById('f_victim_dept_pc').value=d.victim_dept;
+    if(d.hire_y)document.getElementById('f_hire_y_pc').value=d.hire_y;
+    if(d.hire_m)document.getElementById('f_hire_m_pc').value=d.hire_m;
+    if(d.shobyomei)document.getElementById('f_shobyomei_pc').value=d.shobyomei;
+    if(d.byoin)document.getElementById('f_byoin_pc').value=d.byoin;
+    if(d.koui){var r=document.querySelector('input[name="koui_pc"][value="'+d.koui+'"]');if(r)r.checked=true}
+    if(d.kyugyo_type){var kt=document.querySelector('input[name="kyugyo_type_pc"][value="'+d.kyugyo_type+'"]');if(kt)kt.checked=true}
+    if(d.kyugyo_days)document.getElementById('f_kyugyo_days_pc').value=d.kyugyo_days;
+    if(d.kyugyo_yen)document.getElementById('f_kyugyo_yen_pc').value=d.kyugyo_yen;
+    if(d.gennin_aru){var ga=document.querySelector('input[name="gennin_aru_pc"][value="'+d.gennin_aru+'"]');if(ga)ga.checked=true}
+    if(d.shokumei)document.getElementById('f_shokumei_pc').value=d.shokumei;
+    if(d.gennin)document.getElementById('f_gennin_pc').value=d.gennin;
+    if(d.kyukun_person)document.getElementById('f_kyukun_person_pc').value=d.kyukun_person;
+    if(d.kyukun_equip)document.getElementById('f_kyukun_equip_pc').value=d.kyukun_equip;
+    if(d.kyukun_mgmt)document.getElementById('f_kyukun_mgmt_pc').value=d.kyukun_mgmt;
+    if(d.kiinbutsu)document.getElementById('f_kiinbutsu_pc').value=d.kiinbutsu;
+    if(d.fuanzen)document.getElementById('f_fuanzen_pc').value=d.fuanzen;
+    if(d.fuanzen_kodo)document.getElementById('f_fuanzen_kodo_pc').value=d.fuanzen_kodo;
+    if(d.jiko)document.getElementById('f_jiko_pc').value=d.jiko;
+    if(d.kanri)document.getElementById('f_kanri_pc').value=d.kanri;
+    if(d.basho_detail)document.getElementById('f_basho_detail_pc').value=d.basho_detail;
+    if(d.sagyo)document.getElementById('f_sagyo_pc').value=d.sagyo;
+    if(d.genin_busshi)document.getElementById('f_genin_busshi_pc').value=d.genin_busshi;
+    if(d.genin_jin)document.getElementById('f_genin_jin_pc').value=d.genin_jin;
+    if(d.kekka)document.getElementById('f_kekka_pc').value=d.kekka;
+    if(d.kaizen_honin)document.getElementById('f_kaizen_honin_pc').value=d.kaizen_honin;
+    if(d.kaizen_kantoku)document.getElementById('f_kaizen_kantoku_pc').value=d.kaizen_kantoku;
+    if(d.taisaku)document.getElementById('f_taisaku_pc').value=d.taisaku;
+    if(d.report_date)document.getElementById('f_report_date_pc').value=d.report_date;
+    if(d.photos&&d.photos.length){window._disPhotosPC=d.photos.slice();window._disPhotosPC_names=d.photoNames||[];if(window._disPhotosPC_render)window._disPhotosPC_render()}
+    updateDisWeekday();updateDisAge();updateDisExp();
+    alert('仮保存データを読み込みました');
+  }
+  var banner=document.getElementById('disDraftBanner');if(banner)banner.style.display='none';
+}
+function clearDisasterDraft(){
+  if(!confirm('仮保存データを削除しますか？'))return;
+  var key=getDisDraftKey();if(!key)return;
+  try{localStorage.removeItem(key)}catch(e){}
+  checkDisDraftBanner();
+  alert('仮保存データを削除しました');
+}
+function checkDisDraftBanner(){
+  var banner=document.getElementById('disDraftBanner');if(!banner)return;
+  var key=getDisDraftKey();if(!key){banner.style.display='none';return}
+  var raw;try{raw=localStorage.getItem(key)}catch(e){banner.style.display='none';return}
+  if(!raw){banner.style.display='none';return}
+  var d;try{d=JSON.parse(raw)}catch(e){banner.style.display='none';return}
+  banner.style.display='block';
+  var dateEl=document.getElementById('disDraftDate');
+  if(dateEl&&d.savedAt){
+    var dt=new Date(d.savedAt);
+    dateEl.textContent='（保存日時: '+dt.toLocaleString('ja-JP')+'）';
+  }
+}
+
 function disListRowUser(r){
   var dt=r.datetime||r.date||'—';var plc=r.place||r.basho||r.keigen||'—';var typ=r.type||r.jiko||'—';
   var badge='';
