@@ -821,11 +821,7 @@
       (expect ? '（承認者メール: ' + esc(expect) + '）' : '') +
       '</p>';
     if (!can) {
-      return (
-        '<div style="margin-top:12px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:12px">' +
-        hint +
-        '<p style="margin:0;color:var(--t3)">あなたのアカウントのメールアドレスがこの段階の承認者と一致しないため承認できません。所有者は全段階承認可能です。</p></div>'
-      );
+      return '';
     }
     var idStr = String(id).replace(/'/g, "\\'");
     var addendumBlock = isLiteDisViewer()
