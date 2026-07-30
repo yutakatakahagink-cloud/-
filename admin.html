@@ -6,11 +6,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-build" content="20260731-login-fix">
+<meta name="app-build" content="20260731-admin-approve">
 <title>安全衛生管理（管理者）</title>
 <script>
 (function(){
-  var BUILD='20260731-login-fix';
+  var BUILD='20260731-admin-approve';
   try{
     var prev=localStorage.getItem('hh_app_build');
     if(prev!==BUILD){
@@ -451,20 +451,30 @@ const WQ=[['pace','自分のペースで仕事ができた'],['autonomy','仕事
 })();
 
 function doAdminLogin(){
-  ADMIN_ACCOUNTS=JSON.parse(localStorage.getItem('hh_admins')||'[{"id":"admin","pass":"admin123","name":"管理者","email":""}]');
-  const id=document.getElementById('adminId').value.trim();
-  const pw=document.getElementById('adminPass').value;
-  const acc=ADMIN_ACCOUNTS.find(a=>a.id===id&&a.pass===pw);
-  if(!acc){document.getElementById('adminErr').style.display='block';return}
-  if(document.getElementById('adminRemember').checked){localStorage.setItem('hh_admin_login',JSON.stringify({id:id,pw:pw}))}else{localStorage.removeItem('hh_admin_login')}
-  CUR={name:acc.name,dept:'管理者',kubun:'管理者',ageRange:'—',honbu:'',email:(acc.email||'').trim()};
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('userPill').textContent='ログイン画面へ';
-  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
-  document.getElementById('pD').classList.add('on');
-  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
-  document.querySelector('.ni[data-p="pD"]').classList.add('on');
-  rDash();
+  function proceedLogin(){
+    ADMIN_ACCOUNTS=JSON.parse(localStorage.getItem('hh_admins')||'[{"id":"admin","pass":"admin123","name":"管理者","email":""}]');
+    const id=document.getElementById('adminId').value.trim();
+    const pw=document.getElementById('adminPass').value;
+    const acc=ADMIN_ACCOUNTS.find(a=>a.id===id&&a.pass===pw);
+    if(!acc){document.getElementById('adminErr').style.display='block';return}
+    if(document.getElementById('adminRemember').checked){localStorage.setItem('hh_admin_login',JSON.stringify({id:id,pw:pw}))}else{localStorage.removeItem('hh_admin_login')}
+    CUR={name:acc.name,dept:'管理者',kubun:'管理者',ageRange:'—',honbu:'',email:(acc.email||'').trim()};
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('userPill').textContent='ログイン画面へ';
+    document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+    document.getElementById('pD').classList.add('on');
+    document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+    document.querySelector('.ni[data-p="pD"]').classList.add('on');
+    rDash();
+  }
+  if(typeof HHDB!=='undefined'&&HHDB.loadAdmins&&HHDB.useFirebase&&HHDB.useFirebase()){
+    HHDB.loadAdmins(function(admins){
+      if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins))}catch(e){}}
+      proceedLogin();
+    });
+  }else{
+    proceedLogin();
+  }
 }
 
 document.getElementById('adminPass').addEventListener('keydown',function(e){if(e.key==='Enter')doAdminLogin()});
@@ -596,7 +606,7 @@ function doDataInit(){
     HHDB.loadDisasterReports(function(arr){DIS_LIST=arr||[]});
     HHDB.onReportsChange(function(arr){syncReportsFromCloud(arr||[])});
     if(HHDB.useFirebase()&&HHDB.onPhotosChange)HHDB.onPhotosChange(function(){reloadPhotosFromCloud()});
-    HHDB.onAdminsChange(function(admins){if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins))}catch(e){}}});
+    HHDB.onAdminsChange(function(admins){if(admins&&admins.length){ADMIN_ACCOUNTS=admins;try{localStorage.setItem('hh_admins',JSON.stringify(admins))}catch(e){}if(CUR&&CUR.name){var acc=admins.find(function(a){return a.name===CUR.name});if(acc)CUR.email=(acc.email||'').trim()}}});
     HHDB.onRequestsChange(function(arr){REQ_LIST=arr||[];if(typeof syncReqListToWindow==='function')syncReqListToWindow(REQ_LIST);if(document.querySelector('#pReq.pg.on'))rReqList()});
     HHDB.onDisasterChange(function(arr){DIS_LIST=arr||[];if(document.querySelector('#pDis.pg.on'))rDisList()});
     if(typeof disasterLoadWfConfig==='function')disasterLoadWfConfig(function(){if(document.querySelector('#pDis.pg.on'))rDisList()});
