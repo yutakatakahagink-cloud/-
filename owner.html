@@ -7,10 +7,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-build" content="20260730-kitei2">
+<meta name="app-build" content="20260731-owner-edit">
 <script>
 (function(){
-  var BUILD='20260730-kitei2';
+  var BUILD='20260731-owner-edit';
   try{
     var prev=localStorage.getItem('hh_app_build');
     if(prev!==BUILD){
@@ -970,15 +970,18 @@ function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;
   var h=typeof disasterBuildDetailHtml==='function'?disasterBuildDetailHtml(r,{formFormat:true}):'';
   if(typeof disasterWrapDetailWithStamps==='function')h=disasterWrapDetailWithStamps(h,r);
-  var ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
-  // 所有者のみ：詳細モーダル下部に編集（確定済みのみ）・削除ボタンを追加
+  // 所有者は履歴非表示（ステータス・管理パネルのみ）
+  var ex='';
+  if(typeof ROLE!=='undefined'&&ROLE==='owner'){
+    ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
+  }else{
+    ex=(typeof disasterWfStatusBanner==='function'?disasterWfStatusBanner(r):'')+(typeof disasterWfHistoryHtml==='function'?disasterWfHistoryHtml(r):'')+(typeof disasterWfAdminPanelHtml==='function'?disasterWfAdminPanelHtml(r,id,CUR?CUR.email||'':'',CUR?CUR.name||'':'',disasterIsOwnerSession()):'');
+  }
+  // 所有者のみ：詳細モーダル下部に編集・削除ボタンを追加（全報告で編集可）
   var ownerActions='';
   if(typeof ROLE!=='undefined'&&ROLE==='owner'){
     var idEsc=String(id||'').replace(/'/g,"\\'");
-    var editBtn='';
-    if(r.wf&&r.wf.state==='final'){
-      editBtn='<button type="button" onclick="ownerEditDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #1E293B;background:#1E293B;color:#fff;font-weight:700;cursor:pointer">✎ 承認済み報告を修正（所有者）</button>';
-    }
+    var editBtn='<button type="button" onclick="ownerEditDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #1E293B;background:#1E293B;color:#fff;font-weight:700;cursor:pointer">✎ この報告を修正（所有者）</button>';
     var delBtn='<button type="button" onclick="ownerDeleteDisasterReport(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid #B71C1C;background:#B71C1C;color:#fff;font-weight:700;cursor:pointer">🗑 この災害発生報告を削除（所有者）</button>';
     ownerActions='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #FFCDD2;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'+editBtn+delBtn+'</div>';
   }
@@ -1230,9 +1233,8 @@ function ownerDeleteDisasterReport(id){
   _ownerToast('✓ 災害発生報告を削除しました');
 }
 
-// ===== OWNER: 承認確定済み災害発生報告の修正 =====
-// 承認の降りた（final）災害報告について所有者のみフィールドを修正できる。
-// 変更内容は wf.history と wf.report_addenda に記録される。
+// ===== OWNER: 災害発生報告の修正 =====
+// 所有者は全ての災害報告を直接修正できる。
 var OWNER_DIS_EDIT_FIELDS=[
   // 報告情報
   {g:'報告情報',k:'report_date',l:'報告日',t:'text'},
@@ -1303,12 +1305,11 @@ function ownerEditDisasterReport(id){
   if(!_ownerAssertOwner())return;
   var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
   if(!r){alert('対象の災害発生報告が見つかりません');return}
-  if(!r.wf||r.wf.state!=='final'){alert('承認確定済み（final）の報告のみ修正できます');return}
   var idEsc=String(id||'').replace(/'/g,"\\'");
   var groups={};
   OWNER_DIS_EDIT_FIELDS.forEach(function(f){if(!groups[f.g])groups[f.g]=[];groups[f.g].push(f)});
   var body='<div style="padding:14px 16px;max-height:60vh;overflow-y:auto;background:#FAFAFA">';
-  body+='<div style="padding:10px 14px;background:#F0F4F8;border-left:4px solid #2563EB;border-radius:6px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:4px">⚠ 承認確定済み報告の修正（所有者）</div><div style="font-size:11px;color:#2563EB;line-height:1.5">この報告はすでに承認が完了しています。修正内容は履歴に記録され、変更前後の値も残ります。<br>軽微な誤記訂正・追記情報の反映等にお使いください。</div></div>';
+  body+='<div style="padding:10px 14px;background:#F0F4F8;border-left:4px solid #2563EB;border-radius:6px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:4px">災害発生報告の修正（所有者）</div><div style="font-size:11px;color:#2563EB;line-height:1.5">内容を修正して保存できます。</div></div>';
   Object.keys(groups).forEach(function(gn){
     body+='<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#1E293B;padding:6px 10px;background:#F0F4F8;border-radius:4px;margin-bottom:8px">'+_ownerEscHtml(gn)+'</div>';
     groups[gn].forEach(function(f){
@@ -1342,7 +1343,6 @@ function ownerSaveEditedDisasterReport(id){
   if(!_ownerAssertOwner())return;
   var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
   if(!r){alert('対象の災害発生報告が見つかりません');return}
-  if(!r.wf||r.wf.state!=='final'){alert('承認確定済み（final）の報告のみ修正できます');return}
   var changed=0;
   document.querySelectorAll('[data-owner-edit-key]').forEach(function(el){
     var k=el.getAttribute('data-owner-edit-key');
