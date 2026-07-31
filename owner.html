@@ -7,10 +7,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-build" content="20260731-login-fix">
+<meta name="app-build" content="20260731-owner-addenda">
 <script>
 (function(){
-  var BUILD='20260731-login-fix';
+  var BUILD='20260731-owner-addenda';
   try{
     var prev=localStorage.getItem('hh_app_build');
     if(prev!==BUILD){
@@ -619,7 +619,7 @@ select,input,textarea,button{color:var(--t1)}
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260728-fukuoka"></script>
 <script src="hh-com-disaster.js?v=20260728-fukuoka"></script>
-<script src="disaster-workflow.js?v=20260731-addenda-edit"></script>
+<script src="disaster-workflow.js?v=20260731-owner-addenda"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
 <script src="disaster-detail-html.js?v=20260731-addenda-edit"></script>
@@ -1335,6 +1335,61 @@ var OWNER_DIS_EDIT_FIELDS=[
 
 function _ownerEscHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
+var OWNER_ADDENDA_FIELD_OPTS=[
+  {v:'',l:'下部の「追記一覧」のみ（欄未指定）'},
+  {v:'taisaku',l:'【対策】'},
+  {v:'basho_detail',l:'●場所(・・・で)'},
+  {v:'sagyo',l:'●作業(・・・しているとき)'},
+  {v:'genin_busshi',l:'●原因 — 物・環境的要因'},
+  {v:'genin_jin',l:'●原因 — 人的要因'},
+  {v:'kekka',l:'●結果(・・・した)'},
+  {v:'kaizen_honin',l:'こうすればよかった — 本人'},
+  {v:'kaizen_kantoku',l:'こうすればよかった — 監督者'},
+  {v:'kyukun_person',l:'教訓（人）'},
+  {v:'kyukun_equip',l:'教訓（設備）'},
+  {v:'kyukun_mgmt',l:'教訓（管理）'},
+  {v:'keigen',l:'工事件名'},
+  {v:'basho',l:'災害場所'},
+  {v:'basho_jusho',l:'住所（災害場所）'},
+  {v:'shobyomei',l:'傷病名（損害状況）'}
+];
+
+function _ownerAddendaFieldSelectHtml(selected){
+  var cur=String(selected==null?'':selected);
+  return OWNER_ADDENDA_FIELD_OPTS.map(function(o){
+    return '<option value="'+_ownerEscHtml(o.v)+'"'+(o.v===cur?' selected':'')+'>'+_ownerEscHtml(o.l)+'</option>';
+  }).join('');
+}
+
+function ownerMarkAddendaDeleted(btn){
+  var row=btn&&btn.closest?btn.closest('[data-owner-addenda-row]'):null;
+  if(!row)return;
+  var del=row.getAttribute('data-owner-addenda-deleted')==='1';
+  if(del){
+    row.setAttribute('data-owner-addenda-deleted','0');
+    row.style.opacity='1';
+    row.style.outline='';
+    btn.textContent='削除';
+    btn.style.background='#fff';
+    btn.style.color='#B71C1C';
+    var ta=row.querySelector('[data-owner-addenda-text]');
+    var fs=row.querySelector('[data-owner-addenda-field]');
+    if(ta)ta.disabled=false;
+    if(fs)fs.disabled=false;
+  }else{
+    row.setAttribute('data-owner-addenda-deleted','1');
+    row.style.opacity='0.45';
+    row.style.outline='2px dashed #E57373';
+    btn.textContent='削除取消';
+    btn.style.background='#FFEBEE';
+    btn.style.color='#C62828';
+    var ta2=row.querySelector('[data-owner-addenda-text]');
+    var fs2=row.querySelector('[data-owner-addenda-field]');
+    if(ta2)ta2.disabled=true;
+    if(fs2)fs2.disabled=true;
+  }
+}
+
 function ownerEditDisasterReport(id){
   if(!_ownerAssertOwner())return;
   var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
@@ -1343,7 +1398,7 @@ function ownerEditDisasterReport(id){
   var groups={};
   OWNER_DIS_EDIT_FIELDS.forEach(function(f){if(!groups[f.g])groups[f.g]=[];groups[f.g].push(f)});
   var body='<div style="padding:14px 16px;max-height:60vh;overflow-y:auto;background:#FAFAFA">';
-  body+='<div style="padding:10px 14px;background:#F0F4F8;border-left:4px solid #2563EB;border-radius:6px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:4px">災害発生報告の修正（所有者）</div><div style="font-size:11px;color:#2563EB;line-height:1.5">内容を修正して保存できます。</div></div>';
+  body+='<div style="padding:10px 14px;background:#F0F4F8;border-left:4px solid #2563EB;border-radius:6px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#1E293B;margin-bottom:4px">災害発生報告の修正（所有者）</div><div style="font-size:11px;color:#2563EB;line-height:1.5">報告内容と承認者の追記を修正・削除して保存できます。</div></div>';
   Object.keys(groups).forEach(function(gn){
     body+='<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#1E293B;padding:6px 10px;background:#F0F4F8;border-radius:4px;margin-bottom:8px">'+_ownerEscHtml(gn)+'</div>';
     groups[gn].forEach(function(f){
@@ -1359,6 +1414,37 @@ function ownerEditDisasterReport(id){
     });
     body+='</div>';
   });
+  var addenda=(r.wf&&Array.isArray(r.wf.report_addenda))?r.wf.report_addenda:[];
+  body+='<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#B71C1C;padding:6px 10px;background:#FFEBEE;border-radius:4px;margin-bottom:8px">承認者の追記（修正・削除可）</div>';
+  if(!addenda.length){
+    body+='<p style="font-size:12px;color:var(--t3);margin:0 0 8px;padding:0 4px">承認者の追記はありません。</p>';
+  }else{
+    body+='<p style="font-size:11px;color:var(--t2);margin:0 0 10px;line-height:1.5">赤文字で報告書に表示される追記です。内容の修正、差し込み欄の変更、削除ができます。</p>';
+    addenda.forEach(function(e,i){
+      if(!e)return;
+      var isAppr=String(e.role||'').indexOf('承認者')!==-1;
+      var aid=e.id!=null?String(e.id):('idx'+i);
+      var txt=e.text==null?'':String(e.text);
+      var by=e.approver_display_name||e.by||'';
+      var role=e.role||(isAppr?'承認者追記':'追記');
+      var at=e.at||'';
+      if(typeof disasterFormatAtJst==='function'&&at)at=disasterFormatAtJst(at);
+      body+='<div data-owner-addenda-row data-owner-addenda-index="'+i+'" data-owner-addenda-id="'+_ownerEscHtml(aid)+'" data-owner-addenda-deleted="0" style="margin:0 0 12px;padding:12px;background:#fff;border:1px solid #FFCDD2;border-radius:8px">';
+      body+='<div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between;margin-bottom:8px">';
+      body+='<div style="font-size:11px;line-height:1.45;color:#333"><strong style="color:#C62828">'+_ownerEscHtml(role)+'</strong>';
+      if(by)body+='　'+_ownerEscHtml(by);
+      if(at)body+='<div style="font-size:10px;color:#888;margin-top:2px">'+_ownerEscHtml(at)+'</div>';
+      body+='</div>';
+      body+='<button type="button" onclick="ownerMarkAddendaDeleted(this)" style="flex-shrink:0;padding:6px 10px;font-size:11px;border-radius:8px;border:1px solid #B71C1C;background:#fff;color:#B71C1C;font-weight:700;cursor:pointer">削除</button>';
+      body+='</div>';
+      body+='<label class="fl" style="font-size:11px;color:var(--t2);margin-bottom:2px">追記内容</label>';
+      body+='<textarea data-owner-addenda-text rows="3" style="width:100%;padding:7px 9px;border:1px solid #EF9A9A;border-radius:6px;font-size:12px;font-family:inherit;resize:vertical;color:#C62828;margin-bottom:8px">'+_ownerEscHtml(txt)+'</textarea>';
+      body+='<label class="fl" style="font-size:11px;color:var(--t2);margin-bottom:2px">差し込み欄</label>';
+      body+='<select data-owner-addenda-field style="width:100%;padding:7px 9px;border:1px solid var(--bd);border-radius:6px;font-size:12px;background:#fff">'+_ownerAddendaFieldSelectHtml(e.field||'')+'</select>';
+      body+='</div>';
+    });
+  }
+  body+='</div>';
   body+='</div>';
   body+='<div style="padding:12px 16px;border-top:1px solid var(--bd);text-align:right;display:flex;gap:8px;justify-content:flex-end;background:#fff">';
   body+='<button type="button" class="fp" onclick="showDisDetail(\''+idEsc+'\')" style="padding:8px 16px;font-size:12px;border-radius:8px;border:1px solid var(--bd);background:#fff;color:var(--t1);font-weight:600;cursor:pointer">キャンセル</button>';
@@ -1384,6 +1470,52 @@ function ownerSaveEditedDisasterReport(id){
     var ov=r[k]==null?'':String(r[k]);
     if(nv!==ov){r[k]=nv;changed++}
   });
+  var addendaRows=document.querySelectorAll('[data-owner-addenda-row]');
+  if(addendaRows.length){
+    if(!r.wf)r.wf={};
+    var prev=Array.isArray(r.wf.report_addenda)?r.wf.report_addenda.slice():[];
+    var next=[];
+    var addendaChanged=0;
+    addendaRows.forEach(function(row){
+      var idx=parseInt(row.getAttribute('data-owner-addenda-index'),10);
+      var orig=prev[idx];
+      if(!orig)return;
+      if(row.getAttribute('data-owner-addenda-deleted')==='1'){
+        addendaChanged++;
+        return;
+      }
+      var ta=row.querySelector('[data-owner-addenda-text]');
+      var fs=row.querySelector('[data-owner-addenda-field]');
+      var nv=ta?String(ta.value==null?'':ta.value).trim():'';
+      if(!nv){
+        addendaChanged++;
+        return;
+      }
+      var copy={};
+      Object.keys(orig).forEach(function(k){copy[k]=orig[k]});
+      var ov=String(orig.text==null?'':orig.text);
+      var of=String(orig.field==null?'':orig.field);
+      var nf=fs?String(fs.value||'').trim():'';
+      if(nv!==ov||nf!==of)addendaChanged++;
+      copy.text=nv;
+      if(nf)copy.field=nf;
+      else delete copy.field;
+      copy.updated_at=new Date().toISOString();
+      copy.updated_by='所有者';
+      next.push(copy);
+    });
+    if(addendaChanged){
+      r.wf.report_addenda=next;
+      changed+=addendaChanged;
+      r.wf.history=Array.isArray(r.wf.history)?r.wf.history:[];
+      r.wf.history.push({
+        type:'owner_addenda_edit',
+        at:new Date().toISOString(),
+        by:'所有者',
+        note:'所有者による承認者追記の修正・削除'
+      });
+    }
+  }
   if(!changed){alert('変更がありません');return}
   if(typeof disasterSaveReports==='function')disasterSaveReports(DIS_LIST,id);
   else if(typeof HHDB!=='undefined'&&HHDB.saveDisasterReports)HHDB.saveDisasterReports(DIS_LIST);

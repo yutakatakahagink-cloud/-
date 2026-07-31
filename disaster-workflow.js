@@ -918,6 +918,7 @@
     revise: '再提出',
     approver_note: '承認者の追記・訂正',
     approver_note_edit: '承認者の追記修正',
+    owner_addenda_edit: '所有者による追記修正',
   };
 
   function isLiteDisViewer() {
