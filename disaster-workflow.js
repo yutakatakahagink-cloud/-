@@ -561,7 +561,15 @@
       var wfLab = stCur && String(stCur.label || '').trim();
       if (wfLab) displayName = wfLab;
     }
+    var entryId =
+      'ad' +
+      Date.now().toString(36) +
+      Math.random()
+        .toString(36)
+        .slice(2, 8);
     var entry = {
+      id: entryId,
+      step: Number(r.wf.step),
       at: now,
       by: displayName,
       role: '承認者追記（' + stepLab + '）',
@@ -578,7 +586,125 @@
       note: '報告書に追記（' + stepLab + '）',
     });
     disasterSaveReports(DIS_LIST, id);
-    return { ok: true };
+    return { ok: true, id: entryId };
+  };
+
+  /** 承認前のみ：当該段階で保存した追記を修正 */
+  global.disasterReviewerUpdateNote = function (
+    DIS_LIST,
+    id,
+    addendumId,
+    note,
+    approverName,
+    approverEmail,
+    isOwner,
+    publicToken,
+    publicStep,
+    targetField
+  ) {
+    var r = DIS_LIST.find(function (x) {
+      return String(x.id) === String(id);
+    });
+    if (!r || !r.wf) return { ok: false, msg: '対象がありません' };
+    if (r.wf.state !== 'pending') return { ok: false, msg: '承認後の追記は修正できません' };
+    if (!disasterCanApprove(r, approverEmail, isOwner, publicToken, publicStep)) {
+      return {
+        ok: false,
+        msg: publicToken
+          ? 'このURLは現在の承認段階用ではありません。最新のメールのリンクを開いてください。'
+          : 'この段階の承認者（または所有者）のみ追記を修正できます',
+      };
+    }
+    var t = String(note || '').trim();
+    if (!t) return { ok: false, msg: '内容を入力してください' };
+    r.wf.report_addenda = Array.isArray(r.wf.report_addenda) ? r.wf.report_addenda : [];
+    var aid = String(addendumId || '').trim();
+    var idx = -1;
+    for (var i = 0; i < r.wf.report_addenda.length; i++) {
+      var it = r.wf.report_addenda[i];
+      if (!it) continue;
+      if (it.id != null && String(it.id) === aid) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx < 0 && /^\d+$/.test(aid)) idx = parseInt(aid, 10);
+    if (idx < 0 || !r.wf.report_addenda[idx]) return { ok: false, msg: '追記が見つかりません' };
+    var e = r.wf.report_addenda[idx];
+    if (String(e.role || '').indexOf('承認者') === -1) return { ok: false, msg: '承認者の追記のみ修正できます' };
+    var entryStep = e.step != null ? Number(e.step) : null;
+    if (entryStep == null || entryStep !== Number(r.wf.step)) {
+      return { ok: false, msg: '承認後の追記は修正できません' };
+    }
+    var fk = String(targetField || '').trim();
+    var now = new Date().toISOString();
+    e.text = t;
+    e.updated_at = now;
+    if (fk) e.field = fk;
+    else delete e.field;
+    if (!e.id) e.id = aid || 'ad' + Date.now().toString(36);
+    r.wf.history.push({
+      type: 'approver_note_edit',
+      at: now,
+      by: String(approverName || e.by || '').trim(),
+      note: '追記を修正',
+    });
+    disasterSaveReports(DIS_LIST, id);
+    return { ok: true, id: e.id };
+  };
+
+  function currentStepEditableAddenda(r) {
+    if (!r || !r.wf || r.wf.state !== 'pending') return [];
+    var cur = Number(r.wf.step);
+    var list = Array.isArray(r.wf.report_addenda) ? r.wf.report_addenda : [];
+    var out = [];
+    list.forEach(function (e, i) {
+      if (!e || String(e.role || '').indexOf('承認者') === -1) return;
+      if (e.step == null || Number(e.step) !== cur) return;
+      out.push({ entry: e, index: i });
+    });
+    return out;
+  }
+
+  global.disasterEditableAddendaPanelHtml = function (r, reportId, mode) {
+    var items = currentStepEditableAddenda(r);
+    if (!items.length) return '';
+    var idStr = String(reportId).replace(/'/g, "\\'");
+    var rows = items
+      .map(function (x) {
+        var e = x.entry;
+        var aid = e.id != null ? String(e.id) : String(x.index);
+        var aidEsc = aid.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var preview = String(e.text || '').trim();
+        if (preview.length > 80) preview = preview.slice(0, 80) + '…';
+        var fieldLab = e.field ? '（欄: ' + esc(String(e.field)) + '）' : '（追記一覧）';
+        var onclick =
+          mode === 'public'
+            ? "if(typeof disasterPubBeginEditAddendum==='function')disasterPubBeginEditAddendum('" + aidEsc + "')"
+            : "if(typeof disasterBeginEditAddendum==='function')disasterBeginEditAddendum('" +
+              idStr +
+              "','" +
+              aidEsc +
+              "')";
+        return (
+          '<div style="display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;padding:8px;background:#fff;border:1px solid #C8E6C9;border-radius:6px">' +
+          '<div style="flex:1;min-width:0;font-size:11px;line-height:1.45;color:#C62828;white-space:pre-wrap;word-break:break-word">' +
+          esc(preview) +
+          '<div style="font-size:9px;color:#666;margin-top:4px">' +
+          fieldLab +
+          '</div></div>' +
+          '<button type="button" class="fp" style="flex-shrink:0;padding:6px 10px;font-size:11px;border-radius:8px" onclick="' +
+          onclick +
+          '">修正</button></div>'
+        );
+      })
+      .join('');
+    return (
+      '<div style="margin:0 0 10px;padding:8px;background:rgba(255,255,255,.7);border-radius:6px;border:1px dashed #81C784">' +
+      '<div style="font-size:10px;font-weight:700;color:#1B5E20;margin-bottom:6px">この段階で保存した追記（承認前のみ修正可）</div>' +
+      rows +
+      '</div>'
+    );
   };
 
   var REPORT_MERGE_KEYS = [
@@ -791,6 +917,7 @@
     return: '差戻',
     revise: '再提出',
     approver_note: '承認者の追記・訂正',
+    approver_note_edit: '承認者の追記修正',
   };
 
   function isLiteDisViewer() {
@@ -848,13 +975,19 @@
       return '';
     }
     var idStr = String(id).replace(/'/g, "\\'");
+    var editList =
+      typeof global.disasterEditableAddendaPanelHtml === 'function'
+        ? global.disasterEditableAddendaPanelHtml(r, id, 'admin')
+        : '';
     var addendumBlock =
         '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
         '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">承認者による追記・訂正</div>' +
-        '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと<b>報告書の該当箇所</b>に追記として表示されます（承認者名は小さく赤色）。一覧のみにしたい場合は先頭を選んでください。</p>' +
+        '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと<b>報告書の該当箇所</b>の下に赤文字で追記されます。保存後は承認するまで「修正」できます。</p>' +
+        editList +
         (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
         '<textarea id="disApproverNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px" placeholder="指摘・補足・訂正文など"></textarea>' +
-        '<button type="button" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="disasterDoApproverNote(\'' +
+        '<input type="hidden" id="disApproverEditId" value="">' +
+        '<button type="button" id="disApproverNoteSaveBtn" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="disasterDoApproverNote(\'' +
         idStr +
         "')\">追記・訂正を保存</button></div>";
     return (
@@ -908,15 +1041,21 @@
       '<p style="font-size:11px;color:var(--t3);margin:0 0 8px">ログイン不要で操作できます。現在の段階: <strong>' +
       esc(stepLabel) +
       '</strong></p>';
+    var editListPub =
+      typeof global.disasterEditableAddendaPanelHtml === 'function'
+        ? global.disasterEditableAddendaPanelHtml(r, id, 'public')
+        : '';
     return (
       '<div style="margin-top:12px;padding:12px;background:linear-gradient(135deg,rgba(46,125,50,.08),rgba(129,199,132,.12));border:1px solid #81C784;border-radius:8px">' +
       hint +
       '<div style="margin:12px 0 0;padding:10px 0 0;border-top:1px dashed rgba(46,125,50,.35)">' +
       '<div style="font-weight:700;font-size:11px;margin-bottom:6px;color:#1B5E20">追記・訂正（報告書に表示）</div>' +
-      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">表示する欄を選ぶと<b>該当箇所</b>に差し込まれます（承認者名は小さく赤色）。</p>' +
+      '<p style="font-size:10px;color:var(--t3);margin:0 0 8px;line-height:1.5">欄を選ぶと該当箇所の下に赤文字で追記されます。保存後は承認するまで「修正」できます。</p>' +
+      editListPub +
       (typeof global.disasterApproverFieldSelectHtml === 'function' ? global.disasterApproverFieldSelectHtml() : '') +
       '<textarea id="disApproverNote" class="ft" style="min-height:72px;width:100%;box-sizing:border-box;margin-bottom:8px;font-size:12px" placeholder="指摘・補足・訂正文など"></textarea>' +
-      '<button type="button" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="if(typeof disasterPubDoApproverNote===\'function\')disasterPubDoApproverNote()">追記・訂正を保存</button></div>' +
+      '<input type="hidden" id="disApproverEditId" value="">' +
+      '<button type="button" id="disApproverNoteSaveBtn" class="fp" style="padding:8px 14px;font-size:11px;border-radius:8px;margin-bottom:10px" onclick="if(typeof disasterPubDoApproverNote===\'function\')disasterPubDoApproverNote()">追記・訂正を保存</button></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
       '<button type="button" class="sub" style="margin:0;padding:10px 16px;font-size:13px;background:#2E7D32" onclick="if(typeof disasterPubDoApprove===\'function\')disasterPubDoApprove()">承認する</button>' +
       '<button type="button" style="margin:0;padding:10px 16px;font-size:13px;border-radius:var(--rs);border:1px solid #E53935;background:#fff;color:#E53935;cursor:pointer;font-weight:600" onclick="if(typeof disasterPubDoReturn===\'function\')disasterPubDoReturn()">差戻す</button></div>' +

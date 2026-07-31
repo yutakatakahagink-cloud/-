@@ -206,7 +206,7 @@
       r.wf.report_addenda.forEach(function (e) {
         if (!e || String(e.field || '') !== String(fieldKey)) return;
         if (!isApproverAddendum(e)) return;
-        var key = String(e.at || '') + '\t' + String(e.by || '') + '\t' + String(e.text || '').trim();
+        var key = String(e.id || '') + '\t' + String(e.at || '') + '\t' + String(e.by || '') + '\t' + String(e.text || '').trim();
         if (seen[key]) return;
         seen[key] = true;
         out.push(e);
@@ -218,7 +218,7 @@
           var who = approverDisplayName(e);
           var txt = String(e.text || '').trim();
           return (
-            '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E57373;font-size:10pt;white-space:pre-wrap;word-break:break-all;color:#C62828">' +
+            '<div style="display:block;margin-top:10px;padding-top:8px;border-top:1px dashed #E57373;font-size:10pt;white-space:pre-wrap;word-break:break-all;color:#C62828;line-height:1.55">' +
             V(txt) +
             '<span style="font-size:9px;font-weight:600;display:block;margin-top:6px"> — ' +
             V(who) +
@@ -232,7 +232,11 @@
 
     function cellWithApprovals(fieldKey, rawVal) {
       var base = stripSavedApproverMerges(rawVal);
-      return V(base) + (fieldKey ? addendaForFieldUnified(fieldKey) : '');
+      var add = fieldKey ? addendaForFieldUnified(fieldKey) : '';
+      if (!add) return V(base);
+      var baseHtml = V(base);
+      if (baseHtml) return baseHtml + '<br>' + add;
+      return add;
     }
 
     var ss = function (t, fieldKey, v) {

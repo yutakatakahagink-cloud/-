@@ -619,10 +619,10 @@ select,input,textarea,button{color:var(--t1)}
 <script src="hh-analytics-stress.js?v=20260526-stress-we"></script>
 <script src="hh-com-panel.js?v=20260728-fukuoka"></script>
 <script src="hh-com-disaster.js?v=20260728-fukuoka"></script>
-<script src="disaster-workflow.js?v=20260731-stamp-name"></script>
+<script src="disaster-workflow.js?v=20260731-addenda-edit"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
-<script src="disaster-detail-html.js?v=20260731-addenda-red"></script>
+<script src="disaster-detail-html.js?v=20260731-addenda-edit"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="hh-com-xlsx-fill.js?v=20260707c"></script>
@@ -960,11 +960,45 @@ function disasterDoApproverNote(id){
   if(!note){alert('追記・訂正内容を入力してください');return}
   var tfEl=document.getElementById('disApproverField');
   var tf=tfEl?String(tfEl.value||'').trim():'';
-  var res=typeof disasterReviewerAppendNote==='function'?disasterReviewerAppendNote(DIS_LIST,id,note,CUR?CUR.name:'',CUR?CUR.email||'':'',disasterIsOwnerSession(),undefined,undefined,tf):{ok:false,msg:'機能が読み込まれていません'};
+  var editEl=document.getElementById('disApproverEditId');
+  var editId=editEl?String(editEl.value||'').trim():'';
+  var res;
+  if(editId&&typeof disasterReviewerUpdateNote==='function'){
+    res=disasterReviewerUpdateNote(DIS_LIST,id,editId,note,CUR?CUR.name:'',CUR?CUR.email||'':'',disasterIsOwnerSession(),undefined,undefined,tf);
+  }else{
+    res=typeof disasterReviewerAppendNote==='function'?disasterReviewerAppendNote(DIS_LIST,id,note,CUR?CUR.name:'',CUR?CUR.email||'':'',disasterIsOwnerSession(),undefined,undefined,tf):{ok:false,msg:'機能が読み込まれていません'};
+  }
   if(!res.ok){alert(res.msg);return}
   if(ta)ta.value='';
+  if(editEl)editEl.value='';
+  var btn=document.getElementById('disApproverNoteSaveBtn');
+  if(btn)btn.textContent='追記・訂正を保存';
   showDisDetail(id);
   if(document.querySelector('#pDis.pg.on'))rDisList();
+}
+function disasterBeginEditAddendum(id,addendumId){
+  var r=DIS_LIST.find(function(x){return String(x.id)===String(id)});
+  if(!r||!r.wf||!Array.isArray(r.wf.report_addenda)){alert('追記が見つかりません');return}
+  var aid=String(addendumId||'');
+  var e=null;
+  for(var i=0;i<r.wf.report_addenda.length;i++){
+    var it=r.wf.report_addenda[i];
+    if(!it)continue;
+    if(it.id!=null&&String(it.id)===aid){e=it;break}
+    if(String(i)===aid){e=it;break}
+  }
+  if(!e){alert('追記が見つかりません');return}
+  if(r.wf.state!=='pending'||e.step==null||Number(e.step)!==Number(r.wf.step)){
+    alert('承認後の追記は修正できません');return;
+  }
+  var ta=document.getElementById('disApproverNote');
+  if(ta){ta.value=String(e.text||'');try{ta.focus()}catch(err){}}
+  var tf=document.getElementById('disApproverField');
+  if(tf)tf.value=e.field?String(e.field):'';
+  var editEl=document.getElementById('disApproverEditId');
+  if(editEl)editEl.value=e.id!=null?String(e.id):aid;
+  var btn=document.getElementById('disApproverNoteSaveBtn');
+  if(btn)btn.textContent='追記を更新';
 }
 function showDisDetail(id){
   var r=DIS_LIST.find(x=>String(x.id)===String(id));if(!r)return;

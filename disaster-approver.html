@@ -28,10 +28,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:#E8F5E9;color:#1B5E20;marg
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="config.js?v=20260407-emailjs"></script>
 <script src="hh-data.js?v=20260430-4"></script>
-<script src="disaster-workflow.js?v=20260731-stamp-name"></script>
+<script src="disaster-workflow.js?v=20260731-addenda-edit"></script>
 <script src="disaster-email-notify.js?v=20260408-412"></script>
 <script src="disaster-webhook-notify.js"></script>
-<script src="disaster-detail-html.js?v=20260731-addenda-red"></script>
+<script src="disaster-detail-html.js?v=20260731-addenda-edit"></script>
 <script>
 var DIS_LIST=[];
 var REPORT_ID=null;
@@ -100,16 +100,50 @@ function bindPubActions(){
     render();
   };
   window.disasterPubDoApproverNote=function(){
-    if(typeof disasterReviewerAppendNote!=='function')return;
+    if(typeof disasterReviewerAppendNote!=='function'&&typeof disasterReviewerUpdateNote!=='function')return;
     var ta=document.getElementById('disApproverNote');
     var note=ta?String(ta.value||'').trim():'';
     if(!note){alert('追記・訂正内容を入力してください');return}
     var tfEl=document.getElementById('disApproverField');
     var tf=tfEl?String(tfEl.value||'').trim():'';
-    var res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）',disasterPubStepApproverEmail(),false,REPORT_TOKEN,REPORT_STEP,tf);
+    var editEl=document.getElementById('disApproverEditId');
+    var editId=editEl?String(editEl.value||'').trim():'';
+    var res;
+    if(editId&&typeof disasterReviewerUpdateNote==='function'){
+      res=disasterReviewerUpdateNote(DIS_LIST,REPORT_ID,editId,note,'（メールリンク）',disasterPubStepApproverEmail(),false,REPORT_TOKEN,REPORT_STEP,tf);
+    }else{
+      res=disasterReviewerAppendNote(DIS_LIST,REPORT_ID,note,'（メールリンク）',disasterPubStepApproverEmail(),false,REPORT_TOKEN,REPORT_STEP,tf);
+    }
     if(!res.ok){alert(res.msg);return}
     if(ta)ta.value='';
+    if(editEl)editEl.value='';
+    var btn=document.getElementById('disApproverNoteSaveBtn');
+    if(btn)btn.textContent='追記・訂正を保存';
     render();
+  };
+  window.disasterPubBeginEditAddendum=function(addendumId){
+    var r=DIS_LIST.find(function(x){return String(x.id)===String(REPORT_ID)});
+    if(!r||!r.wf||!Array.isArray(r.wf.report_addenda)){alert('追記が見つかりません');return}
+    var aid=String(addendumId||'');
+    var e=null;
+    for(var i=0;i<r.wf.report_addenda.length;i++){
+      var it=r.wf.report_addenda[i];
+      if(!it)continue;
+      if(it.id!=null&&String(it.id)===aid){e=it;break}
+      if(String(i)===aid){e=it;break}
+    }
+    if(!e){alert('追記が見つかりません');return}
+    if(r.wf.state!=='pending'||e.step==null||Number(e.step)!==Number(r.wf.step)){
+      alert('承認後の追記は修正できません');return;
+    }
+    var ta=document.getElementById('disApproverNote');
+    if(ta){ta.value=String(e.text||'');try{ta.focus()}catch(err){}}
+    var tf=document.getElementById('disApproverField');
+    if(tf)tf.value=e.field?String(e.field):'';
+    var editEl=document.getElementById('disApproverEditId');
+    if(editEl)editEl.value=e.id!=null?String(e.id):aid;
+    var btn=document.getElementById('disApproverNoteSaveBtn');
+    if(btn)btn.textContent='追記を更新';
   };
 }
 
