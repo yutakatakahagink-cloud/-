@@ -45,7 +45,7 @@
       return (
         '<div style="display:flex;align-items:stretch;border-bottom:1px solid #333;min-height:28px"><div style="flex-shrink:0;width:90px;padding:4px 8px;background:#e8e8e8;border-right:1px solid #333;display:flex;align-items:center;font-size:10pt;line-height:1.3">' +
         l +
-        '</div><div style="flex:1;min-width:0;padding:4px 6px;display:flex;align-items:center;background:#fff;font-size:10pt;word-break:break-all">' +
+        '</div><div style="flex:1;min-width:0;padding:4px 6px;background:#fff;font-size:10pt;word-break:break-all">' +
         v +
         '</div></div>'
       );
@@ -54,7 +54,7 @@
       return (
         '<div style="display:flex;align-items:stretch;border-bottom:1px solid #ddd;min-height:28px"><div style="flex-shrink:0;width:70px;padding:4px 6px;background:#f0f0f0;border-right:1px solid #ddd;display:flex;align-items:center;font-size:9.5pt">' +
         l +
-        '</div><div style="flex:1;min-width:0;padding:4px 6px;display:flex;align-items:center;background:#fff;font-size:10pt;word-break:break-all">' +
+        '</div><div style="flex:1;min-width:0;padding:4px 6px;background:#fff;font-size:10pt;word-break:break-all">' +
         v +
         '</div></div>'
       );

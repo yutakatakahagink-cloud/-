@@ -175,8 +175,10 @@ select,input,textarea,button{color:var(--t1)}
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:12px}
 .mbg.show{display:flex}
 /* ポップアップ全体を約2倍（zoom）。論理サイズ×2で画面内に収める */
-.mbd{background:#fff;border-radius:14px;width:100%;max-width:min(540px,48vw);max-height:42vh;overflow-y:auto;padding:24px 24px 32px;animation:su .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.2);zoom:2}
+.mbd{background:#fff;border-radius:14px;width:100%;max-width:min(540px,48vw);max-height:42vh;overflow-y:auto;padding:24px 24px 32px;animation:su .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.2);zoom:2;position:relative}
 .mbd.dis-detail-wide{max-width:80vw;max-height:85vh;zoom:1.6}
+.mbd-close{position:absolute;top:8px;right:8px;width:28px;height:28px;border:none;background:rgba(0,0,0,.08);border-radius:50%;cursor:pointer;font-size:16px;color:#666;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;z-index:10}
+.mbd-close:hover{background:rgba(0,0,0,.15);color:#333}
 @media(max-width:767px){.mbd{zoom:1.35;max-width:100%;max-height:70vh}.mbd.dis-detail-wide{max-width:100%;max-height:75vh}}
 @keyframes su{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 .mp{width:32px;height:3px;background:var(--t3);border-radius:2px;margin:0 auto 14px}
@@ -595,7 +597,7 @@ select,input,textarea,button{color:var(--t1)}
 </div></div>
 
 <!-- MODAL -->
-<div class="mbg" id="modal"><div class="mbd"><div class="mp"></div><div class="mh" id="mT"></div><div id="disExportToolbar" style="display:none;margin:0 0 12px;flex-wrap:wrap;align-items:center;gap:8px"></div><div id="mI"></div></div></div>
+<div class="mbg" id="modal"><div class="mbd"><button class="mbd-close" onclick="document.getElementById('modal').classList.remove('show');var mb=document.querySelector('.mbd');if(mb)mb.classList.remove('dis-detail-wide')">✕</button><div class="mp"></div><div class="mh" id="mT"></div><div id="disExportToolbar" style="display:none;margin:0 0 12px;flex-wrap:wrap;align-items:center;gap:8px"></div><div id="mI"></div></div></div>
 
 <!-- NAV: 一覧, 分析, 要望, 災害, 委員会, 規定関連, 設定 -->
 <nav class="nav">
