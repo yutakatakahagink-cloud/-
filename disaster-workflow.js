@@ -93,18 +93,22 @@
     var out = [];
     // 第1承認者（髙萩）を先頭に
     var first = global.disasterWfFirstStep();
-    out.push({ label: first.label, email: first.email });
+    out.push({ label: first.label, email: first.email, name: first.name });
     // 追加承認者（ユーザーが選択）
     var n = 0;
     (optionalSteps || []).forEach(function (s) {
       var em = normEmail(s && s.email);
       if (!em) return;
       n++;
-      out.push({ label: String((s && s.label) || '').trim() || '追加承認' + n, email: em });
+      out.push({
+        label: String((s && s.label) || '').trim() || '追加承認' + n,
+        email: em,
+        name: String((s && s.name) || '').trim(),
+      });
     });
     // 後続の固定承認者
     global.disasterWfFixedTailSteps(deptStr).forEach(function (s) {
-      out.push({ label: s.label, email: s.email });
+      out.push({ label: s.label, email: s.email, name: s.name });
     });
     return out;
   };
@@ -156,6 +160,11 @@
     }
     var need = normEmail(approverEmail);
     if (!need) return '';
+    var fixedKeys = Object.keys(DIS_WF_FIXED);
+    for (var f = 0; f < fixedKeys.length; f++) {
+      var fixed = DIS_WF_FIXED[fixedKeys[f]];
+      if (fixed && normEmail(fixed.email) === need) return fixed.name;
+    }
     try {
       var raw = localStorage.getItem('hh_admins');
       if (!raw) return '';
@@ -340,7 +349,7 @@
   }
 
   /**
-   * 送信時: stepsFromForm = [{label,email},...] メール必須。1件以上で wf 付与。
+   * 送信時: stepsFromForm = [{label,email,name},...] メール必須。1件以上で wf 付与。
    */
   global.disasterApplyWfOnSubmit = function (rec, reporterName, stepsFromForm) {
     var raw = Array.isArray(stepsFromForm) ? stepsFromForm : [];
@@ -349,7 +358,7 @@
       var em = normEmail(s && s.email);
       if (!em) return;
       var lab = String((s && s.label) || '').trim() || '承認';
-      cleaned.push({ label: lab, email: em });
+      cleaned.push({ label: lab, email: em, name: String((s && s.name) || '').trim() });
     });
     if (!cleaned.length) return;
     var now = new Date().toISOString();
@@ -453,19 +462,28 @@
       };
     }
     var now = new Date().toISOString();
-    var label = (steps[r.wf.step] && steps[r.wf.step].label) || '第' + (r.wf.step + 1) + '承認';
+    var currentStep = steps[r.wf.step] || {};
+    var label = currentStep.label || '第' + (r.wf.step + 1) + '承認';
+    var stampEmail = normEmail(approverEmail) || normEmail(currentStep.email);
+    var stampName = String(approverName || '').trim();
+    if (!stampName || isMailLinkPlaceholderName(stampName)) {
+      stampName = String(currentStep.name || '').trim();
+    }
+    if (!stampName || isMailLinkPlaceholderName(stampName)) {
+      stampName = resolveApproverByName('（メールリンク）', stampEmail);
+    }
     r.wf.stamps = r.wf.stamps || [];
     r.wf.stamps.push({
       step: r.wf.step,
       label: label,
-      name: approverName || '',
-      email: normEmail(approverEmail),
+      name: stampName,
+      email: stampEmail,
       at: now,
     });
     r.wf.history.push({
       type: 'approve',
       at: now,
-      by: approverName || '',
+      by: stampName,
       note: label,
     });
     if (r.wf.step + 1 >= steps.length) {
@@ -693,17 +711,23 @@
     return r.wf.stamps
       .map(function (s) {
         var dt = formatAtJst(s.at || '').slice(0, 10).replace(/-/g, '/');
+        var step = getStepsForRecord(r)[Number(s.step)] || {};
+        var stampEmail = normEmail(s.email) || normEmail(step.email);
+        var stampName = String(s.name || '').trim();
+        if (!stampName || isMailLinkPlaceholderName(stampName)) {
+          stampName = String(step.name || '').trim();
+        }
+        if (!stampName || isMailLinkPlaceholderName(stampName)) {
+          stampName = resolveApproverByName('（メールリンク）', stampEmail);
+        }
         return (
           '<div style="width:76px;height:76px;border-radius:50%;border:3px solid #B71C1C;background:rgba(255,255,255,.98);box-shadow:0 2px 10px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;box-sizing:border-box;flex-shrink:0;pointer-events:none">' +
           '<div style="font-size:8px;font-weight:800;color:#B71C1C;letter-spacing:.06em;line-height:1">承認</div>' +
-          '<div style="font-size:9px;font-weight:700;color:#222;line-height:1.15;margin-top:2px;max-width:68px;max-height:28px;overflow:hidden">' +
-          esc(s.name || '') +
-          '</div>' +
           '<div style="font-size:7px;color:#555;margin-top:2px;line-height:1.1">' +
           esc(dt) +
           '</div>' +
-          '<div style="font-size:6px;color:#888;margin-top:1px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
-          esc(s.label || '') +
+          '<div style="font-size:9px;font-weight:700;color:#222;line-height:1.15;margin-top:3px;max-width:68px;max-height:28px;overflow:hidden">' +
+          esc(stampName) +
           '</div></div>'
         );
       })
