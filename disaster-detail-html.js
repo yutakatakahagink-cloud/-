@@ -218,9 +218,9 @@
           var who = approverDisplayName(e);
           var txt = String(e.text || '').trim();
           return (
-            '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E57373;font-size:10pt;white-space:pre-wrap;word-break:break-all">' +
+            '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E57373;font-size:10pt;white-space:pre-wrap;word-break:break-all;color:#C62828">' +
             V(txt) +
-            '<span style="font-size:9px;color:#C62828;font-weight:600;display:block;margin-top:6px"> — ' +
+            '<span style="font-size:9px;font-weight:600;display:block;margin-top:6px"> — ' +
             V(who) +
             ' ' +
             V(at) +
@@ -381,7 +381,7 @@
             var who = approverDisplayName(e);
             h +=
               '<div style="margin-bottom:12px;padding:10px;background:#fff;border:1px solid #FFE082;border-radius:6px;font-size:10pt;line-height:1.5">' +
-              '<div style="white-space:pre-wrap;word-break:break-all;color:#1a1a1a">' +
+              '<div style="white-space:pre-wrap;word-break:break-all;color:#C62828">' +
               V(e.text || '') +
               '</div>' +
               '<span style="font-size:9px;color:#C62828;font-weight:600;display:block;margin-top:8px"> — ' +
@@ -552,7 +552,7 @@
         looseRaw.forEach(function (e) {
           h += '<tr><td style="background:#FFFDE7;font-size:10pt"><strong>' + V(e.role || '追記') + '</strong>　' +
             V(e.by || '') + '　<span style="color:#888">' + V(e.at || '') + '</span><br>' +
-            V(e.text || '') + '</td></tr>';
+            '<span style="color:#C62828">' + V(e.text || '') + '</span></td></tr>';
         });
         h += '</table>';
       }
